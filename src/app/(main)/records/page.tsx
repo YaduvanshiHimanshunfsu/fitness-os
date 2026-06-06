@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/analytics/PageHeader'
+
+export const dynamic = 'force-dynamic'
 import { getPersonalRecords } from '@/services/record-service'
 import { Trophy, Dumbbell, Timer } from 'lucide-react'
 

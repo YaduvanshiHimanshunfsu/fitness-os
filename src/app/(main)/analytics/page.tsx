@@ -10,6 +10,8 @@ import {
   getStreakData,
 } from '@/services/analytics-service'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AnalyticsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

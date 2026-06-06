@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -13,27 +13,64 @@ import {
   Settings, 
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react';
 import { logout } from '@/actions/auth';
 import { useUIStore } from '@/hooks/useUI';
+import { createClient } from '@/lib/supabase/client';
+import { getLevelFromXP } from '@/utils/level-calculator';
 
 const NAV_ITEMS = [
-  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Schedule', path: '/schedule', icon: Dumbbell },
-  { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-  { name: 'Records', path: '/records', icon: History },
-  { name: 'Achievements', path: '/achievements', icon: Trophy },
-  { name: 'Settings', path: '/settings', icon: Settings },
+  { name: 'Dashboard',    path: '/dashboard',    icon: LayoutDashboard },
+  { name: 'Schedule',     path: '/schedule',     icon: Dumbbell        },
+  { name: 'Analytics',    path: '/analytics',    icon: BarChart3       },
+  { name: 'Records',      path: '/records',      icon: History         },
+  { name: 'Achievements', path: '/achievements', icon: Trophy          },
+  { name: 'Settings',     path: '/settings',     icon: Settings        },
 ];
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const pathname                              = usePathname();
   const { isSidebarCollapsed, toggleSidebar } = useUIStore();
 
-  const handleLogout = async () => {
-    await logout();
-  };
+  // ── Dynamic user profile ──────────────────────────────────────────────
+  const [displayName,  setDisplayName]  = useState('...');
+  const [levelLabel,   setLevelLabel]   = useState('Loading...');
+  const [avatarLetter, setAvatarLetter] = useState('?');
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+
+        const { data: profile } = await (supabase
+          .from('profiles') as any)
+          .select('name, xp_total')
+          .eq('id', user.id)
+          .single();
+
+        if (cancelled) return;
+
+        const name = profile?.name || user.email?.split('@')[0] || 'Athlete';
+        const xp   = profile?.xp_total ?? 0;
+        const { current } = getLevelFromXP(xp);
+
+        setDisplayName(name);
+        setAvatarLetter(name.charAt(0).toUpperCase());
+        setLevelLabel(`${current.name} · Lv ${current.level}`);
+      } catch {
+        /* silent */
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [pathname]); // Re-fetch when route changes (handles after profile update)
+
+  const handleLogout = async () => { await logout(); };
 
   return (
     <aside 
@@ -56,13 +93,13 @@ export default function Sidebar() {
               </span>
             </Link>
             <span className="text-[10px] font-mono text-zinc-600 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">
-              v1.0
+              v2.0
             </span>
           </>
         )}
       </div>
 
-      {/* Collapse Toggle Button */}
+      {/* Collapse Toggle */}
       <button 
         onClick={toggleSidebar}
         className="absolute -right-3 top-20 w-6 h-6 bg-zinc-800 hover:bg-[#FF6B35] border border-zinc-700 hover:border-[#FF6B35] text-white rounded-full flex items-center justify-center transition-colors z-50 shadow-md"
@@ -75,7 +112,6 @@ export default function Sidebar() {
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
           const Icon = item.icon;
-
           return (
             <Link
               key={item.path}
@@ -89,7 +125,6 @@ export default function Sidebar() {
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
               }`}
             >
-              {/* Active Background Slide */}
               {isActive && (
                 <motion.div
                   layoutId="sidebar-active"
@@ -97,11 +132,9 @@ export default function Sidebar() {
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 />
               )}
-
               <Icon className={`w-5 h-5 z-10 transition-colors ${
                 isActive ? 'text-[#FF6B35]' : 'text-zinc-500 group-hover:text-[#FF6B35]'
               }`} />
-              
               {!isSidebarCollapsed && (
                 <span className="z-10 relative group-hover:translate-x-1 transition-transform duration-200 truncate">
                   {item.name}
@@ -112,37 +145,34 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer Info & Logout */}
+      {/* Footer */}
       <div className="flex flex-col border-t border-[#1F1F1F] bg-zinc-950/40 shrink-0">
-        
-        {/* Copyright Footer */}
         {!isSidebarCollapsed && (
           <div className="px-5 py-4 border-b border-[#1F1F1F]/50">
             <div className="text-[10px] text-zinc-500 font-medium leading-relaxed">
               <p className="text-zinc-400 font-bold mb-0.5">Created by Himanshu Yadav</p>
               <p>&copy; {new Date().getFullYear()} Fitness OS</p>
-              <a href="mailto:mrhimanshu1234567@gmail.com" className="hover:text-[#FF6B35] transition-colors truncate block mt-1">
-                mrhimanshu1234567@gmail.com
-              </a>
             </div>
           </div>
         )}
 
-        {/* User Card Profile & Logout */}
+        {/* User Card */}
         <div className={`p-4 flex items-center ${isSidebarCollapsed ? 'justify-center flex-col gap-4' : 'justify-between gap-3'}`}>
-          <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+          <Link href="/profile" className={`flex items-center gap-3 hover:opacity-80 transition-opacity ${isSidebarCollapsed ? 'justify-center' : ''}`}>
             <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-[#FF6B35]/20 to-[#FF6B35]/40 border border-[#FF6B35]/30 flex items-center justify-center font-mono font-bold text-white text-base shadow-inner shrink-0">
-              H
+              {avatarLetter}
             </div>
             {!isSidebarCollapsed && (
               <div className="flex flex-col truncate">
-                <span className="text-sm font-semibold text-white tracking-wide leading-tight truncate">Himanshu</span>
+                <span className="text-sm font-semibold text-white tracking-wide leading-tight truncate">
+                  {displayName}
+                </span>
                 <span className="text-[11px] text-[#FF6B35] font-medium uppercase tracking-wider leading-none mt-1 truncate">
-                  Lifter Level 4
+                  {levelLabel}
                 </span>
               </div>
             )}
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             className={`p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer ${isSidebarCollapsed ? 'w-full flex justify-center' : ''}`}
@@ -152,7 +182,6 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-
     </aside>
   );
 }

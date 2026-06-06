@@ -1,93 +1,107 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronRight, Flame, CheckCircle2, Zap, Coffee, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { useWorkoutStore } from '@/hooks/useWorkout';
+import { EXERCISES } from '@/constants/exercises';
 
 export interface AthleteDashboardProps {
-  userName:          string;
-  workoutName:       string;
-  muscles:           string[];
-  currentStreak:     number;
-  levelName:         string;
-  estimatedMinutes:  number;
-  estimatedCalories: number;
-  todayExercises:    any[];
-  isRest:            boolean;
+  userName:      string;
+  currentStreak: number;
+  levelName:     string;
 }
 
-// Slot machine style animated number
+/** Slot-machine style count-up for numeric stats */
 function RollingCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [display, setDisplay] = useState(0);
-
   useEffect(() => {
-    if (value === 0) return;
-    const duration   = 1200;
-    const startTime  = performance.now();
-    const startVal   = 0;
-    const endVal     = value;
-
+    if (value === 0) { setDisplay(0); return; }
+    const duration  = 1200;
+    const startTime = performance.now();
     const tick = (now: number) => {
       const progress = Math.min((now - startTime) / duration, 1);
-      // ease-out-expo
-      const eased = 1 - Math.pow(2, -10 * progress);
-      setDisplay(Math.round(startVal + (endVal - startVal) * eased));
+      const eased    = 1 - Math.pow(2, -10 * progress);
+      setDisplay(Math.round(value * eased));
       if (progress < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }, [value]);
-
   return <>{display}{suffix}</>;
 }
 
 export default function AthleteDashboard({
   userName,
-  workoutName,
-  muscles,
   currentStreak,
   levelName,
-  estimatedMinutes,
-  estimatedCalories,
-  todayExercises,
-  isRest,
 }: AthleteDashboardProps) {
-  const router        = useRouter();
-  const [now, setNow] = useState<Date | null>(null);
-  const { startSession, isSessionActive } = useWorkoutStore();
+  const router = useRouter();
+  const { startSession } = useWorkoutStore();
 
-  // Fix hydration mismatch — only render time on client
-  useEffect(() => {
-    setNow(new Date());
-    const timer = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(timer);
+  // ── CRITICAL: All date/day logic is in useEffect so it ALWAYS runs
+  //    on the client with the user's real local timezone (never UTC server time).
+  const [mounted,          setMounted]          = useState(false);
+  const [now,              setNow]              = useState<Date | null>(null);
+  const [isRest,           setIsRest]           = useState(false);
+  const [todayName,        setTodayName]        = useState('');
+  const [todayExercises,   setTodayExercises]   = useState<typeof EXERCISES>([]);
+  const [workoutName,      setWorkoutName]      = useState('Loading Mission...');
+  const [muscles,          setMuscles]          = useState<string[]>([]);
+  const [estimatedMinutes, setEstimatedMinutes] = useState(0);
+  const [estimatedCalories,setEstimatedCalories]= useState(0);
+
+  const computeDay = useCallback(() => {
+    const localNow  = new Date();                                       // guaranteed client-local
+    const dayString = format(localNow, 'EEEE').toLowerCase();           // e.g. "sunday"
+    const rest      = dayString === 'thursday';
+    const exercises = EXERCISES.filter(e => e.day === dayString);
+
+    const muscleSet = new Set<string>();
+    let mins = 0, cals = 0;
+    if (!rest && exercises.length > 0) {
+      exercises.forEach(e => {
+        muscleSet.add(e.muscleGroup);
+        mins += (e.sets || 0) * 1.5;
+        cals += (e.sets || 0) * 12;
+      });
+      mins += 10;
+    }
+
+    setNow(localNow);
+    setIsRest(rest);
+    setTodayName(dayString);
+    setTodayExercises(exercises);
+    setWorkoutName(rest ? 'Rest Day' : `${dayString.charAt(0).toUpperCase() + dayString.slice(1)} Workout`);
+    setMuscles(Array.from(muscleSet));
+    setEstimatedMinutes(Math.round(mins));
+    setEstimatedCalories(Math.round(cals));
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    computeDay();                                      // run immediately on mount
+    const clockTick = setInterval(computeDay, 60_000); // refresh every minute
+    return () => clearInterval(clockTick);
+  }, [computeDay]);
 
   const totalSets = todayExercises.reduce((acc, ex) => acc + (ex.sets || 0), 0);
 
   const handleStartMission = () => {
-    // Fire the global startSession to activate the live timer
-    startSession(
-      format(new Date(), 'EEEE').toLowerCase(),
-      estimatedMinutes,
-      todayExercises
-    );
+    startSession(todayName, estimatedMinutes, todayExercises);
     router.push('/workout/warmup');
   };
 
   return (
     <div className="w-full text-white font-sans pb-12 relative">
-
-      {/* Background Ambient Glows — fixed, non-blocking */}
+      {/* Ambient glows */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FF4500]/15 blur-[140px] pointer-events-none will-change-transform" />
       <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#10B981]/8 blur-[140px] pointer-events-none will-change-transform" />
 
-      {/* MAIN CONTENT — no opacity animation to prevent black screen */}
       <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
 
-        {/* LEFT COLUMN: 2/3 width */}
+        {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
         <div className="lg:col-span-2 flex flex-col gap-6">
 
           {/* Welcome Header */}
@@ -105,11 +119,13 @@ export default function AthleteDashboard({
                 </span>
               </h1>
               <p className="text-zinc-400 font-medium text-sm mt-2">
-                {isRest
-                  ? 'Take it easy today. Recovery is key.'
-                  : now
-                  ? `${format(now, 'EEEE, MMMM d')} · Ready to crush your goals?`
-                  : 'Ready to crush your goals?'}
+                {mounted
+                  ? isRest
+                    ? 'Take it easy today. Recovery is key.'
+                    : now
+                      ? `${format(now, 'EEEE, MMMM d')} · Ready to crush your goals?`
+                      : 'Ready to crush your goals?'
+                  : ''}
               </p>
             </div>
 
@@ -141,31 +157,22 @@ export default function AthleteDashboard({
             transition={{ delay: 0.1, duration: 0.4, ease: 'easeOut' }}
           >
             <div className="bg-white/5 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-              {/* Corner glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#FF4500]/20 to-transparent rounded-bl-full pointer-events-none" />
-              {/* Shimmer on hover via CSS */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent -translate-x-full animate-[shimmer_3s_ease-in-out_infinite] pointer-events-none rounded-3xl" />
 
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-2 h-2 rounded-full bg-[#FF4500] animate-pulse" />
-                    <span className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest">
-                      Today's Mission
-                    </span>
+                    <span className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest">Today's Mission</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
                     {workoutName}
                   </h2>
-
-                  {/* Muscle Badges */}
                   {muscles.length > 0 && !isRest && (
                     <div className="flex flex-wrap gap-2 mt-4">
                       {muscles.map((m) => (
-                        <span
-                          key={m}
-                          className="px-3 py-1 bg-white/10 border border-white/10 text-white text-[11px] font-bold rounded-md capitalize"
-                        >
+                        <span key={m} className="px-3 py-1 bg-white/10 border border-white/10 text-white text-[11px] font-bold rounded-md capitalize">
                           {m}
                         </span>
                       ))}
@@ -178,7 +185,8 @@ export default function AthleteDashboard({
                     whileHover={{ scale: 1.03, boxShadow: '0 0 40px rgba(255,69,0,0.6)' }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleStartMission}
-                    className="w-full md:w-auto px-8 py-5 bg-gradient-to-r from-[#FF4500] to-[#E03C00] text-white rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-shadow"
+                    disabled={!mounted}
+                    className="w-full md:w-auto px-8 py-5 bg-gradient-to-r from-[#FF4500] to-[#E03C00] text-white rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Play className="w-4 h-4" fill="currentColor" />
                     Start Mission
@@ -187,7 +195,7 @@ export default function AthleteDashboard({
                 )}
               </div>
 
-              {/* Bottom Stats Row */}
+              {/* Stats Row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10 text-center relative z-10">
                 {[
                   { label: 'Exercises',    value: todayExercises.length, suffix: '' },
@@ -197,19 +205,17 @@ export default function AthleteDashboard({
                 ].map((stat, i) => (
                   <div key={i}>
                     <div className="text-2xl sm:text-3xl font-black text-white">
-                      <RollingCounter value={stat.value} suffix={stat.suffix} />
+                      {mounted ? <RollingCounter value={stat.value} suffix={stat.suffix} /> : '—'}
                     </div>
-                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
-                      {stat.label}
-                    </div>
+                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{stat.label}</div>
                   </div>
                 ))}
               </div>
             </div>
           </motion.div>
 
-          {/* Exercise Protocol List */}
-          {!isRest && todayExercises.length > 0 && (
+          {/* Execution Protocol List */}
+          {mounted && !isRest && todayExercises.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -219,14 +225,13 @@ export default function AthleteDashboard({
                 <div className="w-1 h-4 bg-[#FF4500] rounded-full" />
                 Execution Protocol
               </h3>
-
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-xl">
                 {todayExercises.map((ex, idx) => (
                   <motion.div
                     key={ex.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.25 + idx * 0.05 }}
+                    transition={{ delay: 0.25 + idx * 0.04 }}
                     className="flex items-center justify-between p-4 sm:p-5 border-b border-white/5 last:border-b-0 hover:bg-white/10 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">
@@ -236,9 +241,9 @@ export default function AthleteDashboard({
                       <div>
                         <div className="font-bold text-white text-sm sm:text-base">{ex.name}</div>
                         <div className="text-[11px] font-bold text-zinc-500 mt-0.5 uppercase tracking-widest">
-                          {ex.muscleGroup}{' '}
+                          {ex.muscleGroup}
                           <span className="text-[#FF4500] mx-1">•</span>
-                          {ex.sets} SETS{' '}
+                          {ex.sets} SETS
                           <span className="text-[#FF4500] mx-1">•</span>
                           {ex.reps} REPS
                         </div>
@@ -252,7 +257,7 @@ export default function AthleteDashboard({
           )}
 
           {/* Rest Day Card */}
-          {isRest && (
+          {mounted && isRest && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -270,19 +275,17 @@ export default function AthleteDashboard({
           )}
         </div>
 
-        {/* RIGHT COLUMN: Sidebar */}
+        {/* ── RIGHT COLUMN ─────────────────────────────────────────────── */}
         <div className="flex flex-col gap-6">
 
-          {/* Level Progress Card */}
+          {/* Level Progress */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.4, ease: 'easeOut' }}
             className="bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl"
           >
-            <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-              XP Level Progress
-            </div>
+            <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">XP Level Progress</div>
             <div className="flex justify-between items-end mb-4">
               <div className="text-2xl font-black text-white">{levelName}</div>
               <div className="text-[11px] font-bold text-[#FF4500] uppercase tracking-widest flex items-center gap-1">
@@ -297,9 +300,7 @@ export default function AthleteDashboard({
                 className="h-full bg-gradient-to-r from-[#FF4500] to-[#FF8C61] rounded-full"
               />
             </div>
-            <div className="text-right text-[10px] font-black text-zinc-500 mt-2 tracking-widest">
-              3,450 / 5,000 XP
-            </div>
+            <div className="text-right text-[10px] font-black text-zinc-500 mt-2 tracking-widest">3,450 / 5,000 XP</div>
           </motion.div>
 
           {/* Quick Stats */}
@@ -310,26 +311,21 @@ export default function AthleteDashboard({
             className="bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl"
           >
             <h3 className="text-sm font-black text-white mb-5 flex items-center gap-2 uppercase tracking-widest">
-              <span className="text-[#FF4500]">
-                <CheckCircle2 className="w-4 h-4" />
-              </span>
+              <span className="text-[#FF4500]"><CheckCircle2 className="w-4 h-4" /></span>
               Quick Stats
             </h3>
-
             <div className="space-y-4">
               {[
-                { label: 'This Week',    value: '4 sessions',     color: 'bg-[#FF4500]' },
-                { label: 'Avg Duration', value: `${estimatedMinutes}m`,   color: 'bg-[#10B981]' },
-                { label: 'Best Streak',  value: `${currentStreak} Days`,  color: 'bg-[#F59E0B]' },
+                { label: 'This Week',    value: '4 sessions',              color: 'bg-[#FF4500]' },
+                { label: 'Avg Duration', value: `${estimatedMinutes || '—'}m`, color: 'bg-[#10B981]' },
+                { label: 'Best Streak',  value: `${currentStreak} Days`,    color: 'bg-[#F59E0B]' },
               ].map((stat, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${stat.color}`} />
-                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                      {stat.label}
-                    </span>
+                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{stat.label}</span>
                   </div>
-                  <span className="text-sm font-black text-white">{stat.value}</span>
+                  <span className="text-sm font-black text-white">{mounted ? stat.value : '—'}</span>
                 </div>
               ))}
             </div>

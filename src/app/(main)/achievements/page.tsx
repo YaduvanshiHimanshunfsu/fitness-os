@@ -6,6 +6,8 @@ import { AchievementGrid } from '@/components/achievements/AchievementGrid'
 import { LevelProgress } from '@/components/achievements/LevelProgress'
 import { ACHIEVEMENTS } from '@/constants/achievements'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AchievementsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
