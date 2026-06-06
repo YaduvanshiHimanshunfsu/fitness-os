@@ -1,6 +1,5 @@
 # FITNESS OS 🏋️‍♂️
 
-![Fitness OS Banner](https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop)
 
 > **A premium, high-performance web application designed for elite athlete tracking.**
 > *This is a personal, self-learned project built by Himanshu Yadav to master advanced web architecture, complex state management, and modern UI/UX design.*
