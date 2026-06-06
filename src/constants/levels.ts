@@ -1,4 +1,11 @@
-export const LEVELS = [
+export interface Level {
+  level: number
+  name: string
+  xpRequired: number
+  color: string
+}
+
+export const LEVELS: Level[] = [
   { level: 1, name: 'Beginner',   xpRequired: 0,     color: '#94a3b8' },
   { level: 2, name: 'Consistent', xpRequired: 200,   color: '#22c55e' },
   { level: 3, name: 'Dedicated',  xpRequired: 500,   color: '#3b82f6' },

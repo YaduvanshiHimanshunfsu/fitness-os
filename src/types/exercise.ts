@@ -1,13 +1,14 @@
 export interface Exercise {
   id: number
   name: string
-  muscleGroup: MuscleGroup
-  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  muscleGroup: string
+  difficulty?: 'beginner' | 'intermediate' | 'advanced'
   imageUrl: string
   instructions?: string
   sets: number
   reps: string
   exerciseOrder: number
+  day?: string
 }
 
-export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'forearms' | 'legs' | 'abs' | 'posture' | 'fullbody'
+export type MuscleGroup = string

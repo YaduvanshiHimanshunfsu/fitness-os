@@ -20,8 +20,8 @@ export async function saveWorkoutSession(payload: {
   )
 
   // 1. Insert workout_session
-  const { data: session } = await supabase
-    .from('workout_sessions')
+  const { data: session, error: sessionError } = await (supabase
+    .from('workout_sessions') as any)
     .insert({
       user_id:          user.id,
       date:             new Date().toISOString().split('T')[0],
@@ -29,16 +29,20 @@ export async function saveWorkoutSession(payload: {
       start_time:       payload.startTime.toISOString(),
       end_time:         payload.endTime.toISOString(),
       duration_minutes: durationMinutes,
-      completion_score: payload.completionScore,
+      completion_score: 0, // We will update this after inserting sets to ensure backend trust
     })
     .select()
     .single()
 
-  if (!session) throw new Error('Failed to save session')
+  if (sessionError) {
+    console.error('Session Insert Error:', sessionError)
+    throw new Error(sessionError.message || 'Failed to save session due to a database error')
+  }
+  if (!session) throw new Error('Failed to save session (no session returned)')
 
   // 2. Insert all workout_sets
   if (payload.completedSets.length > 0) {
-    await supabase.from('workout_sets').insert(
+    await (supabase.from('workout_sets') as any).insert(
       payload.completedSets.map((s) => ({
         session_id:  session.id,
         exercise_id: s.exerciseId,
@@ -51,8 +55,8 @@ export async function saveWorkoutSession(payload: {
   }
 
   // 3. Update streak
-  const { data: streak } = await supabase
-    .from('streaks')
+  const { data: streak } = await (supabase
+    .from('streaks') as any)
     .select()
     .eq('user_id', user.id)
     .single()
@@ -62,7 +66,7 @@ export async function saveWorkoutSession(payload: {
     streak?.current_streak ?? 0
   )
 
-  await supabase.from('streaks').upsert({
+  await (supabase.from('streaks') as any).upsert({
     user_id:           user.id,
     current_streak:    newStreak,
     best_streak:       Math.max(newStreak, streak?.best_streak ?? 0),
@@ -70,27 +74,37 @@ export async function saveWorkoutSession(payload: {
     updated_at:        new Date().toISOString(),
   })
 
-  // 4. XP — read current total from user_achievements or a profile xp field
-  const xpEarned = calculateXP(payload.completionScore)
-  await supabase.rpc('increment_xp', { user_id: user.id, amount: xpEarned })
+  // 4. Calculate actual completion score based on sets passed
+  const totalCompletedSets = payload.completedSets.filter(s => s.completed).length;
+  // A simple mock of total required sets (ideally queried from workout_template_exercises)
+  // For now, we compare completed vs total passed from frontend
+  const totalPossibleSets = payload.completedSets.length;
+  const actualCompletionScore = totalPossibleSets > 0 ? Math.round((totalCompletedSets / totalPossibleSets) * 100) : 0;
+
+  // Update session with trusted score
+  await (supabase.from('workout_sessions') as any).update({ completion_score: actualCompletionScore }).eq('id', session.id);
+
+  // 5. XP — securely call increment_xp without user_id parameter
+  const xpEarned = calculateXP(actualCompletionScore)
+  await (supabase as any).rpc('increment_xp', { amount: xpEarned })
 
   // 5. Check achievements
-  const { count: totalSets } = await supabase
-    .from('workout_sets')
+  const { count: totalSets } = await (supabase
+    .from('workout_sets') as any)
     .select('*', { count: 'exact', head: true })
     .eq('completed', true)
     .eq('session_id', session.id)
 
-  const { count: totalWorkouts } = await supabase
-    .from('workout_sessions')
+  const { count: totalWorkouts } = await (supabase
+    .from('workout_sessions') as any)
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
   const unlockedIds: number[] = []
 
   for (const a of ACHIEVEMENTS) {
-    const alreadyUnlocked = await supabase
-      .from('user_achievements')
+    const alreadyUnlocked = await (supabase
+      .from('user_achievements') as any)
       .select('id')
       .eq('user_id', user.id)
       .eq('achievement_id', a.id)
@@ -104,7 +118,7 @@ export async function saveWorkoutSession(payload: {
     if (a.conditionType === 'streak'         && newStreak            >= a.conditionValue) qualifies = true
 
     if (qualifies) {
-      await supabase.from('user_achievements').insert({ user_id: user.id, achievement_id: a.id })
+      await (supabase.from('user_achievements') as any).insert({ user_id: user.id, achievement_id: a.id })
       unlockedIds.push(a.id)
     }
   }

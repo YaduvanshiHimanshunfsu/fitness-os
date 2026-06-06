@@ -23,7 +23,7 @@ export function AchievementGrid({ userAchievements }: { userAchievements: UserAc
         <AchievementCard 
           key={achievement.id} 
           achievement={achievement} 
-          unlockedAt={unlockedMap.get(achievement.id) ?? null} 
+          unlockedAt={unlockedMap.get(String(achievement.id)) ?? null} 
         />
       ))}
     </motion.div>

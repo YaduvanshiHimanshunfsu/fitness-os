@@ -5,4 +5,4 @@ export const POSTURE_EXERCISES = [
   { id: 'p4', name: 'Scapular Retractions', sets: 2, reps: '15' },
 ]
 
-export const POSTURE_IMAGE = '/images/posture/Daily Posture Correction.png'
+export const POSTURE_IMAGE = '/images/Posture Routine/Daily Posture Correction.png'

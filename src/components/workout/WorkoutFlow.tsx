@@ -1,12 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { Exercise } from '@/types/exercise'
-import { ExerciseCard } from '@/components/exercise/ExerciseCard'
-import { ExerciseProgress } from '@/components/exercise/ExerciseProgress'
-import { RestScreen } from '@/components/workout/RestScreen'
 import { useWorkoutStore } from '@/hooks/useWorkout'
+import { WireframeExerciseCard } from '@/components/workout/WireframeExerciseCard'
+import { WireframeRestScreen } from '@/components/workout/WireframeRestScreen'
 
 export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const router = useRouter()
@@ -14,15 +13,28 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   
   const [currentIndex, setCurrentIndex] = useState(0)
   const [completedSets, setCompletedSets] = useState<Record<number, boolean[]>>({})
-  const [phase, setLocalPhase] = useState<'exercise' | 'rest'>('exercise')
-  const [restForSet, setRestForSet] = useState(0)
+  const [phase, setLocalPhase] = useState<'exercise' | 'rest' | 'rest_exercise'>('exercise')
+  const [restTimeLeft, setRestTimeLeft] = useState(0)
 
   const currentExercise = exercises[currentIndex]
   const currentCompleted = completedSets[currentExercise.id] || Array(currentExercise.sets).fill(false)
 
+  // Timer for rest screen
+  useEffect(() => {
+    if (phase === 'exercise' || restTimeLeft <= 0) return
+    const timer = setInterval(() => setRestTimeLeft(prev => prev - 1), 1000)
+    return () => clearInterval(timer)
+  }, [phase, restTimeLeft])
+
+  // Handle rest completion
+  useEffect(() => {
+    if (phase !== 'exercise' && restTimeLeft === 0) {
+      handleRestComplete()
+    }
+  }, [restTimeLeft, phase])
+
   const handleSetComplete = (setIndex: number) => {
-    // Only allow completing sets in order (optional, but good UX)
-    if (currentCompleted[setIndex]) return // already done
+    if (currentCompleted[setIndex]) return 
 
     const newCompleted = [...currentCompleted]
     newCompleted[setIndex] = true
@@ -32,83 +44,91 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       [currentExercise.id]: newCompleted
     }))
 
-    // Save to Zustand store
-    // We assume an actual actualReps input in a real app, defaulting to max reps here for simplicity
     const repsNum = parseInt(currentExercise.reps.split('-')[0] || '10')
     addSet({
-      exerciseId: currentExercise.id,
-      setNumber: setIndex + 1,
-      actualReps: isNaN(repsNum) ? 1 : repsNum,
-      completed: true,
-      timestamp: new Date()
+      exerciseId:   currentExercise.id,
+      exerciseName: currentExercise.name,
+      setNumber:    setIndex + 1,
+      actualReps:   isNaN(repsNum) ? 1 : repsNum,
+      completed:    true,
+      timestamp:    new Date()
     })
 
+    // If it's the very last set of the very last exercise, we don't need a rest
     const isLastSet = setIndex === currentExercise.sets - 1
     const isLastExercise = currentIndex === exercises.length - 1
 
     if (isLastSet && isLastExercise) {
-      // Workout Complete!
-      setTimeout(() => {
-        setPhase('cooldown')
-        router.push('/workout/cooldown')
-      }, 500)
-    } else if (isLastSet) {
-      // Exercise complete, advance to next exercise immediately or rest?
-      // Let's do a slightly longer rest between exercises
-      setRestForSet(setIndex + 1)
-      setLocalPhase('rest')
+      // Don't trigger 15s rest if it's the very last set, wait for user to click Finish
     } else {
-      // Standard rest between sets
-      setRestForSet(setIndex + 1)
+      // Trigger 15s rest between sets immediately after checking the box
+      setRestTimeLeft(15) 
       setLocalPhase('rest')
     }
   }
 
+  const handleSkipExercise = () => {
+    // Log all remaining incomplete sets as completed: false
+    currentCompleted.forEach((isCompleted, setIndex) => {
+      if (!isCompleted) {
+        addSet({
+          exerciseId:   currentExercise.id,
+          exerciseName: currentExercise.name,
+          setNumber:    setIndex + 1,
+          actualReps:   0,
+          completed:    false,
+          timestamp:    new Date()
+        })
+      }
+    })
+    
+    handleFinishExercise()
+  }
+
+  const handleFinishExercise = () => {
+    const isLastExercise = currentIndex === exercises.length - 1
+    if (isLastExercise) {
+      setPhase('cooldown')
+      router.push('/workout/posture')
+    } else {
+      // 30s rest between exercises
+      setRestTimeLeft(30)
+      setLocalPhase('rest_exercise') // special phase for 30s rest
+    }
+  }
+
   const handleRestComplete = () => {
-    const isLastSet = restForSet === currentExercise.sets
-    if (isLastSet) {
+    if (phase === 'rest_exercise') {
       setCurrentIndex(prev => prev + 1)
     }
     setLocalPhase('exercise')
   }
 
-  const totalSetsCompleted = Object.values(completedSets).reduce((acc, arr) => acc + arr.filter(Boolean).length, 0)
-  const totalTargetSets = exercises.reduce((acc, ex) => acc + ex.sets, 0)
-
-  const nextLabel = restForSet === currentExercise.sets
-    ? `Next: ${exercises[currentIndex + 1]?.name || 'Cooldown'}`
-    : `Set ${restForSet + 1} of ${currentExercise.name}`
+  const nextExerciseName = phase === 'rest_exercise'
+    ? (exercises[currentIndex + 1]?.name || 'Posture Routine')
+    : currentExercise.name
 
   return (
-    <>
-      <AnimatePresence mode="wait">
-        {phase === 'exercise' ? (
-          <ExerciseCard 
-            key={currentExercise.id}
-            exercise={currentExercise}
-            currentIndex={currentIndex}
-            totalExercises={exercises.length}
-            completedSets={currentCompleted}
-            onSetComplete={handleSetComplete}
-          />
-        ) : (
-          <RestScreen 
-            key="rest"
-            durationSeconds={15}
-            setNumber={restForSet}
-            exerciseName={currentExercise.name}
-            nextLabel={nextLabel}
-            onComplete={handleRestComplete}
-            onSkip={handleRestComplete}
-          />
-        )}
-      </AnimatePresence>
-
-      <ExerciseProgress 
-        completedSets={totalSetsCompleted} 
-        totalSets={totalTargetSets} 
-        exerciseName="Overall Progress" 
-      />
-    </>
+    <AnimatePresence mode="wait">
+      {phase === 'exercise' ? (
+        <WireframeExerciseCard 
+          key={currentExercise.id}
+          exercise={currentExercise}
+          currentIndex={currentIndex}
+          totalExercises={exercises.length}
+          completedSets={currentCompleted}
+          onSetComplete={handleSetComplete}
+          onFinishExercise={handleFinishExercise}
+          onSkipExercise={handleSkipExercise}
+        />
+      ) : (
+        <WireframeRestScreen 
+          key="rest"
+          timeLeft={restTimeLeft}
+          nextExerciseName={nextExerciseName}
+          onSkip={handleRestComplete}
+        />
+      )}
+    </AnimatePresence>
   )
 }

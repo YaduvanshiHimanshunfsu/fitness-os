@@ -48,29 +48,29 @@ export async function getWeeklyReport(userId: string): Promise<WeeklyReport> {
   const sunday = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
 
-  const { data: sessions } = await supabase
-    .from('workout_sessions')
+  const { data: sessions } = await (supabase
+    .from('workout_sessions') as any)
     .select('date, day, duration_minutes, workout_sets(actual_reps, completed)')
     .eq('user_id', userId)
     .gte('date', monday.toISOString().split('T')[0])
     .lte('date', sunday.toISOString().split('T')[0])
 
-  const totalSets = (sessions ?? []).reduce((acc, s) => {
-    return acc + ((s.workout_sets as any[]) ?? []).filter((w: any) => w.completed).length
+  const totalSets = ((sessions ?? []) as any[]).reduce((acc: number, s: any) => {
+    return acc + (((s.workout_sets as any[]) ?? [])).filter((w: any) => w.completed).length
   }, 0)
 
-  const totalReps = (sessions ?? []).reduce((acc, s) => {
-    return acc + ((s.workout_sets as any[]) ?? []).reduce((a: number, w: any) => a + (w.actual_reps ?? 0), 0)
+  const totalReps = ((sessions ?? []) as any[]).reduce((acc: number, s: any) => {
+    return acc + (((s.workout_sets as any[]) ?? [])).reduce((a: number, w: any) => a + (w.actual_reps ?? 0), 0)
   }, 0)
 
   const setsByDay: Record<string, number> = {}
-  for (const s of sessions ?? []) {
-    setsByDay[s.day] = ((s.workout_sets as any[]) ?? []).filter((w: any) => w.completed).length
+  for (const s of (sessions as any[]) ?? []) {
+    setsByDay[s.day] = (((s.workout_sets as any[]) ?? [])).filter((w: any) => w.completed).length
   }
   const bestDay = Object.entries(setsByDay).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
 
   const workoutDays = ['monday', 'tuesday', 'wednesday', 'friday', 'saturday', 'sunday']
-  const completedDays = new Set((sessions ?? []).map((s) => s.day))
+  const completedDays = new Set(((sessions ?? []) as any[]).map((s: any) => s.day))
   const missedDays = workoutDays
     .filter((d) => !completedDays.has(d))
     .filter((d) => {
@@ -102,23 +102,23 @@ export async function getMonthlyReport(userId: string): Promise<MonthlyReport> {
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastOfMonth  = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-  const { data: sessions } = await supabase
-    .from('workout_sessions')
+  const { data: sessions } = await (supabase
+    .from('workout_sessions') as any)
     .select('date, day, workout_sets(actual_reps, completed, exercises(muscle_group))')
     .eq('user_id', userId)
     .gte('date', firstOfMonth.toISOString().split('T')[0])
     .lte('date', lastOfMonth.toISOString().split('T')[0])
 
-  const totalSets = (sessions ?? []).reduce((acc, s) =>
-    acc + ((s.workout_sets as any[]) ?? []).filter((w: any) => w.completed).length, 0)
+  const totalSets = ((sessions ?? []) as any[]).reduce((acc: number, s: any) =>
+    acc + (((s.workout_sets as any[]) ?? [])).filter((w: any) => w.completed).length, 0)
 
-  const totalReps = (sessions ?? []).reduce((acc, s) =>
-    acc + ((s.workout_sets as any[]) ?? []).reduce((a: number, w: any) => a + (w.actual_reps ?? 0), 0), 0)
+  const totalReps = ((sessions ?? []) as any[]).reduce((acc: number, s: any) =>
+    acc + (((s.workout_sets as any[]) ?? [])).reduce((a: number, w: any) => a + (w.actual_reps ?? 0), 0), 0)
 
   // Top muscle group
   const muscleMap: Record<string, number> = {}
-  for (const s of sessions ?? []) {
-    for (const w of (s.workout_sets as any[]) ?? []) {
+  for (const s of (sessions as any[]) ?? []) {
+    for (const w of ((s.workout_sets as any[]) ?? [])) {
       if (w.completed) {
         const mg = w.exercises?.muscle_group ?? 'unknown'
         muscleMap[mg] = (muscleMap[mg] ?? 0) + 1
@@ -129,7 +129,7 @@ export async function getMonthlyReport(userId: string): Promise<MonthlyReport> {
 
   // Best week: which 7-day span had the most workouts
   const weekMap: Record<string, number> = {}
-  for (const s of sessions ?? []) {
+  for (const s of (sessions as any[]) ?? []) {
     const d = new Date(s.date)
     const weekStart = new Date(d)
     weekStart.setDate(d.getDate() - ((d.getDay() + 6) % 7))
@@ -138,8 +138,8 @@ export async function getMonthlyReport(userId: string): Promise<MonthlyReport> {
   }
   const bestWeek = Object.entries(weekMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
 
-  const { data: streakRow } = await supabase
-    .from('streaks').select('current_streak, best_streak').eq('user_id', userId).single()
+  const { data: streakRow } = await (supabase
+    .from('streaks') as any).select('current_streak, best_streak').eq('user_id', userId).single()
 
   const totalWorkingDays = 26 // ~Mon–Sat for a full month
   return {
@@ -160,24 +160,24 @@ export async function getYearlyReport(userId: string): Promise<YearlyReport> {
 
   const year = new Date().getFullYear()
 
-  const { data: sessions } = await supabase
-    .from('workout_sessions')
+  const { data: sessions } = await (supabase
+    .from('workout_sessions') as any)
     .select('date, duration_minutes, workout_sets(actual_reps, completed, exercises(muscle_group))')
     .eq('user_id', userId)
     .gte('date', `${year}-01-01`)
     .lte('date', `${year}-12-31`)
 
-  const totalSets = (sessions ?? []).reduce((acc, s) =>
-    acc + ((s.workout_sets as any[]) ?? []).filter((w: any) => w.completed).length, 0)
+  const totalSets = ((sessions ?? []) as any[]).reduce((acc: number, s: any) =>
+    acc + (((s.workout_sets as any[]) ?? [])).filter((w: any) => w.completed).length, 0)
 
-  const totalReps = (sessions ?? []).reduce((acc, s) =>
-    acc + ((s.workout_sets as any[]) ?? []).reduce((a: number, w: any) => a + (w.actual_reps ?? 0), 0), 0)
+  const totalReps = ((sessions ?? []) as any[]).reduce((acc: number, s: any) =>
+    acc + (((s.workout_sets as any[]) ?? [])).reduce((a: number, w: any) => a + (w.actual_reps ?? 0), 0), 0)
 
-  const totalMinutes = (sessions ?? []).reduce((acc, s) => acc + (s.duration_minutes ?? 0), 0)
+  const totalMinutes = ((sessions ?? []) as any[]).reduce((acc: number, s: any) => acc + (s.duration_minutes ?? 0), 0)
 
   const muscleMap: Record<string, number> = {}
-  for (const s of sessions ?? []) {
-    for (const w of (s.workout_sets as any[]) ?? []) {
+  for (const s of (sessions as any[]) ?? []) {
+    for (const w of ((s.workout_sets as any[]) ?? [])) {
       if (w.completed) {
         const mg = w.exercises?.muscle_group ?? 'unknown'
         muscleMap[mg] = (muscleMap[mg] ?? 0) + 1
@@ -187,16 +187,16 @@ export async function getYearlyReport(userId: string): Promise<YearlyReport> {
   const topMuscleGroup = Object.entries(muscleMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
 
   const monthMap: Record<string, number> = {}
-  for (const s of sessions ?? []) {
+  for (const s of (sessions as any[]) ?? []) {
     const m = new Date(s.date).toLocaleDateString('en-US', { month: 'long' })
     monthMap[m] = (monthMap[m] ?? 0) + 1
   }
   const bestMonth = Object.entries(monthMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
 
-  const { data: streakRow } = await supabase
-    .from('streaks').select('best_streak').eq('user_id', userId).single()
-  const { data: profile }   = await supabase
-    .from('profiles').select('xp_total').eq('id', userId).single()
+  const { data: streakRow } = await (supabase
+    .from('streaks') as any).select('best_streak').eq('user_id', userId).single()
+  const { data: profile }   = await (supabase
+    .from('profiles') as any).select('xp_total').eq('id', userId).single()
 
   const { getLevelFromXP } = await import('@/utils/level-calculator')
   const { current: level } = getLevelFromXP(profile?.xp_total ?? 0)

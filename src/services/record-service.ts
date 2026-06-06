@@ -15,8 +15,8 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
 
   // In the current schema, personal_records has:
   // id, user_id, exercise_id, max_weight, max_reps, longest_hold_seconds, achieved_at
-  const { data } = await supabase
-    .from('personal_records')
+  const { data } = await (supabase
+    .from('personal_records') as any)
     .select(`
       id,
       max_weight,
@@ -33,7 +33,7 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
 
   if (!data) return []
 
-  return data.map(record => ({
+  return (data as any[]).map((record: any) => ({
     id: record.id,
     max_weight: record.max_weight,
     max_reps: record.max_reps,
@@ -48,8 +48,8 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
   const supabase = await createClient()
 
   // Get current record
-  const { data: existing } = await supabase
-    .from('personal_records')
+  const { data: existing } = await (supabase
+    .from('personal_records') as any)
     .select('*')
     .eq('user_id', userId)
     .eq('exercise_id', exerciseId)
@@ -88,9 +88,9 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
 
   if (isNewRecord) {
     if (existing) {
-      await supabase.from('personal_records').update(updates).eq('id', existing.id)
+      await (supabase.from('personal_records') as any).update(updates).eq('id', existing.id)
     } else {
-      await supabase.from('personal_records').insert(updates)
+      await (supabase.from('personal_records') as any).insert(updates)
     }
   }
 

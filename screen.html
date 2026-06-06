@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trophy Room | Fitness OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
+        
+        body {
+            font-family: 'Geist', sans-serif;
+            background-color: #0A0A0A;
+            color: #e5e2e1;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 15px 30px -10px rgba(255, 107, 53, 0.3);
+            transform: translateY(-8px);
+        }
+
+        /* Achievement Shimmer & Pulse Animation */
+        @keyframes unlocked-glow {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(255, 107, 53, 0.3);
+                filter: brightness(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 107, 53, 0.6);
+                filter: brightness(1.2);
+            }
+        }
+
+        @keyframes shimmer-sweep {
+            0% { transform: translateX(-150%) rotate(45deg); }
+            100% { transform: translateX(250%) rotate(45deg); }
+        }
+
+        .unlocked-badge {
+            position: relative;
+            overflow: hidden;
+            animation: unlocked-glow 3s ease-in-out infinite;
+        }
+
+        .unlocked-badge::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -100%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                transparent 100%
+            );
+            animation: shimmer-sweep 4s infinite linear;
+            pointer-events: none;
+        }
+
+        /* Ambient Background */
+        .ambient-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
+            animation: mesh-shift 20s infinite alternate;
+        }
+
+        @keyframes mesh-shift {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        /* Particle effect simulation via CSS */
+        .particle-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .particle {
+            position: absolute;
+            background: #ff6b35;
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: float-up var(--duration) linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        .mesh-gradient {
+            background: #131313;
+        }
+
+        .timeline-line {
+            background: linear-gradient(to bottom, #ff6b35 0%, rgba(255, 107, 53, 0.1) 100%);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "success-green": "#22C55E",
+                    "secondary-container": "#454747",
+                    "on-secondary-fixed-variant": "#454747",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-bright": "#3a3939",
+                    "primary-container": "#ff6b35",
+                    "on-background": "#e5e2e1",
+                    "glass-border": "rgba(255, 255, 255, 0.1)",
+                    "error-container": "#93000a",
+                    "tertiary": "#c8c6c5",
+                    "outline": "#a98a80",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "on-tertiary": "#313030",
+                    "primary": "#ffb59d",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "error": "#ffb4ab",
+                    "tertiary-fixed": "#e5e2e1",
+                    "on-primary-container": "#5f1900",
+                    "primary-fixed-dim": "#ffb59d",
+                    "muted-text": "#A1A1AA",
+                    "surface": "#131313",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-surface-variant": "#e1bfb5",
+                    "surface-container-lowest": "#0e0e0e",
+                    "accent-glow": "rgba(255, 107, 53, 0.35)",
+                    "background": "#131313",
+                    "inverse-primary": "#ab3500",
+                    "inverse-on-surface": "#313030",
+                    "surface-container-high": "#2a2a2a",
+                    "on-error": "#690005",
+                    "on-primary-fixed": "#390c00",
+                    "on-primary-fixed-variant": "#832600",
+                    "surface-dim": "#131313",
+                    "outline-variant": "#594139",
+                    "surface-container-low": "#1c1b1b",
+                    "secondary-fixed": "#e2e2e2",
+                    "surface-container-highest": "#353534",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "secondary": "#c6c6c7",
+                    "surface-tint": "#ffb59d",
+                    "surface-container": "#201f1f",
+                    "on-primary": "#5d1900",
+                    "tertiary-container": "#9b9999",
+                    "on-surface": "#e5e2e1",
+                    "primary-fixed": "#ffdbd0",
+                    "surface-variant": "#353534",
+                    "on-tertiary-container": "#323131",
+                    "glass-surface": "rgba(255, 255, 255, 0.05)",
+                    "on-secondary": "#2f3131"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "stack-md": "16px",
+                    "margin-page": "40px",
+                    "section-gap": "64px",
+                    "container-max": "1440px",
+                    "gutter": "24px",
+                    "stack-sm": "8px"
+            },
+            "fontFamily": {
+                    "display-xl": ["Geist"],
+                    "body-base": ["Geist"],
+                    "label-sm": ["Geist"],
+                    "headline-lg": ["Geist"],
+                    "metric-md": ["Geist"],
+                    "headline-lg-mobile": ["Geist"]
+            },
+            "fontSize": {
+                    "display-xl": ["72px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "body-base": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "metric-md": ["24px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="mesh-gradient min-h-screen">
+<!-- Background Elements -->
+<div class="ambient-particles"></div>
+<div class="particle-container" id="particles"></div>
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col h-full p-stack-md h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-glass-border z-50">
+<div class="mb-10 px-4">
+<h1 class="font-headline-lg text-headline-lg font-black text-primary-container">Fitness OS</h1>
+<p class="text-muted-text text-label-sm font-label-sm">14 Day Streak</p>
+</div>
+<nav class="flex-grow space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-muted-text hover:bg-glass-surface hover:text-on-surface transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-muted-text hover:bg-glass-surface hover:text-on-surface transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-label-sm text-label-sm">Workouts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-muted-text hover:bg-glass-surface hover:text-on-surface transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-sm text-label-sm">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary font-bold bg-glass-surface rounded-xl group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+<span class="font-label-sm text-label-sm">Trophy Room</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-muted-text hover:bg-glass-surface hover:text-on-surface transition-all rounded-xl group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</a>
+</nav>
+<button class="mt-auto bg-primary-container text-on-primary-container font-bold py-4 rounded-xl shadow-lg hover:shadow-primary-container/20 active:scale-95 transition-all">
+            Start Workout
+        </button>
+</aside>
+<!-- Main Content Area -->
+<div class="lg:ml-64 flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-0 lg:left-64 z-40 bg-glass-surface backdrop-blur-xl border-b border-glass-border flex justify-between items-center px-margin-page py-4">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile lg:font-headline-lg lg:text-headline-lg font-black text-primary-container italic tracking-tighter">TROPHY ROOM</h2>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-primary hover:text-primary-container transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-primary-container rounded-full"></span>
+</button>
+<button class="text-primary hover:text-primary-container transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</button>
+</div>
+<div class="h-10 w-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxWbcO5wD1WsJ619gAbqHr7FSLeVL_wLZBngf7wuGu9ruQ6TDoXl7Zc8l1EetHuXl7OEIHuDEDidEDUcH3I1mZ-NEJmIcW0sCiJU0EWnNLtZ56Hio4CI_OEgFxJ8u14YDMt_RysHMwvc-2r4cgO9Vy6aknEF_ceg2drauUmrCAvDBY48IERt3_Qifat2tixasffkcNLQTGzhkes8WsJmj_jPYgig4F5IhrjCEmyK4Seo3MlWQcqsERvVikQx3tOnnnrYGGCtZ7ty0"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-20 px-4 lg:px-margin-page max-w-container-max mx-auto w-full relative">
+<!-- Streak Highlights Hero -->
+<section class="mb-section-gap mt-8">
+<div class="relative overflow-hidden rounded-3xl glass-card p-10 flex flex-col md:flex-row items-center justify-between group">
+<div class="absolute inset-0 bg-gradient-to-r from-primary-container/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative z-10 space-y-4 text-center md:text-left">
+<div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-primary-container/20 text-primary-container border border-primary-container/30">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-label-sm font-label-sm tracking-widest uppercase">Elite Status</span>
+</div>
+<h3 class="font-display-xl text-display-xl lg:text-display-xl text-on-surface">14-Day Streak</h3>
+<p class="text-muted-text font-body-base text-body-base italic">"Consistency beats motivation. Every single day counts."</p>
+<div class="pt-4 flex gap-4 justify-center md:justify-start">
+<div class="text-center">
+<p class="text-primary-container font-bold text-metric-md">320</p>
+<p class="text-muted-text text-label-sm uppercase tracking-tighter">Total XP</p>
+</div>
+<div class="w-px h-10 bg-glass-border"></div>
+<div class="text-center">
+<p class="text-primary-container font-bold text-metric-md">Top 2%</p>
+<p class="text-muted-text text-label-sm uppercase tracking-tighter">Community</p>
+</div>
+</div>
+</div>
+<div class="relative z-10 mt-10 md:mt-0 flex items-center justify-center">
+<div class="relative h-48 w-48 lg:h-64 lg:w-64">
+<div class="absolute inset-0 bg-primary-container blur-[60px] opacity-20 animate-pulse"></div>
+<span class="material-symbols-outlined text-[120px] lg:text-[160px] text-primary-container drop-shadow-[0_0_30px_rgba(255,107,53,0.5)]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Achievement Grid -->
+<section class="mb-section-gap">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h4 class="font-headline-lg text-headline-lg text-on-surface">Achievement Grid</h4>
+<p class="text-muted-text">Progress through milestones to unlock legendary status.</p>
+</div>
+<div class="hidden md:flex gap-4">
+<button class="px-4 py-2 rounded-lg bg-surface-container-high text-on-surface text-label-sm font-bold border border-glass-border">All Badges</button>
+<button class="px-4 py-2 rounded-lg text-muted-text text-label-sm font-bold hover:text-on-surface transition-colors">Legendary</button>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-gutter">
+<!-- Unlocked Badge 1 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center group cursor-pointer">
+<div class="unlocked-badge w-20 h-20 mb-4 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary-container drop-shadow-[0_0_10px_rgba(255,107,53,0.4)]" style="font-variation-settings: 'FILL' 1;">air</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Iron Lungs</h5>
+<p class="text-muted-text text-label-sm mt-1">First 10km Run</p>
+</div>
+<!-- Unlocked Badge 2 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center group cursor-pointer">
+<div class="unlocked-badge w-20 h-20 mb-4 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary-container" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Heavy Lifter</h5>
+<p class="text-muted-text text-label-sm mt-1">1000kg Total Lift</p>
+</div>
+<!-- Unlocked Badge 3 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center group cursor-pointer">
+<div class="unlocked-badge w-20 h-20 mb-4 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary-container" style="font-variation-settings: 'FILL' 1;">sunny</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Early Bird</h5>
+<p class="text-muted-text text-label-sm mt-1">5 Workouts before 6AM</p>
+</div>
+<!-- Unlocked Badge 4 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center group cursor-pointer">
+<div class="unlocked-badge w-20 h-20 mb-4 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary-container" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Weekend Warrior</h5>
+<p class="text-muted-text text-label-sm mt-1">No missed Weekends</p>
+</div>
+<!-- Unlocked Badge 5 -->
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center group cursor-pointer">
+<div class="unlocked-badge w-20 h-20 mb-4 rounded-full bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary-container" style="font-variation-settings: 'FILL' 1;">counter_0</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Century Club</h5>
+<p class="text-muted-text text-label-sm mt-1">100 Workouts Completed</p>
+</div>
+<!-- Locked Badges -->
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center opacity-40 grayscale group hover:grayscale-0 hover:opacity-80 transition-all cursor-not-allowed">
+<div class="w-20 h-20 mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-muted-text">bolt</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Flash</h5>
+<p class="text-muted-text text-label-sm mt-1">Sub 20min 5k</p>
+</div>
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center opacity-40 grayscale group cursor-not-allowed">
+<div class="w-20 h-20 mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-muted-text">mountain_flag</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Peak Performance</h5>
+<p class="text-muted-text text-label-sm mt-1">Altitude Training</p>
+</div>
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center opacity-40 grayscale group cursor-not-allowed">
+<div class="w-20 h-20 mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-muted-text">workspace_premium</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Master</h5>
+<p class="text-muted-text text-label-sm mt-1">365 Day Streak</p>
+</div>
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center opacity-40 grayscale group cursor-not-allowed">
+<div class="w-20 h-20 mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-muted-text">water_drop</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Hydrated</h5>
+<p class="text-muted-text text-label-sm mt-1">Drink 3L for 30 days</p>
+</div>
+<div class="glass-card p-6 rounded-2xl flex flex-col items-center text-center opacity-40 grayscale group cursor-not-allowed">
+<div class="w-20 h-20 mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-muted-text">groups</span>
+</div>
+<h5 class="text-on-surface font-bold text-body-base">Socialite</h5>
+<p class="text-muted-text text-label-sm mt-1">Refer 5 Friends</p>
+</div>
+</div>
+</section>
+<!-- Milestone Timeline -->
+<section class="pb-24">
+<h4 class="font-headline-lg text-headline-lg text-on-surface mb-10">Milestone Timeline</h4>
+<div class="relative ml-4">
+<!-- Vertical Line -->
+<div class="absolute left-0 top-0 bottom-0 w-px timeline-line"></div>
+<div class="space-y-12">
+<!-- Milestone 1 -->
+<div class="relative pl-10">
+<div class="absolute left-[-5px] top-1 h-[11px] w-[11px] rounded-full bg-primary-container shadow-[0_0_10px_#ff6b35]"></div>
+<span class="text-label-sm font-label-sm text-primary-container tracking-widest uppercase">Aug 20, 2023</span>
+<div class="glass-card p-6 mt-4 rounded-2xl max-w-2xl">
+<h6 class="font-bold text-body-base text-on-surface">50 Workouts Reached</h6>
+<p class="text-muted-text text-label-sm mt-2">You've officially built the habit. You are stronger than 85% of new users who started the same month.</p>
+</div>
+</div>
+<!-- Milestone 2 -->
+<div class="relative pl-10">
+<div class="absolute left-[-5px] top-1 h-[11px] w-[11px] rounded-full bg-primary-container shadow-[0_0_10px_#ff6b35]"></div>
+<span class="text-label-sm font-label-sm text-primary-container tracking-widest uppercase">Jun 15, 2023</span>
+<div class="glass-card p-6 mt-4 rounded-2xl max-w-2xl">
+<h6 class="font-bold text-body-base text-on-surface">First 5k Completed</h6>
+<p class="text-muted-text text-label-sm mt-2">Personal record: 24:12. The first of many competitive benchmarks set in your profile.</p>
+</div>
+</div>
+<!-- Milestone 3 -->
+<div class="relative pl-10 opacity-70">
+<div class="absolute left-[-5px] top-1 h-[11px] w-[11px] rounded-full bg-white/20"></div>
+<span class="text-label-sm font-label-sm text-muted-text tracking-widest uppercase">May 01, 2023</span>
+<div class="glass-card p-6 mt-4 rounded-2xl max-w-2xl bg-surface-container-low border-dashed">
+<h6 class="font-bold text-body-base text-on-surface">Started Journey</h6>
+<p class="text-muted-text text-label-sm mt-2">Welcome to Fitness OS. Your account was activated and your transformation began.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface-container-high/80 backdrop-blur-2xl border-t border-glass-border shadow-2xl">
+<a class="flex flex-col items-center justify-center text-muted-text" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-[10px] mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-muted-text" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-label-sm text-[10px] mt-1">Train</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold scale-110" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+<span class="font-label-sm text-[10px] mt-1">Trophy</span>
+</a>
+<a class="flex flex-col items-center justify-center text-muted-text" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-[10px] mt-1">Profile</span>
+</a>
+</nav>
+<script>
+        // Particle Generation
+        const particleContainer = document.getElementById('particles');
+        const particleCount = 20;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            // Random properties
+            const size = Math.random() * 3 + 1 + 'px';
+            const left = Math.random() * 100 + '%';
+            const duration = Math.random() * 10 + 10 + 's';
+            const delay = Math.random() * 10 + 's';
+            
+            particle.style.width = size;
+            particle.style.height = size;
+            particle.style.left = left;
+            particle.style.setProperty('--duration', duration);
+            particle.style.animationDelay = delay;
+            
+            particleContainer.appendChild(particle);
+        }
+
+        // Micro-interaction for cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const icon = card.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    icon.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    icon.style.transform = 'scale(1.15) rotate(8deg)';
+                }
+            });
+            card.addEventListener('mouseleave', () => {
+                const icon = card.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    icon.style.transform = 'scale(1) rotate(0deg)';
+                }
+            });
+        });
+
+        // Simple smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body></html>

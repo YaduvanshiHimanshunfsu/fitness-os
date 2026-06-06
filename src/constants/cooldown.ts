@@ -6,4 +6,4 @@ export const COOLDOWN_EXERCISES = [
   { id: 'c5', name: 'Hamstring Stretch',durationSeconds: 30 },
 ]
 
-export const COOLDOWN_IMAGE = '/images/cooldown/Post-Workout Cool Down.png'
+export const COOLDOWN_IMAGE = '/images/Post-Workout Cool Down Routine/Post-Workout Cool Down.png'

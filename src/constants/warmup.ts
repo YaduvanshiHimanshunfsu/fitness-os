@@ -7,4 +7,4 @@ export const WARMUP_EXERCISES = [
   { id: 'w6', name: 'Leg Swings',     durationSeconds: 30 },
 ]
 
-export const WARMUP_IMAGE = '/images/warmup/Full Body Warm-Up.png'
+export const WARMUP_IMAGE = '/images/Full Body Warm-Up Routine/Full Body Warm-Up.png'

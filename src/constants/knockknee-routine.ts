@@ -4,4 +4,4 @@ export const KNOCKKNEE_EXERCISES = [
   { id: 'k3', name: 'Wall Sit With Pillow', sets: 2, duration: '30 sec' },
 ]
 
-export const KNOCKKNEE_IMAGE = '/images/posture/Knock Knee Correction.png'
+export const KNOCKKNEE_IMAGE = '/images/Knock Knee Correction Routine/Knock Knee Correction.png'

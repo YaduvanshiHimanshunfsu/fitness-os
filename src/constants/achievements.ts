@@ -1,4 +1,13 @@
-export const ACHIEVEMENTS = [
+export interface Achievement {
+  id: number
+  name: string
+  description: string
+  conditionType: string
+  conditionValue: number
+  icon: string
+}
+
+export const ACHIEVEMENTS: Achievement[] = [
   { id: 1,  name: 'First Step',       description: 'Complete your first workout',         conditionType: 'total_workouts', conditionValue: 1,    icon: '👟' },
   { id: 2,  name: '7 Day Streak',     description: 'Work out 7 days in a row',            conditionType: 'streak',         conditionValue: 7,    icon: '🔥' },
   { id: 3,  name: '30 Day Streak',    description: 'Work out 30 days in a row',           conditionType: 'streak',         conditionValue: 30,   icon: '🔥' },

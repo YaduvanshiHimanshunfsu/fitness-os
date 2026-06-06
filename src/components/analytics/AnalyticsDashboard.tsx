@@ -4,6 +4,7 @@ import { PageHeader } from './PageHeader'
 import { LifetimeStatsRow } from './LifetimeStatsRow'
 import { PeriodTabs, Period } from './PeriodTabs'
 import { StreakCard } from './StreakCard'
+import { CalendarCard } from './CalendarCard'
 import { WorkoutHeatmap } from '@/components/heatmap/WorkoutHeatmap'
 import { WeeklyChart } from '@/components/charts/WeeklyChart'
 import { MonthlyChart } from '@/components/charts/MonthlyChart'
@@ -44,12 +45,13 @@ export default function AnalyticsDashboard({
         <div className="lg:col-span-2">
           <WorkoutHeatmap data={heatmap} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 flex flex-col gap-6">
           <StreakCard 
             currentStreak={streak.currentStreak} 
             bestStreak={streak.bestStreak} 
             lastWorkoutDate={streak.lastWorkoutDate} 
           />
+          <CalendarCard heatmap={heatmap} currentStreak={streak.currentStreak} />
         </div>
       </div>
 
