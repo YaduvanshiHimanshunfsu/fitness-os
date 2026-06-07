@@ -35,7 +35,7 @@ const securityHeaders = [
   }
 ];
 
-const nextConfig: NextConfig = {
+const nextConfig: any = {
   eslint: {
     ignoreDuringBuilds: true,
   },
