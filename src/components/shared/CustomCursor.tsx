@@ -15,12 +15,13 @@ class Particle {
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
-    this.size = Math.random() * 4 + 1; // Size between 1 and 5
-    this.speedX = (Math.random() - 0.5) * 2;
-    this.speedY = (Math.random() - 0.5) * 2;
-    // Glowing orange embers
-    this.color = `rgba(255, ${Math.floor(Math.random() * 100 + 69)}, 0, `;
-    this.maxLife = Math.random() * 30 + 20;
+    this.size = Math.random() * 3 + 1.5; // Size between 1.5 and 4.5
+    // Faster, more explosive movement for sprinkles
+    this.speedX = (Math.random() - 0.5) * 6;
+    this.speedY = (Math.random() - 0.5) * 6 + 1; // Slight downward gravity
+    // Pure red color
+    this.color = `rgba(255, 0, 0, `;
+    this.maxLife = Math.random() * 20 + 15;
     this.life = this.maxLife;
   }
 
@@ -28,7 +29,7 @@ class Particle {
     this.x += this.speedX;
     this.y += this.speedY;
     this.life -= 1;
-    this.size = Math.max(0, this.size - 0.1);
+    this.size = Math.max(0, this.size - 0.15); // Shrink faster
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -38,9 +39,9 @@ class Particle {
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
     
-    // Glow effect
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = 'rgba(255, 69, 0, 0.8)';
+    // Intense glow effect
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(255, 0, 0, 0.9)';
   }
 }
 
@@ -56,7 +57,7 @@ export default function CustomCursor() {
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
     if (isTouch) return;
 
-    document.body.classList.add('custom-cursor-active');
+    // We do NOT add 'custom-cursor-active' anymore so the default cursor remains visible
 
     const handleMouseMove = (e: MouseEvent) => {
       mousePos.current.x = e.clientX;
@@ -64,8 +65,8 @@ export default function CustomCursor() {
       isMoving.current = true;
       if (!isVisible) setIsVisible(true);
       
-      // Add particles
-      for (let i = 0; i < 2; i++) {
+      // Add more particles for a denser sprinkle effect
+      for (let i = 0; i < 3; i++) {
         particles.current.push(new Particle(e.clientX, e.clientY));
       }
 
@@ -105,16 +106,7 @@ export default function CustomCursor() {
         }
       }
       
-      // Core cursor dot
-      if (isVisible) {
-        ctx.beginPath();
-        ctx.arc(mousePos.current.x, mousePos.current.y, isMoving.current ? 3 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isMoving.current ? '#FF8C61' : '#FF4500';
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#FF4500';
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset
-      }
+      // Removed the core cursor dot rendering so only the native cursor and sprinkles are visible
 
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -122,7 +114,6 @@ export default function CustomCursor() {
     animate();
 
     return () => {
-      document.body.classList.remove('custom-cursor-active');
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameId);

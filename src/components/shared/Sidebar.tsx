@@ -38,6 +38,7 @@ export default function Sidebar() {
   const [displayName,  setDisplayName]  = useState('...');
   const [levelLabel,   setLevelLabel]   = useState('Loading...');
   const [avatarLetter, setAvatarLetter] = useState('?');
+  const [avatarUrl,    setAvatarUrl]    = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +50,7 @@ export default function Sidebar() {
 
         const { data: profile } = await (supabase
           .from('profiles') as any)
-          .select('name, xp_total')
+          .select('name, xp_total, avatar_url')
           .eq('id', user.id)
           .single();
 
@@ -62,6 +63,9 @@ export default function Sidebar() {
         setDisplayName(name);
         setAvatarLetter(name.charAt(0).toUpperCase());
         setLevelLabel(`${current.name} · Lv ${current.level}`);
+        if (profile?.avatar_url) {
+          setAvatarUrl(profile.avatar_url);
+        }
       } catch {
         /* silent */
       }
@@ -159,8 +163,12 @@ export default function Sidebar() {
         {/* User Card */}
         <div className={`p-4 flex items-center ${isSidebarCollapsed ? 'justify-center flex-col gap-4' : 'justify-between gap-3'}`}>
           <Link href="/profile" className={`flex items-center gap-3 hover:opacity-80 transition-opacity ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-[#FF6B35]/20 to-[#FF6B35]/40 border border-[#FF6B35]/30 flex items-center justify-center font-mono font-bold text-white text-base shadow-inner shrink-0">
-              {avatarLetter}
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-[#FF6B35]/20 to-[#FF6B35]/40 border border-[#FF6B35]/30 flex items-center justify-center font-mono font-bold text-white text-base shadow-inner shrink-0 overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                avatarLetter
+              )}
             </div>
             {!isSidebarCollapsed && (
               <div className="flex flex-col truncate">

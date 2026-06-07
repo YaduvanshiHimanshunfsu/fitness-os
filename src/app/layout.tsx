@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CustomCursor from "@/components/shared/CustomCursor";
+import MagicCursor from "@/components/shared/MagicCursor";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -42,6 +43,7 @@ export default function RootLayout({
         className={`${outfit.variable} ${jetbrainsMono.variable} font-sans min-h-screen antialiased bg-[#0A0A0A] text-[#F5F5F5] bg-noise relative`}
       >
         <CustomCursor />
+        <MagicCursor />
         {children}
         <script
           dangerouslySetInnerHTML={{

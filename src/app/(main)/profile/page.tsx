@@ -12,7 +12,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await (supabase
     .from('profiles') as any)
-    .select('name, xp_total, total_workouts, total_sets')
+    .select('name, xp_total, total_workouts, total_sets, avatar_url')
     .eq('id', user.id)
     .single()
 
@@ -39,10 +39,14 @@ export default async function ProfilePage() {
       <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 mb-6 shadow-xl">
         {/* Avatar + Name Row */}
         <div className="flex items-center gap-6 mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#FF4500]/30 to-[#FF8C61]/20 border border-[#FF4500]/30 flex items-center justify-center shrink-0 shadow-inner">
-            <span className="text-3xl font-black text-white">
-              {(profile?.name || user.email || 'A').charAt(0).toUpperCase()}
-            </span>
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#FF4500]/30 to-[#FF8C61]/20 border border-[#FF4500]/30 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-3xl font-black text-white">
+                {(profile?.name || user.email || 'A').charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">{profile?.name || 'Fitness Athlete'}</h2>

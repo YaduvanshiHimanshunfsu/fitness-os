@@ -389,14 +389,23 @@ as $$
 declare
   v_raw_name       text;
   v_formatted_name text;
+  v_avatar_url     text;
 begin
-  -- Derive a display name from the email prefix
-  v_raw_name       := split_part(new.email, '@', 1);
-  v_formatted_name := upper(left(v_raw_name, 1)) || lower(substring(v_raw_name from 2));
+  -- Try to get name from Google Auth metadata first
+  v_formatted_name := coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name');
+  v_avatar_url     := coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture');
 
-  insert into public.profiles (id, email, name, xp_total)
-  values (new.id, new.email, v_formatted_name, 0)
-  on conflict (id) do nothing;
+  -- Fallback to deriving from email if no name provided
+  if v_formatted_name is null or v_formatted_name = '' then
+    v_raw_name       := split_part(new.email, '@', 1);
+    v_formatted_name := upper(left(v_raw_name, 1)) || lower(substring(v_raw_name from 2));
+  end if;
+
+  insert into public.profiles (id, email, name, avatar_url, xp_total)
+  values (new.id, new.email, v_formatted_name, v_avatar_url, 0)
+  on conflict (id) do update
+  set name = excluded.name,
+      avatar_url = excluded.avatar_url;
 
   insert into public.streaks (user_id, current_streak, best_streak)
   values (new.id, 0, 0)
