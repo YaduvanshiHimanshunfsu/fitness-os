@@ -4,11 +4,13 @@ import { calculateXP } from '@/utils/xp-calculator'
 import { calculateNewStreak } from '@/utils/streak-calculator'
 import { ACHIEVEMENTS } from '@/constants/achievements'
 
+import { checkAndUpdateRecords } from '@/services/record-service'
+
 export async function saveWorkoutSession(payload: {
   day:             string
   startTime:       Date
   endTime:         Date
-  completedSets:   { exerciseId: number; setNumber: number; actualReps: number; completed: boolean }[]
+  completedSets:   { exerciseId: number; setNumber: number; actualReps: number; completed: boolean; weight_kg?: number; unit?: string }[]
   completionScore: number
 }) {
   const supabase = await createClient()
@@ -19,109 +21,99 @@ export async function saveWorkoutSession(payload: {
     (payload.endTime.getTime() - payload.startTime.getTime()) / 60000
   )
 
-  // 1. Insert workout_session
-  const { data: session, error: sessionError } = await (supabase
-    .from('workout_sessions') as any)
+  // 1. Pre-calculate metrics
+  const totalSets = payload.completedSets.length
+  const completedSetsCount = payload.completedSets.filter(s => s.completed).length
+  const setsSkipped = totalSets - completedSetsCount
+  const actualCompletionScore = totalSets > 0 ? Math.round((completedSetsCount / totalSets) * 100) : 0
+  const xpEarned = calculateXP(actualCompletionScore)
+
+  // Group sets by exercise
+  const exerciseMap = new Map<number, typeof payload.completedSets>()
+  for (const s of payload.completedSets) {
+    if (!exerciseMap.has(s.exerciseId)) exerciseMap.set(s.exerciseId, [])
+    exerciseMap.get(s.exerciseId)!.push(s)
+  }
+
+  let exercisesSkipped = 0
+  for (const sets of exerciseMap.values()) {
+    if (sets.every(s => !s.completed)) exercisesSkipped++
+  }
+
+  // Calculate volume to estimate calories and check for new records
+  let totalVolumeKg = 0
+  let newRecordsHit = false;
+
+  for (const s of payload.completedSets) {
+    if (s.completed && s.weight_kg) {
+      const weight = s.unit === 'lbs' ? s.weight_kg * 0.453592 : s.weight_kg
+      totalVolumeKg += weight * s.actualReps
+      
+      // Check PR
+      const isNewRecord = await checkAndUpdateRecords(user.id, s.exerciseId.toString(), s.actualReps, weight, null);
+      if (isNewRecord) newRecordsHit = true;
+    }
+  }
+  const estimatedCalories = Math.round(totalVolumeKg * 0.00205)
+
+  // 2. Insert workout
+  const { data: workout, error: workoutError } = await (supabase
+    .from('workouts_v5') as any)
     .insert({
-      user_id:          user.id,
-      date:             new Date().toISOString().split('T')[0],
-      day:              payload.day,
-      start_time:       payload.startTime.toISOString(),
-      end_time:         payload.endTime.toISOString(),
-      duration_minutes: durationMinutes,
-      completion_score: 0, // We will update this after inserting sets to ensure backend trust
+      profile_id:        user.id,
+      name:              payload.day, // Using day as name for now
+      start_time:        payload.startTime.toISOString(),
+      end_time:          payload.endTime.toISOString(),
+      xp_earned:         xpEarned,
+      sets_skipped:      setsSkipped,
+      exercises_skipped: exercisesSkipped,
+      estimated_calories: estimatedCalories
     })
     .select()
     .single()
 
-  if (sessionError) {
-    console.error('Session Insert Error:', sessionError)
-    throw new Error(sessionError.message || 'Failed to save session due to a database error')
+  if (workoutError || !workout) {
+    console.error('Workout Insert Error:', workoutError)
+    throw new Error(workoutError?.message || 'Failed to save workout')
   }
-  if (!session) throw new Error('Failed to save session (no session returned)')
 
-  // 2. Insert all workout_sets
-  if (payload.completedSets.length > 0) {
-    await (supabase.from('workout_sets') as any).insert(
-      payload.completedSets.map((s) => ({
-        session_id:  session.id,
-        exercise_id: s.exerciseId,
-        set_number:  s.setNumber,
-        target_reps: '0',
-        actual_reps: s.actualReps,
-        completed:   s.completed,
+  // 3. Insert exercises and sets
+  let orderIndex = 0
+  for (const [exerciseId, sets] of exerciseMap.entries()) {
+    const exerciseSetsSkipped = sets.filter(s => !s.completed).length
+
+    const { data: we, error: weError } = await (supabase
+      .from('workout_exercises_v5') as any)
+      .insert({
+        workout_id:   workout.id,
+        exercise_id:  exerciseId,
+        order_index:  orderIndex++,
+        sets_skipped: exerciseSetsSkipped
+      })
+      .select()
+      .single()
+
+    if (weError || !we) continue
+
+    await (supabase.from('workout_sets_v5') as any).insert(
+      sets.map(s => ({
+        workout_exercise_id: we.id,
+        actual_reps:  s.actualReps,
+        weight_kg:    s.weight_kg ?? 0,
+        unit:         s.unit ?? 'kg',
+        completed:    s.completed,
       }))
     )
   }
 
-  // 3. Update streak
-  const { data: streak } = await (supabase
-    .from('streaks') as any)
-    .select()
-    .eq('user_id', user.id)
-    .single()
+  // 4. Update streak via RPC (if needed, but DB trigger handles profiles.current_streak)
+  // We will just fetch the latest profile streak
+  const { data: profile } = await (supabase.from('profiles') as any).select('current_streak').eq('id', user.id).single()
+  const newStreak = profile?.current_streak ?? 0
 
-  const newStreak = calculateNewStreak(
-    streak?.last_workout_date ? new Date(streak.last_workout_date) : null,
-    streak?.current_streak ?? 0
-  )
-
-  await (supabase.from('streaks') as any).upsert({
-    user_id:           user.id,
-    current_streak:    newStreak,
-    best_streak:       Math.max(newStreak, streak?.best_streak ?? 0),
-    last_workout_date: new Date().toISOString().split('T')[0],
-    updated_at:        new Date().toISOString(),
-  })
-
-  // 4. Calculate actual completion score based on sets passed
-  const totalCompletedSets = payload.completedSets.filter(s => s.completed).length;
-  // A simple mock of total required sets (ideally queried from workout_template_exercises)
-  // For now, we compare completed vs total passed from frontend
-  const totalPossibleSets = payload.completedSets.length;
-  const actualCompletionScore = totalPossibleSets > 0 ? Math.round((totalCompletedSets / totalPossibleSets) * 100) : 0;
-
-  // Update session with trusted score
-  await (supabase.from('workout_sessions') as any).update({ completion_score: actualCompletionScore }).eq('id', session.id);
-
-  // 5. XP — securely call increment_xp without user_id parameter
-  const xpEarned = calculateXP(actualCompletionScore)
+  // 5. XP update (keep rpc call if it exists)
   await (supabase as any).rpc('increment_xp', { amount: xpEarned })
 
-  // 5. Check achievements
-  const { count: totalSets } = await (supabase
-    .from('workout_sets') as any)
-    .select('*', { count: 'exact', head: true })
-    .eq('completed', true)
-    .eq('session_id', session.id)
-
-  const { count: totalWorkouts } = await (supabase
-    .from('workout_sessions') as any)
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  const unlockedIds: number[] = []
-
-  for (const a of ACHIEVEMENTS) {
-    const alreadyUnlocked = await (supabase
-      .from('user_achievements') as any)
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('achievement_id', a.id)
-      .single()
-
-    if (alreadyUnlocked.data) continue
-
-    let qualifies = false
-    if (a.conditionType === 'total_sets'     && (totalSets    ?? 0) >= a.conditionValue) qualifies = true
-    if (a.conditionType === 'total_workouts' && (totalWorkouts ?? 0) >= a.conditionValue) qualifies = true
-    if (a.conditionType === 'streak'         && newStreak            >= a.conditionValue) qualifies = true
-
-    if (qualifies) {
-      await (supabase.from('user_achievements') as any).insert({ user_id: user.id, achievement_id: a.id })
-      unlockedIds.push(a.id)
-    }
-  }
-
-  return { sessionId: session.id, xpEarned, unlockedAchievementIds: unlockedIds, newStreak }
+  // Return info for summary dashboard
+  return { sessionId: workout.id, xpEarned, newStreak, newRecordsHit }
 }

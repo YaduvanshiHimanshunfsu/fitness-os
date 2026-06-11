@@ -98,22 +98,22 @@ export default function Topbar() {
     <header
       className={`fixed top-0 left-0 ${
         isSidebarCollapsed ? 'md:left-20' : 'md:left-60'
-      } right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-6 bg-[#0A0A0A]/80 backdrop-blur-md border-b border-[#1F1F1F] transition-all duration-300 ease-in-out`}
+      } right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-6 bg-zinc-50 dark:bg-[#0A0A0A]/80 backdrop-blur-md border-b border-zinc-200 dark:border-[#1F1F1F] transition-all duration-300 ease-in-out`}
     >
       {/* Left: Day & Date */}
       <div className="flex items-center gap-3 w-1/3 min-w-0">
         <span className="text-sm font-black tracking-widest text-[#FF6B35] hidden sm:block truncate">
           {dayName}
         </span>
-        <span className="w-1.5 h-1.5 rounded-full bg-zinc-800 hidden sm:block shrink-0" />
-        <span className="text-xs font-semibold text-zinc-400 hidden md:block truncate">
+        <span className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
+        <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hidden md:block truncate">
           {dateStr}
         </span>
       </div>
 
       {/* Center: Fitness OS Title */}
       <div className="flex justify-center items-center w-1/3">
-        <span className="font-sans font-black tracking-widest text-lg text-white whitespace-nowrap">
+        <span className="font-sans font-black tracking-widest text-lg text-zinc-900 dark:text-white whitespace-nowrap">
           FITNESS <span className="text-[#FF6B35]">OS</span>
         </span>
       </div>
@@ -131,7 +131,7 @@ export default function Topbar() {
         {/* Streak Badge */}
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2A160F] border border-[#FF6B35]/20 shadow-[0_0_15px_rgba(255,107,53,0.08)] shrink-0">
           <Flame className="w-4 h-4 text-[#FF6B35] animate-pulse" />
-          <span className="text-xs font-bold text-white">
+          <span className="text-xs font-bold text-zinc-900 dark:text-white">
             {streak} <span className="text-zinc-500 font-normal hidden sm:inline">DAYS</span>
           </span>
         </div>
@@ -140,7 +140,7 @@ export default function Topbar() {
         <NotificationBell />
 
         {/* Live Clock */}
-        <div className="font-mono text-sm font-semibold tracking-wider text-zinc-300 min-w-[70px] text-right bg-zinc-950 px-3 py-1 rounded-md border border-[#1F1F1F] hidden sm:block">
+        <div className="font-mono text-sm font-semibold tracking-wider text-zinc-700 dark:text-zinc-300 min-w-[70px] text-right bg-zinc-50 dark:bg-zinc-950 px-3 py-1 rounded-md border border-zinc-200 dark:border-[#1F1F1F] hidden sm:block">
           {time}
         </div>
       </div>

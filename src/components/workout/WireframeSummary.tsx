@@ -11,6 +11,7 @@ import { saveWorkoutSession } from '@/actions/workout';
 import { useWorkoutStore, SkippedItem } from '@/hooks/useWorkout';
 import { useNotifications } from '@/hooks/useNotifications';
 import confetti from 'canvas-confetti';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
 function AnimatedValue({
@@ -117,6 +118,7 @@ export interface WireframeSummaryProps {
   totalSets:           number;
   skippedItems:        SkippedItem[];
   achievements:        string[];
+  muscleVolume:        { name: string; reps: number }[];
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -138,6 +140,7 @@ export function WireframeSummary({
   totalSets,
   skippedItems,
   achievements,
+  muscleVolume,
 }: WireframeSummaryProps) {
   const router = useRouter();
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -194,6 +197,22 @@ export function WireframeSummary({
         message: `${day} workout logged. +${result.xpEarned} XP earned. Streak: ${result.newStreak} days.`,
       });
 
+      if (result.newRecordsHit) {
+        addNotification({
+          type:    'success',
+          title:   'New PR! 🚀',
+          message: `You beat your previous 1RM volume today! Keep up the progressive overload!`,
+        });
+        
+        // Extra PR confetti
+        confetti({
+          particleCount: 200,
+          spread: 120,
+          origin: { y: 0.5 },
+          colors: ['#FF4500', '#F59E0B', '#10B981'],
+        });
+      }
+
       // Extra confetti on save
       confetti({
         particleCount: 120,
@@ -223,6 +242,14 @@ export function WireframeSummary({
   const timeDiff  = duration - estimatedMinutes;
   const fasterBy  = timeDiff < 0 ? Math.abs(timeDiff) : null;
   const slowerBy  = timeDiff > 0 ? timeDiff : null;
+  const timeProgress = Math.min(100, (duration / (estimatedMinutes || 1)) * 100);
+
+  // ── XP Earned ────────────────────────────────────────────────────────────
+  // Base XP = 50. Bonus based on completion percent and time efficiency
+  const baseXP = 50;
+  const completionXP = Math.round((completionPercent / 100) * 100);
+  const efficiencyXP = fasterBy ? fasterBy * 2 : 0;
+  const totalXPEarned = baseXP + completionXP + efficiencyXP;
 
   const skippedExercises = skippedItems.filter((item, idx, arr) =>
     arr.findIndex(i => i.exerciseId === item.exerciseId) === idx
@@ -231,7 +258,7 @@ export function WireframeSummary({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center px-4 py-10 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] flex flex-col items-center justify-center px-4 py-10 font-sans relative overflow-hidden">
 
       {/* Background glows */}
       <div className="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#FF4500]/10 blur-[160px] pointer-events-none" />
@@ -252,14 +279,14 @@ export function WireframeSummary({
             transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
             className="w-24 h-24 bg-gradient-to-br from-[#FF4500] to-[#E03C00] rounded-full flex items-center justify-center mb-6 shadow-[0_0_60px_rgba(255,69,0,0.4)]"
           >
-            <Trophy className="w-12 h-12 text-white" />
+            <Trophy className="w-12 h-12 text-zinc-900 dark:text-white" />
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight"
+            className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-white tracking-tight leading-tight"
           >
             Congratulations!
           </motion.h1>
@@ -283,44 +310,78 @@ export function WireframeSummary({
           </motion.p>
         </motion.div>
 
-        {/* ── Time Breakdown Card ──────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
-          className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-center gap-5"
-        >
-          <div className="w-12 h-12 rounded-xl bg-[#FF4500]/15 flex items-center justify-center shrink-0">
-            <Timer className="w-6 h-6 text-[#FF4500]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
-              Time Breakdown
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <div>
-                <span className="text-xl font-black text-white">{duration}m</span>
-                <span className="text-xs text-zinc-500 ml-1.5">actual</span>
+        {/* ── Time Breakdown & XP Card ──────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex flex-col gap-4"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#FF4500]/15 flex items-center justify-center shrink-0">
+                <Timer className="w-6 h-6 text-[#FF4500]" />
               </div>
-              <div>
-                <span className="text-xl font-black text-zinc-500">{estimatedMinutes}m</span>
-                <span className="text-xs text-zinc-600 ml-1.5">estimated</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                  Time Breakdown
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <div>
+                    <span className="text-xl font-black text-zinc-900 dark:text-white">{duration}m</span>
+                    <span className="text-xs text-zinc-500 ml-1.5">actual</span>
+                  </div>
+                  <div>
+                    <span className="text-xl font-black text-zinc-500">{estimatedMinutes}m</span>
+                    <span className="text-xs text-zinc-600 ml-1.5">estimated</span>
+                  </div>
+                </div>
               </div>
+              {fasterBy !== null && (
+                <div className="bg-[#10B981]/15 border border-[#10B981]/25 rounded-xl px-3 py-2 text-center shrink-0">
+                  <div className="text-[#10B981] font-black text-sm">{fasterBy}m</div>
+                  <div className="text-[9px] font-bold text-[#10B981]/70 uppercase tracking-widest">Faster! 🚀</div>
+                </div>
+              )}
+              {slowerBy !== null && (
+                <div className="bg-[#F59E0B]/15 border border-[#F59E0B]/25 rounded-xl px-3 py-2 text-center shrink-0">
+                  <div className="text-[#F59E0B] font-black text-sm">+{slowerBy}m</div>
+                  <div className="text-[9px] font-bold text-[#F59E0B]/70 uppercase tracking-widest">Overtime</div>
+                </div>
+              )}
             </div>
-          </div>
-          {fasterBy !== null && (
-            <div className="bg-[#10B981]/15 border border-[#10B981]/25 rounded-xl px-3 py-2 text-center shrink-0">
-              <div className="text-[#10B981] font-black text-sm">{fasterBy}m</div>
-              <div className="text-[9px] font-bold text-[#10B981]/70 uppercase tracking-widest">Faster! 🚀</div>
+            {/* Progress Bar for Time */}
+            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden flex">
+              <div 
+                className={`h-full ${timeProgress <= 100 ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} 
+                style={{ width: `${Math.min(100, timeProgress)}%` }} 
+              />
+              {timeProgress > 100 && (
+                <div 
+                  className="h-full bg-red-500" 
+                  style={{ width: `${Math.min(100, timeProgress - 100)}%` }} 
+                />
+              )}
             </div>
-          )}
-          {slowerBy !== null && (
-            <div className="bg-[#F59E0B]/15 border border-[#F59E0B]/25 rounded-xl px-3 py-2 text-center shrink-0">
-              <div className="text-[#F59E0B] font-black text-sm">+{slowerBy}m</div>
-              <div className="text-[9px] font-bold text-[#F59E0B]/70 uppercase tracking-widest">Overtime</div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="bg-gradient-to-br from-[#7C3AED]/20 to-[#6D28D9]/10 border border-[#8B5CF6]/30 rounded-2xl p-5 flex flex-col justify-center items-center relative overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-[#8B5CF6]/10 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
+            <Sparkles className="w-8 h-8 text-[#A78BFA] mb-2" />
+            <div className="text-[10px] font-bold text-[#C4B5FD] uppercase tracking-widest mb-1">
+              XP Earned
             </div>
-          )}
-        </motion.div>
+            <div className="text-4xl font-black text-zinc-900 dark:text-white tracking-tight flex items-baseline gap-1">
+              +<AnimatedValue value={totalXPEarned} duration={1500} delay={800} />
+              <span className="text-sm font-bold text-[#A78BFA]">XP</span>
+            </div>
+          </motion.div>
+        </div>
 
         {/* ── Stats Grid ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -338,7 +399,7 @@ export function WireframeSummary({
             numericValue={duration}
             suffix="m"
             Icon={Clock}
-            colorClass="text-white"
+            colorClass="text-zinc-900 dark:text-white"
             bgClass="bg-white/10"
             delay={0.45}
           />
@@ -363,7 +424,7 @@ export function WireframeSummary({
             label={`Exercises (${totalExercises} total)`}
             numericValue={exercisesCompleted}
             Icon={CheckSquare}
-            colorClass="text-white"
+            colorClass="text-zinc-900 dark:text-white"
             bgClass="bg-white/10"
             delay={0.6}
           />
@@ -371,11 +432,56 @@ export function WireframeSummary({
             label={`Sets (${totalSets} planned)`}
             numericValue={setsCompleted}
             Icon={CheckSquare}
-            colorClass="text-white"
+            colorClass="text-zinc-900 dark:text-white"
             bgClass="bg-white/10"
             delay={0.65}
           />
         </div>
+
+        {/* ── Volume Breakdown Chart ─────────────────────────────────────── */}
+        {muscleVolume.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.68 }}
+            className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-5"
+          >
+            <h3 className="text-sm font-black text-zinc-900 dark:text-white mb-4 uppercase tracking-widest">
+              Volume Breakdown (Reps)
+            </h3>
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={muscleVolume} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#52525B" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    interval={0}
+                    tickFormatter={(val) => val.substring(0, 4)}
+                  />
+                  <YAxis 
+                    stroke="#52525B" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false} 
+                  />
+                  <RechartsTooltip 
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{ backgroundColor: '#18181B', border: '1px solid #3F3F46', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#FF4500' }}
+                  />
+                  <Bar dataKey="reps" radius={[4, 4, 0, 0]}>
+                    {muscleVolume.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? '#FF4500' : '#52525B'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Achievements ────────────────────────────────────────────────── */}
         {achievements.length > 0 && (
@@ -390,9 +496,9 @@ export function WireframeSummary({
             </h3>
             <ul className="space-y-3">
               {achievements.map((a, i) => (
-                <li key={i} className="flex items-center gap-3 font-bold text-sm text-white">
+                <li key={i} className="flex items-center gap-3 font-bold text-sm text-zinc-900 dark:text-white">
                   <div className="w-7 h-7 rounded-full bg-[#FF4500] flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(255,69,0,0.3)]">
-                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <CheckCircle2 className="w-4 h-4 text-zinc-900 dark:text-white" />
                   </div>
                   {a}
                 </li>
@@ -419,10 +525,10 @@ export function WireframeSummary({
               {skippedItems.map((item, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 text-sm text-zinc-400 p-2 rounded-xl bg-white/[0.03] border border-white/5"
+                  className="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400 p-2 rounded-xl bg-white/[0.03] border border-white/5"
                 >
                   <XCircle className="w-4 h-4 text-[#F59E0B] shrink-0" />
-                  <span className="font-semibold text-zinc-300">{item.exerciseName}</span>
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">{item.exerciseName}</span>
                   <span className="text-zinc-600 text-xs ml-auto">Set {item.setNumber}</span>
                 </li>
               ))}
@@ -445,12 +551,12 @@ export function WireframeSummary({
             whileTap={saveState === 'idle' ? { scale: 0.97 } : {}}
             className={`flex-1 py-5 rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all ${
               saveState === 'saved'
-                ? 'bg-[#10B981] text-white shadow-[0_0_30px_rgba(16,185,129,0.4)]'
+                ? 'bg-[#10B981] text-zinc-900 dark:text-white shadow-[0_0_30px_rgba(16,185,129,0.4)]'
                 : saveState === 'error'
-                ? 'bg-red-500/80 text-white'
+                ? 'bg-red-500/80 text-zinc-900 dark:text-white'
                 : saveState === 'saving'
-                ? 'bg-[#FF4500]/60 text-white cursor-wait'
-                : 'bg-gradient-to-r from-[#FF4500] to-[#E03C00] text-white shadow-lg shadow-[#FF4500]/20'
+                ? 'bg-[#FF4500]/60 text-zinc-900 dark:text-white cursor-wait'
+                : 'bg-gradient-to-r from-[#FF4500] to-[#E03C00] text-zinc-900 dark:text-white shadow-lg shadow-[#FF4500]/20'
             }`}
           >
             <AnimatePresence mode="wait">
@@ -509,12 +615,40 @@ export function WireframeSummary({
             </AnimatePresence>
           </motion.button>
 
+          {/* Share Button */}
+          <motion.button
+            onClick={async () => {
+              const url = `${window.location.origin}/api/og?score=${completionPercent}&duration=${duration}&day=${day}&streak=${streak}`;
+              if (navigator.share) {
+                try {
+                  await navigator.share({
+                    title: 'My Workout',
+                    text: 'Check out my latest workout on FITNESS OS!',
+                    url: url,
+                  });
+                } catch (err) {
+                  navigator.clipboard.writeText(url);
+                  addNotification({ type: 'success', title: 'Link copied to clipboard!' });
+                }
+              } else {
+                navigator.clipboard.writeText(url);
+                addNotification({ type: 'success', title: 'Link copied to clipboard!' });
+              }
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            className="sm:w-auto px-6 py-5 bg-[#FF4500]/10 hover:bg-[#FF4500]/20 border border-[#FF4500]/30 text-[#FF4500] hover:text-zinc-900 dark:text-white rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all"
+          >
+            <Zap className="w-4 h-4" />
+            Share
+          </motion.button>
+
           {/* Skip to Dashboard */}
           <motion.button
             onClick={() => { reset(); router.push('/dashboard'); router.refresh(); }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="sm:w-auto px-6 py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-white rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all"
+            className="sm:w-auto px-6 py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all"
           >
             <Home className="w-4 h-4" />
             Dashboard

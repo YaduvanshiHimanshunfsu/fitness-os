@@ -36,7 +36,7 @@ export function ExerciseCard({
         {exercise.name}
       </h2>
 
-      <div className="w-full rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 mb-6 relative group cursor-pointer">
+      <div className="w-full rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-6 relative group cursor-pointer">
         <Image 
           src={exercise.imageUrl} 
           alt={exercise.name} 
@@ -48,8 +48,8 @@ export function ExerciseCard({
       </div>
 
       <div className="flex justify-between items-center mb-4 px-2">
-        <span className="text-sm font-medium text-zinc-400">Target</span>
-        <span className="text-sm font-bold text-zinc-100">
+        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Target</span>
+        <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
           {exercise.sets} × {exercise.reps}
         </span>
       </div>

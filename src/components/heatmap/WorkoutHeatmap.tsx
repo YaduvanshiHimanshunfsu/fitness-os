@@ -26,7 +26,8 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
     currentWeek.push({
       date: d.toISOString().split('T')[0],
       completed: false,
-      isRestDay: false
+      isRestDay: false,
+      sets: 0
     })
   }
 
@@ -46,7 +47,8 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
       currentWeek.push({
         date: lastDay.toISOString().split('T')[0],
         completed: false,
-        isRestDay: false
+        isRestDay: false,
+        sets: 0
       })
     }
     weeks.push(currentWeek)
@@ -55,7 +57,7 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
   const todayStr = new Date().toISOString().split('T')[0]
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 overflow-hidden">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500">Workout Activity</h3>
         <span className="text-xs text-zinc-500 font-medium">{totalWorkouts} workouts this year</span>
@@ -85,6 +87,7 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
                     isRestDay={day.isRestDay}
                     isToday={isToday}
                     isFuture={isFuture}
+                    sets={day.sets}
                   />
                 )
               })}
@@ -99,11 +102,11 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
           <span>Completed</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-zinc-800" />
+          <div className="w-[10px] h-[10px] rounded-[2px] bg-zinc-200 dark:bg-zinc-800" />
           <span>Missed</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-[10px] h-[10px] rounded-[2px] bg-zinc-900 bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(255,255,255,0.06)_2px,rgba(255,255,255,0.06)_4px)] border border-zinc-800" />
+          <div className="w-[10px] h-[10px] rounded-[2px] bg-white dark:bg-zinc-900 bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(255,255,255,0.06)_2px,rgba(255,255,255,0.06)_4px)] border border-zinc-200 dark:border-zinc-800" />
           <span>Rest Day</span>
         </div>
       </div>

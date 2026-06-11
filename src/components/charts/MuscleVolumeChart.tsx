@@ -28,13 +28,13 @@ export function MuscleVolumeChart({ data, period }: { data: MuscleVolumeData[], 
           <div key={item.muscleGroup} className="w-full">
             <div className="flex justify-between items-end mb-1.5">
               <div>
-                <span className="text-sm font-bold text-zinc-300 capitalize">{item.muscleGroup}</span>
+                <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 capitalize">{item.muscleGroup}</span>
                 <span className="text-[10px] uppercase tracking-widest text-zinc-600 ml-2">{item.sets} sets</span>
               </div>
               <span className="text-xs font-bold text-zinc-500">{item.percentage}%</span>
             </div>
             
-            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${item.percentage}%` }}

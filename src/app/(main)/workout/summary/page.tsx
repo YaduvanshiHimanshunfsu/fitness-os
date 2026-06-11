@@ -94,6 +94,23 @@ export default function SummaryPage() {
     [setsCompleted, durationMinutes],
   );
 
+  const muscleVolume = useMemo(() => {
+    const muscleMap: Record<string, number> = {};
+    completedSets.forEach(set => {
+      if (set.completed) {
+        // Exercise ID in state often matches the index in planExercises
+        const ex = planExercises[set.exerciseId];
+        if (ex) {
+          const m = ex.muscleGroup.toUpperCase();
+          muscleMap[m] = (muscleMap[m] || 0) + set.reps;
+        }
+      }
+    });
+    return Object.entries(muscleMap)
+      .map(([name, reps]) => ({ name, reps }))
+      .sort((a, b) => b.reps - a.reps);
+  }, [completedSets, planExercises]);
+
   // ── Formatting strings ────────────────────────────────────────────────────
   const dateStr      = mountTimeRef.current.toLocaleDateString('en-GB',  { day: '2-digit', month: 'long', year: 'numeric' });
   const dayStr       = mountTimeRef.current.toLocaleDateString('en-US',  { weekday: 'long' });
@@ -155,7 +172,7 @@ export default function SummaryPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] flex items-center justify-center">
         <div
           className="w-10 h-10 rounded-full border-2 border-[#FF4500]/20 border-t-[#FF4500] animate-spin"
           aria-label="Loading your session summary…"
@@ -188,6 +205,7 @@ export default function SummaryPage() {
         totalSets={totalSets}
         skippedItems={skippedItems}
         achievements={achievements}
+        muscleVolume={muscleVolume}
       />
     </div>
   );

@@ -34,7 +34,7 @@ export function NotificationBell() {
     <div className="relative z-50" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full hover:bg-white/10 transition-colors text-zinc-400 hover:text-white"
+        className="relative p-2 rounded-full hover:bg-white/10 transition-colors text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white"
       >
         <Bell className="w-5 h-5" />
         {unreadCount() > 0 && (
@@ -55,11 +55,11 @@ export function NotificationBell() {
             className="absolute right-0 mt-2 w-80 md:w-96 bg-[#161616] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
-              <h3 className="font-bold text-white tracking-tight">Notifications</h3>
+              <h3 className="font-bold text-zinc-900 dark:text-white tracking-tight">Notifications</h3>
               {unreadCount() > 0 && (
                 <button 
                   onClick={markAllAsRead}
-                  className="text-xs font-bold text-[#FF4500] hover:text-white transition-colors uppercase tracking-widest"
+                  className="text-xs font-bold text-[#FF4500] hover:text-zinc-900 dark:text-white transition-colors uppercase tracking-widest"
                 >
                   Mark all read
                 </button>
@@ -85,16 +85,16 @@ export function NotificationBell() {
                       <div className="shrink-0 mt-0.5">{getIcon(notif.type)}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
-                          <h4 className="font-bold text-white text-sm truncate">{notif.title}</h4>
+                          <h4 className="font-bold text-zinc-900 dark:text-white text-sm truncate">{notif.title}</h4>
                           <span className="text-[10px] text-zinc-500 font-bold whitespace-nowrap">
                             {notif.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{notif.message}</p>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 line-clamp-2">{notif.message}</p>
                       </div>
                       <button 
                         onClick={(e) => { e.stopPropagation(); removeNotification(notif.id); }}
-                        className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-white transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-zinc-900 dark:text-white transition-all shrink-0"
                       >
                         <X className="w-4 h-4" />
                       </button>

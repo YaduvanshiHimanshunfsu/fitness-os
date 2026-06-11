@@ -32,7 +32,7 @@ export default async function AchievementsPage() {
 
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500">Badge Collection</h3>
-        <span className="text-xs font-bold bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full border border-zinc-700">
+        <span className="text-xs font-bold bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700">
           {userAchievements.length} / {ACHIEVEMENTS.length}
         </span>
       </div>

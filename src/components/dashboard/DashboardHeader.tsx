@@ -15,10 +15,10 @@ export function DashboardHeader({ name }: { name: string }) {
       animate="animate"
       className="mb-8"
     >
-      <h1 className="text-3xl font-bold tracking-tight text-white mb-1">
+      <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-1">
         {greeting}, {name}
       </h1>
-      <p className="text-zinc-400 font-medium">
+      <p className="text-zinc-600 dark:text-zinc-400 font-medium">
         {getTodayDay().charAt(0).toUpperCase() + getTodayDay().slice(1)} • {formatWorkoutDate(new Date())}
       </p>
       

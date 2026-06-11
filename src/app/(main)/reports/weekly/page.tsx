@@ -25,21 +25,21 @@ export default async function WeeklyReportPage() {
 
       {/* Hero Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Workouts</span>
-          <span className="text-3xl font-bold text-white">{report.workoutsCompleted} <span className="text-sm text-zinc-500">/ 6</span></span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.workoutsCompleted} <span className="text-sm text-zinc-500">/ 6</span></span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Sets</span>
-          <span className="text-3xl font-bold text-white">{report.totalSets}</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.totalSets}</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Reps</span>
-          <span className="text-3xl font-bold text-white">{report.totalReps}</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.totalReps}</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Completion</span>
-          <span className="text-3xl font-bold text-white">{report.completionRate}%</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.completionRate}%</span>
         </div>
       </div>
 
@@ -49,24 +49,24 @@ export default async function WeeklyReportPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="md:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-6">Activity Graph</h3>
           <WeeklyChart data={chartData} />
         </div>
 
         <div className="md:col-span-1 flex flex-col gap-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
             <span className="text-[10px] tracking-widest uppercase text-zinc-500 font-bold block mb-2">Best Day</span>
-            <span className="text-2xl font-bold text-white block mb-1">{report.bestDay}</span>
+            <span className="text-2xl font-bold text-zinc-900 dark:text-white block mb-1">{report.bestDay}</span>
             <span className="text-xs text-zinc-500">Most sets completed this week</span>
           </div>
 
           {report.missedDays.length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
               <span className="text-[10px] tracking-widest uppercase text-zinc-500 font-bold block mb-4">Missed Days</span>
               <div className="flex flex-wrap gap-2">
                 {report.missedDays.map(day => (
-                  <span key={day} className="px-3 py-1 bg-zinc-800 text-zinc-400 rounded-full text-xs font-medium border border-zinc-700">
+                  <span key={day} className="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full text-xs font-medium border border-zinc-300 dark:border-zinc-700">
                     {day}
                   </span>
                 ))}

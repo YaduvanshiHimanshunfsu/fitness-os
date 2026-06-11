@@ -83,7 +83,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
         </button>
 
         <div className="flex flex-col items-center">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+          <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
             {phase === 'warmup' ? 'WARMUP ROUTINE' : 'TRANSITION REST'}
           </span>
           <div className="flex gap-1.5 mt-2">
@@ -98,7 +98,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
         <button
           className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
             isPaused
-              ? 'bg-[#FF4500] text-white hover:bg-[#E03C00]'
+              ? 'bg-[#FF4500] text-zinc-900 dark:text-white hover:bg-[#E03C00]'
               : 'hover:bg-zinc-200 text-zinc-500'
           }`}
           onClick={() => setIsPaused(p => !p)}
@@ -120,7 +120,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
             exit={{ opacity: 0, y: -10 }}
             className="w-full max-w-5xl mb-3 px-2"
           >
-            <div className="bg-[#FF4500] text-white text-center text-sm font-black uppercase tracking-widest py-2.5 rounded-xl">
+            <div className="bg-[#FF4500] text-zinc-900 dark:text-white text-center text-sm font-black uppercase tracking-widest py-2.5 rounded-xl">
               ⏸ Paused — tap the button above to resume
             </div>
           </motion.div>
@@ -184,7 +184,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
               </div>
 
               <div className="w-full max-w-sm flex items-center justify-between mb-4 px-2">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Next Up</span>
+                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Next Up</span>
                 <span className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest">Active Stretching</span>
               </div>
 
@@ -228,13 +228,13 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
                 </svg>
                 <div className="absolute flex flex-col items-center">
                   <span className="text-6xl font-black text-zinc-900 tracking-tighter">{restTimeLeft}</span>
-                  <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest mt-1">seconds</span>
+                  <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mt-1">seconds</span>
                 </div>
               </div>
 
               <button
                 onClick={() => setRestTimeLeft(0)}
-                className="w-full max-w-sm py-5 px-6 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl font-bold uppercase tracking-widest text-sm flex items-center justify-center transition-colors cursor-pointer"
+                className="w-full max-w-sm py-5 px-6 bg-white dark:bg-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-2xl font-bold uppercase tracking-widest text-sm flex items-center justify-center transition-colors cursor-pointer"
               >
                 Skip Rest
               </button>

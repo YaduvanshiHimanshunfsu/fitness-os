@@ -9,31 +9,29 @@ import { WireframeRestScreen } from '@/components/workout/WireframeRestScreen'
 
 export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const router = useRouter()
-  const { addSet, setPhase } = useWorkoutStore()
+  const { addSet, setPhase, startRestTimer, clearRestTimer, restTimerEnd } = useWorkoutStore()
   
   const [currentIndex, setCurrentIndex] = useState(0)
   const [completedSets, setCompletedSets] = useState<Record<number, boolean[]>>({})
   const [phase, setLocalPhase] = useState<'exercise' | 'rest' | 'rest_exercise'>('exercise')
-  const [restTimeLeft, setRestTimeLeft] = useState(0)
 
   const currentExercise = exercises[currentIndex]
   const currentCompleted = completedSets[currentExercise.id] || Array(currentExercise.sets).fill(false)
 
-  // Timer for rest screen
+  // Wait for the global rest timer to finish if we are in a rest phase
   useEffect(() => {
-    if (phase === 'exercise' || restTimeLeft <= 0) return
-    const timer = setInterval(() => setRestTimeLeft(prev => prev - 1), 1000)
-    return () => clearInterval(timer)
-  }, [phase, restTimeLeft])
+    if (phase === 'exercise' || !restTimerEnd) return;
+    
+    const interval = setInterval(() => {
+      if (Date.now() >= restTimerEnd) {
+        clearRestTimer();
+        handleRestComplete();
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [phase, restTimerEnd]);
 
-  // Handle rest completion
-  useEffect(() => {
-    if (phase !== 'exercise' && restTimeLeft === 0) {
-      handleRestComplete()
-    }
-  }, [restTimeLeft, phase])
-
-  const handleSetComplete = (setIndex: number) => {
+  const handleSetComplete = (setIndex: number, reps: number, weight: number, unit: string) => {
     if (currentCompleted[setIndex]) return 
 
     const newCompleted = [...currentCompleted]
@@ -44,12 +42,13 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       [currentExercise.id]: newCompleted
     }))
 
-    const repsNum = parseInt(currentExercise.reps.split('-')[0] || '10')
     addSet({
       exerciseId:   currentExercise.id,
       exerciseName: currentExercise.name,
       setNumber:    setIndex + 1,
-      actualReps:   isNaN(repsNum) ? 1 : repsNum,
+      actualReps:   reps,
+      weight_kg:    unit === 'lbs' ? weight * 0.453592 : weight,
+      unit:         unit,
       completed:    true,
       timestamp:    new Date()
     })
@@ -61,8 +60,8 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     if (isLastSet && isLastExercise) {
       // Don't trigger 15s rest if it's the very last set, wait for user to click Finish
     } else {
-      // Trigger 15s rest between sets immediately after checking the box
-      setRestTimeLeft(15) 
+      // Trigger rest between sets using Zustand
+      startRestTimer(15) 
       setLocalPhase('rest')
     }
   }
@@ -92,12 +91,13 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       router.push('/workout/posture')
     } else {
       // 30s rest between exercises
-      setRestTimeLeft(30)
+      startRestTimer(30)
       setLocalPhase('rest_exercise') // special phase for 30s rest
     }
   }
 
   const handleRestComplete = () => {
+    clearRestTimer();
     if (phase === 'rest_exercise') {
       setCurrentIndex(prev => prev + 1)
     }
@@ -107,6 +107,19 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const nextExerciseName = phase === 'rest_exercise'
     ? (exercises[currentIndex + 1]?.name || 'Posture Routine')
     : currentExercise.name
+
+  const [displayTimeLeft, setDisplayTimeLeft] = useState(0);
+
+  useEffect(() => {
+    if (!restTimerEnd) return;
+    const updateTime = () => {
+      const remaining = Math.max(0, Math.ceil((restTimerEnd - Date.now()) / 1000));
+      setDisplayTimeLeft(remaining);
+    };
+    updateTime();
+    const iv = setInterval(updateTime, 100);
+    return () => clearInterval(iv);
+  }, [restTimerEnd]);
 
   return (
     <AnimatePresence mode="wait">
@@ -124,7 +137,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       ) : (
         <WireframeRestScreen 
           key="rest"
-          timeLeft={restTimeLeft}
+          timeLeft={displayTimeLeft}
           nextExerciseName={nextExerciseName}
           onSkip={handleRestComplete}
         />

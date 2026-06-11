@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 
 export function AnimatedBackground() {
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-zinc-950">
+    <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-zinc-50 dark:bg-zinc-950">
       {/* Subtle modern dark animated background elements */}
       <motion.div
         animate={{

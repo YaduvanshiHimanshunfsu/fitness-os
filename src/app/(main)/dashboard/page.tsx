@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import AthleteDashboard from '@/components/dashboard/AthleteDashboard';
 import { getLevelFromXP } from '@/utils/level-calculator';
+import { getHeatmapData } from '@/services/analytics-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +14,12 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Fetch Profile
-  const { data: profile } = await (supabase.from('profiles') as any).select('*').eq('id', user.id).single();
-  
-  // Fetch Streak
-  const { data: streak } = await (supabase.from('streaks') as any).select('*').eq('user_id', user.id).single();
+  // Fetch Profile, Streak, and Heatmap in parallel
+  const [{ data: profile }, { data: streak }, heatmap] = await Promise.all([
+    (supabase.from('profiles') as any).select('*').eq('id', user.id).single(),
+    (supabase.from('profiles') as any).select('current_streak').eq('id', user.id).single(),
+    getHeatmapData(user.id, 90),
+  ]);
 
   const { current: currentLevel } = getLevelFromXP(profile?.xp_total || 0);
 
@@ -26,6 +28,7 @@ export default async function DashboardPage() {
       userName={profile?.name || 'Athlete'}
       currentStreak={streak?.current_streak || 0}
       levelName={currentLevel.name}
+      heatmap={heatmap}
     />
   );
 }

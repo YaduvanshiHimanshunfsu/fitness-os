@@ -33,7 +33,7 @@ export function StreakCard({
   if (currentStreak >= 30) iconColor = 'text-orange-500'
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-full flex flex-col items-center justify-center text-center relative overflow-hidden">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 h-full flex flex-col items-center justify-center text-center relative overflow-hidden">
       {/* Background glow if streak is active */}
       {currentStreak > 0 && (
         <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
@@ -56,17 +56,17 @@ export function StreakCard({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
-          <span className="text-3xl font-bold text-white leading-none">{currentStreak}</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white leading-none">{currentStreak}</span>
           <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mt-1">Days</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2 justify-center mb-2">
         <Flame className={`w-5 h-5 ${iconColor}`} />
-        <span className="text-xl font-bold text-white">{currentStreak} days</span>
+        <span className="text-xl font-bold text-zinc-900 dark:text-white">{currentStreak} days</span>
       </div>
       
-      <p className="text-sm text-zinc-400 font-medium mb-1">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium mb-1">
         Best: {bestStreak} days
       </p>
       
@@ -79,9 +79,9 @@ export function StreakCard({
           Start your streak today
         </div>
       ) : (
-        <div className="mt-auto flex flex-col gap-1 w-full p-3 rounded-lg bg-zinc-950 border border-zinc-800">
+        <div className="mt-auto flex flex-col gap-1 w-full p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
           <span className="text-[10px] tracking-widest uppercase font-bold text-zinc-500">Next Milestone</span>
-          <span className="text-sm font-medium text-zinc-300">
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {ring.milestoneName} <span className="text-zinc-600">({ring.remaining} to go)</span>
           </span>
         </div>

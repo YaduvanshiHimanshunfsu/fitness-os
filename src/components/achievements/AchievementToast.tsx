@@ -18,9 +18,9 @@ export function AchievementToast({ achievement, onClose }: { achievement: any, o
       initial={{ opacity: 0, y: 50, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.9 }}
-      className="fixed bottom-20 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:bottom-8 md:right-8 z-50 bg-zinc-900 border border-zinc-700 shadow-2xl shadow-black/50 rounded-xl p-4 flex items-center gap-4 w-[340px]"
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:bottom-8 md:right-8 z-50 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 shadow-2xl shadow-black/50 rounded-xl p-4 flex items-center gap-4 w-[340px]"
     >
-      <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-2xl border border-zinc-700 shrink-0">
+      <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-2xl border border-zinc-300 dark:border-zinc-700 shrink-0">
         {achievement.icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -28,9 +28,9 @@ export function AchievementToast({ achievement, onClose }: { achievement: any, o
           <Trophy className="w-3 h-3 text-amber-500" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Achievement Unlocked</span>
         </div>
-        <h4 className="text-sm font-bold text-white truncate">{achievement.name}</h4>
+        <h4 className="text-sm font-bold text-zinc-900 dark:text-white truncate">{achievement.name}</h4>
       </div>
-      <button onClick={onClose} className="p-1 text-zinc-500 hover:text-white transition-colors">
+      <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-900 dark:text-white transition-colors">
         <X className="w-4 h-4" />
       </button>
     </motion.div>

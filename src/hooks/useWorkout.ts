@@ -9,6 +9,8 @@ export interface CompletedSet {
   setNumber:    number
   actualReps:   number
   completed:    boolean
+  weight_kg?:   number
+  unit?:        string
   timestamp:    Date
 }
 
@@ -32,18 +34,27 @@ interface WorkoutStore {
   estimatedMinutes:   number
   todayExercises:     Exercise[]
   isSessionActive:    boolean
+  
+  // Advanced Rest Timer
+  restTimerEnd:       number | null
+  defaultRestSeconds: number
 
   startSession:       (day: string, estimatedMinutes: number, exercises: Exercise[]) => void
   addSet:             (set: CompletedSet) => void
   addSkipped:         (item: SkippedItem) => void
   setPhase:           (phase: WorkoutPhase) => void
   finishSession:      (score: number) => void
+  startRestTimer:     (seconds?: number) => void
+  addRestTime:        (seconds: number) => void
+  clearRestTimer:     () => void
+  setDefaultRestSeconds: (seconds: number) => void
+  setExercises:       (exercises: Exercise[]) => void
   reset:              () => void
 }
 
 export const useWorkoutStore = create<WorkoutStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       sessionId:          null,
       day:                '',
       startTime:          null,
@@ -56,6 +67,9 @@ export const useWorkoutStore = create<WorkoutStore>()(
       estimatedMinutes:   0,
       todayExercises:     [],
       isSessionActive:    false,
+      
+      restTimerEnd:       null,
+      defaultRestSeconds: 60,
 
       startSession: (day, estimatedMinutes, exercises) =>
         set({
@@ -69,6 +83,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           todayExercises:   exercises,
           isSessionActive:  true,
           currentPhase:     'posture',
+          restTimerEnd:     null,
         }),
 
       addSet: (s) =>
@@ -80,7 +95,25 @@ export const useWorkoutStore = create<WorkoutStore>()(
       setPhase: (p) => set({ currentPhase: p }),
 
       finishSession: (score) =>
-        set({ completionScore: score, isSessionActive: false }),
+        set({ completionScore: score, isSessionActive: false, restTimerEnd: null }),
+
+      startRestTimer: (seconds) => {
+        const duration = seconds ?? get().defaultRestSeconds;
+        set({ restTimerEnd: Date.now() + duration * 1000 });
+      },
+
+      addRestTime: (seconds) => {
+        const currentEnd = get().restTimerEnd;
+        if (currentEnd) {
+          set({ restTimerEnd: currentEnd + seconds * 1000 });
+        }
+      },
+
+      clearRestTimer: () => set({ restTimerEnd: null }),
+
+      setDefaultRestSeconds: (seconds) => set({ defaultRestSeconds: seconds }),
+
+      setExercises: (exercises) => set({ todayExercises: exercises }),
 
       reset: () =>
         set({
@@ -93,6 +126,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           estimatedMinutes:   0,
           todayExercises:     [],
           isSessionActive:    false,
+          restTimerEnd:       null,
         }),
     }),
     {

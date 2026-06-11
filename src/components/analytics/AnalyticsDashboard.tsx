@@ -58,14 +58,14 @@ export default function AnalyticsDashboard({
       <PeriodTabs period={period} onChange={setPeriod} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-6">Activity (Sets)</h3>
           {period === 'week' && <WeeklyChart key="weekly" data={weekly} />}
           {period === 'month' && <MonthlyChart key="monthly" data={monthly} />}
           {period === 'year' && <YearlyChart key="yearly" data={yearly} />}
         </div>
         
-        <div className="lg:col-span-1 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="lg:col-span-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-6">Muscle Volume</h3>
           <MuscleVolumeChart key={`muscle-${period}`} data={muscleData[period]} period={period} />
         </div>

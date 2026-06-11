@@ -99,14 +99,14 @@ export default function CoolDownPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-xl bg-[#111111] border border-[#1F1F1F] rounded-2xl p-6 md:p-8 flex flex-col items-center shadow-2xl relative"
+            className="w-full max-w-xl bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1F1F1F] rounded-2xl p-6 md:p-8 flex flex-col items-center shadow-2xl relative"
           >
             {/* Header info */}
             <div className="flex flex-col items-center text-center mb-6">
               <span className="text-[10px] font-mono font-black tracking-widest text-[#FF6B35] bg-[#2A160F] border border-[#FF6B35]/15 px-2.5 py-1 rounded-md uppercase">
                 Phase 5: Cool Down
               </span>
-              <h2 className="text-2xl md:text-3xl font-sans font-black tracking-tight text-white mt-3 uppercase">
+              <h2 className="text-2xl md:text-3xl font-sans font-black tracking-tight text-zinc-900 dark:text-white mt-3 uppercase">
                 {currentExercise.name}
               </h2>
               <span className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase mt-1">
@@ -115,7 +115,7 @@ export default function CoolDownPage() {
             </div>
 
             {/* Cool Down Image */}
-            <div className="w-full rounded-xl overflow-hidden border border-[#1F1F1F] bg-zinc-950 p-2 mb-6 flex justify-center shadow-lg">
+            <div className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-[#1F1F1F] bg-zinc-50 dark:bg-zinc-950 p-2 mb-6 flex justify-center shadow-lg">
               <img 
                 src={COOLDOWN_IMAGE} 
                 alt="Cool Down stretch demonstration" 
@@ -149,7 +149,7 @@ export default function CoolDownPage() {
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="font-mono text-3xl font-black text-white tabular-nums">
+                <span className="font-mono text-3xl font-black text-zinc-900 dark:text-white tabular-nums">
                   {timeLeft}
                 </span>
                 <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-none">
@@ -161,7 +161,7 @@ export default function CoolDownPage() {
             {/* Manual Skip or Progress button */}
             <button
               onClick={handleCompleteStretch}
-              className="w-full py-4 rounded-xl font-sans font-black tracking-widest text-xs uppercase bg-[#FF6B35] hover:bg-[#FF8C61] border-[#FF6B35] text-white shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_30px_rgba(255,107,53,0.45)] transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl font-sans font-black tracking-widest text-xs uppercase bg-[#FF6B35] hover:bg-[#FF8C61] border-[#FF6B35] text-zinc-900 dark:text-white shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_30px_rgba(255,107,53,0.45)] transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               Skip / Next Stretch <ArrowRight className="w-4 h-4" />
             </button>
@@ -172,12 +172,12 @@ export default function CoolDownPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="w-full max-w-md bg-[#111111] border border-[#1F1F1F] rounded-2xl p-6 md:p-8 flex flex-col items-center shadow-2xl"
+            className="w-full max-w-md bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1F1F1F] rounded-2xl p-6 md:p-8 flex flex-col items-center shadow-2xl"
           >
             <span className="text-[10px] font-mono font-black tracking-widest text-[#FF6B35] bg-[#2A160F] border border-[#FF6B35]/15 px-2.5 py-1 rounded-md uppercase">
               15s Stretch Rest
             </span>
-            <h2 className="text-xl md:text-2xl font-sans font-black tracking-tight text-white mt-4 uppercase">
+            <h2 className="text-xl md:text-2xl font-sans font-black tracking-tight text-zinc-900 dark:text-white mt-4 uppercase">
               Prepare Next Stretch
             </h2>
             <p className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mt-1">
@@ -207,7 +207,7 @@ export default function CoolDownPage() {
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="font-mono text-4xl font-black text-white tabular-nums">
+                <span className="font-mono text-4xl font-black text-zinc-900 dark:text-white tabular-nums">
                   {restTimeLeft}
                 </span>
                 <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-none mt-0.5">
@@ -216,18 +216,18 @@ export default function CoolDownPage() {
               </div>
             </div>
 
-            <div className="w-full bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center mb-6">
+            <div className="w-full bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-900 text-center mb-6">
               <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block font-mono">
                 Up Next
               </span>
-              <span className="text-xs font-bold text-white uppercase block mt-1">
+              <span className="text-xs font-bold text-zinc-900 dark:text-white uppercase block mt-1">
                 {COOLDOWN_EXERCISES[currentIndex + 1]?.name || 'Summary'}
               </span>
             </div>
 
             <button
               onClick={handleSkipRest}
-              className="w-full py-4 border border-[#1F1F1F] hover:border-zinc-700 bg-zinc-950 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-4 border border-zinc-200 dark:border-[#1F1F1F] hover:border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 hover:bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <SkipForward className="w-4 h-4" /> Skip Rest
             </button>

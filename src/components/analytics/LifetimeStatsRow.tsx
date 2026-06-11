@@ -62,13 +62,13 @@ function StatCard({ icon, label, value, suffix = '' }: { icon: React.ReactNode, 
   return (
     <motion.div 
       variants={fadeUp} 
-      className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:border-zinc-600 group"
+      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:border-zinc-600 group"
     >
-      <div className="mb-3 text-zinc-500 group-hover:text-zinc-300 transition-colors">
+      <div className="mb-3 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-300 transition-colors">
         {icon}
       </div>
       <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-2 text-center">{label}</span>
-      <span className="text-3xl font-bold text-white">
+      <span className="text-3xl font-bold text-zinc-900 dark:text-white">
         {animatedValue}{suffix && <span className="text-sm text-zinc-500 font-medium ml-1">{suffix}</span>}
       </span>
     </motion.div>

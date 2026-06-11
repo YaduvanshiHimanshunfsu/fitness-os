@@ -25,14 +25,14 @@ export default function GlobalError({
   }, [error, addNotification]);
 
   return (
-    <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 bg-[#0A0A0A] text-white">
+    <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-900 dark:text-white">
       <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
         <AlertCircle className="w-10 h-10 text-red-500" />
       </div>
       <h1 className="text-3xl font-black uppercase tracking-tight mb-2 text-center">
         System Error Prevented
       </h1>
-      <p className="text-zinc-400 font-medium mb-8 max-w-md text-center">
+      <p className="text-zinc-600 dark:text-zinc-400 font-medium mb-8 max-w-md text-center">
         Our self-healing system intercepted a fatal exception. We've logged it to your Notification Bell for review.
       </p>
       

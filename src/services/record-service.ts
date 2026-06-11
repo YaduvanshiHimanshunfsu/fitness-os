@@ -7,7 +7,14 @@ export interface PersonalRecord {
   max_weight: number | null
   max_reps: number | null
   longest_hold_seconds: number | null
+  estimated_1rm: number | null
   achieved_at: string
+}
+
+export function calculate1RM(weight: number, reps: number): number {
+  if (reps === 1) return weight;
+  // Epley formula
+  return weight * (1 + reps / 30);
 }
 
 export async function getPersonalRecords(userId: string): Promise<PersonalRecord[]> {
@@ -62,15 +69,19 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
     achieved_at: new Date().toISOString()
   }
 
+  const current1RM = (weight !== null && reps > 0) ? calculate1RM(weight, reps) : null;
+
   if (!existing) {
     isNewRecord = true
     updates.max_reps = reps
     updates.max_weight = weight
     updates.longest_hold_seconds = holdTime
+    updates.estimated_1rm = current1RM
   } else {
     updates.max_reps = existing.max_reps
     updates.max_weight = existing.max_weight
     updates.longest_hold_seconds = existing.longest_hold_seconds
+    updates.estimated_1rm = existing.estimated_1rm
 
     if (reps > (existing.max_reps ?? 0)) {
       updates.max_reps = reps
@@ -82,6 +93,10 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
     }
     if (holdTime !== null && holdTime > (existing.longest_hold_seconds ?? 0)) {
       updates.longest_hold_seconds = holdTime
+      isNewRecord = true
+    }
+    if (current1RM !== null && current1RM > (existing.estimated_1rm ?? 0)) {
+      updates.estimated_1rm = current1RM
       isNewRecord = true
     }
   }

@@ -26,8 +26,8 @@ export default function WorkoutLayout({ children }: { children: React.ReactNode 
   const progressPercent = (step / 6) * 100
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent text-zinc-100 relative">
-      <div className="fixed top-0 left-0 w-full h-1 bg-zinc-900 z-50">
+    <div className="flex flex-col min-h-screen bg-transparent text-zinc-800 dark:text-zinc-100 relative">
+      <div className="fixed top-0 left-0 w-full h-1 bg-white dark:bg-zinc-900 z-50">
         <motion.div 
           className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8C61] shadow-[0_0_12px_rgba(255,107,53,0.6)]"
           initial={{ width: 0 }}

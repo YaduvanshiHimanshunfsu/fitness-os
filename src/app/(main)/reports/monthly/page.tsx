@@ -26,25 +26,25 @@ export default async function MonthlyReportPage() {
 
       {/* Hero Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Workouts</span>
-          <span className="text-3xl font-bold text-white">{report.workoutsCompleted}</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.workoutsCompleted}</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Sets</span>
-          <span className="text-3xl font-bold text-white">{report.totalSets}</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.totalSets}</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Reps</span>
-          <span className="text-3xl font-bold text-white">{report.totalReps}</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.totalReps}</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Completion</span>
-          <span className="text-3xl font-bold text-white">{report.completionRate}%</span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.completionRate}%</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center md:col-span-1 col-span-2">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 flex flex-col items-center justify-center md:col-span-1 col-span-2">
           <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold mb-2">Best Streak</span>
-          <span className="text-3xl font-bold text-white">{report.bestStreak} <span className="text-sm text-zinc-500">days</span></span>
+          <span className="text-3xl font-bold text-zinc-900 dark:text-white">{report.bestStreak} <span className="text-sm text-zinc-500">days</span></span>
         </div>
       </div>
 
@@ -54,13 +54,13 @@ export default async function MonthlyReportPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="md:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-6">Activity Graph</h3>
           <MonthlyChart data={chartData} />
         </div>
 
         <div className="md:col-span-1 flex flex-col gap-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex-1">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 flex-1">
             <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500 mb-6">Muscle Volume</h3>
             <MuscleVolumeChart data={muscleData} period="month" />
           </div>
@@ -68,14 +68,14 @@ export default async function MonthlyReportPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <span className="text-[10px] tracking-widest uppercase text-zinc-500 font-bold block mb-2">Most Trained</span>
-          <span className="text-2xl font-bold text-white block mb-1">{report.topMuscleGroup}</span>
+          <span className="text-2xl font-bold text-zinc-900 dark:text-white block mb-1">{report.topMuscleGroup}</span>
           <span className="text-xs text-zinc-500">Based on total sets this month</span>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <span className="text-[10px] tracking-widest uppercase text-zinc-500 font-bold block mb-2">Best Week</span>
-          <span className="text-2xl font-bold text-white block mb-1">{report.bestWeek}</span>
+          <span className="text-2xl font-bold text-zinc-900 dark:text-white block mb-1">{report.bestWeek}</span>
           <span className="text-xs text-zinc-500">Highest volume 7-day span</span>
         </div>
       </div>

@@ -17,7 +17,7 @@ export function PeriodTabs({
   ]
 
   return (
-    <div className="flex border-b border-zinc-800 mb-6">
+    <div className="flex border-b border-zinc-200 dark:border-zinc-800 mb-6">
       {tabs.map((tab) => {
         const isActive = period === tab.id
         return (
@@ -25,7 +25,7 @@ export function PeriodTabs({
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={`relative px-6 py-4 text-sm font-bold tracking-widest uppercase transition-colors ${
-              isActive ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+              isActive ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-300'
             }`}
           >
             {tab.label}

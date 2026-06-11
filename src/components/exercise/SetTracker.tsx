@@ -24,12 +24,12 @@ export function SetTracker({
             onClick={() => onSetToggle(i)}
             className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all duration-300 ${
               isCompleted 
-                ? 'bg-zinc-800 border-zinc-700' 
-                : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                ? 'bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700' 
+                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:border-zinc-700'
             }`}
           >
             <span className={`text-[15px] font-medium transition-colors ${
-              isCompleted ? 'text-zinc-500' : 'text-zinc-100'
+              isCompleted ? 'text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'
             }`}>
               Set {i + 1}
             </span>

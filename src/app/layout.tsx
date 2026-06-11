@@ -29,22 +29,31 @@ export const viewport = {
   viewportFit: "cover",
 };
 
+import { ThemeProvider } from "@/components/theme-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body
-        className={`${outfit.variable} ${jetbrainsMono.variable} font-sans min-h-screen antialiased bg-[#0A0A0A] text-[#F5F5F5] bg-noise relative`}
+        className={`${outfit.variable} ${jetbrainsMono.variable} font-sans min-h-screen antialiased bg-white dark:bg-[#0A0A0A] text-zinc-900 dark:text-[#F5F5F5] bg-noise relative transition-colors`}
       >
-        <CustomCursor />
-        <MagicCursor />
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <CustomCursor />
+          <MagicCursor />
+          {children}
+        </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

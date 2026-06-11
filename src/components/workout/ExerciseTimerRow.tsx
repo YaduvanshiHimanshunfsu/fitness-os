@@ -46,16 +46,16 @@ export function ExerciseTimerRow({
       variants={fadeUp}
       layout
       className={`flex items-center justify-between p-4 mb-2 rounded-lg border transition-colors duration-300 ${
-        done ? 'bg-zinc-800/80 border-zinc-700' : 'bg-zinc-900 border-zinc-800'
+        done ? 'bg-zinc-200 dark:bg-zinc-800/80 border-zinc-300 dark:border-zinc-700' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
       }`}
     >
-      <span className={`text-[15px] font-medium transition-colors ${done ? 'text-zinc-400' : 'text-zinc-100'}`}>
+      <span className={`text-[15px] font-medium transition-colors ${done ? 'text-zinc-600 dark:text-zinc-400' : 'text-zinc-800 dark:text-zinc-100'}`}>
         {name}
       </span>
 
       <div className="flex items-center">
         {done ? (
-          <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-green-400">
+          <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-green-400">
             <Check className="w-5 h-5" />
           </div>
         ) : isRunning ? (
@@ -77,7 +77,7 @@ export function ExerciseTimerRow({
         ) : (
           <button 
             onClick={onStart}
-            className="px-4 py-2 text-xs font-bold tracking-widest uppercase bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md transition-colors"
+            className="px-4 py-2 text-xs font-bold tracking-widest uppercase bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md transition-colors"
           >
             Start
           </button>

@@ -15,8 +15,8 @@ export function StartWorkoutButton() {
         onClick={() => router.push(rest ? '/dashboard' : '/workout/posture')}
         className={`w-full py-5 rounded-xl border font-bold tracking-widest uppercase text-sm transition-all duration-300 active:scale-95
           ${rest 
-            ? 'bg-zinc-900 border-zinc-800 text-zinc-500 cursor-not-allowed' 
-            : 'bg-zinc-800 border-zinc-600 text-zinc-100 hover:scale-[1.02] hover:border-zinc-400 hover:bg-zinc-700 shadow-lg shadow-black/50'
+            ? 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 cursor-not-allowed' 
+            : 'bg-zinc-200 dark:bg-zinc-800 border-zinc-600 text-zinc-800 dark:text-zinc-100 hover:scale-[1.02] hover:border-zinc-400 hover:bg-zinc-700 shadow-lg shadow-black/50'
           }`}
         disabled={rest}
       >

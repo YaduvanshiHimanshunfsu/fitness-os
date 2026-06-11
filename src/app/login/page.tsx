@@ -43,7 +43,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center p-4 bg-[#0A0A0A] bg-noise relative">
+    <div className="flex min-h-screen w-full items-center justify-center p-4 bg-zinc-50 dark:bg-[#0A0A0A] bg-noise relative">
       {/* Glow effect in background */}
       <div className="absolute w-[400px] h-[400px] rounded-full bg-[#FF6B35]/5 blur-[120px] pointer-events-none" />
 
@@ -53,14 +53,14 @@ export default function LoginPage() {
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className="w-full max-w-md z-10"
       >
-        <Card className="bg-[#111111] border border-[#1F1F1F] shadow-2xl text-[#F5F5F5]">
+        <Card className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1F1F1F] shadow-2xl text-zinc-900 dark:text-[#F5F5F5]">
           <CardHeader className="space-y-1.5 text-center">
             <div className="flex justify-center mb-2">
               <div className="w-12 h-12 rounded-xl bg-[#2A160F] border border-[#FF6B35]/20 flex items-center justify-center">
                 <Dumbbell className="w-6 h-6 text-[#FF6B35]" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-black tracking-widest text-white uppercase">
+            <CardTitle className="text-2xl font-black tracking-widest text-zinc-900 dark:text-white uppercase">
               FITNESS <span className="text-[#FF6B35]">OS</span>
             </CardTitle>
             <CardDescription className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">
@@ -80,7 +80,7 @@ export default function LoginPage() {
               variant="outline"
               disabled={loading}
               onClick={handleGoogleLogin}
-              className="w-full h-12 text-sm font-bold border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50 text-white bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center gap-3"
+              className="w-full h-12 text-sm font-bold border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800/50 text-zinc-900 dark:text-white bg-white dark:bg-zinc-900 transition-colors cursor-pointer flex items-center justify-center gap-3"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -93,16 +93,16 @@ export default function LoginPage() {
 
             <div className="relative my-4 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-[#1F1F1F]" />
+                <span className="w-full border-t border-zinc-200 dark:border-[#1F1F1F]" />
               </div>
-              <span className="relative bg-[#111111] px-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <span className="relative bg-white dark:bg-[#111111] px-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                 Or Use Email
               </span>
             </div>
 
             <form action={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-zinc-400" htmlFor="email">
+                <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400" htmlFor="email">
                   Email Address
                 </label>
                 <input
@@ -111,12 +111,12 @@ export default function LoginPage() {
                   placeholder="name@example.com"
                   required
                   type="email"
-                  className="flex h-12 w-full rounded-lg border border-[#1F1F1F] bg-zinc-950 px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-[#FF6B35]/50 font-mono transition-colors"
+                  className="flex h-12 w-full rounded-lg border border-zinc-200 dark:border-[#1F1F1F] bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-700 focus:outline-none focus:border-[#FF6B35]/50 font-mono transition-colors"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-zinc-400" htmlFor="password">
+                <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400" htmlFor="password">
                   Password
                 </label>
                 <input
@@ -125,7 +125,7 @@ export default function LoginPage() {
                   required
                   placeholder="••••••••"
                   type="password"
-                  className="flex h-12 w-full rounded-lg border border-[#1F1F1F] bg-zinc-950 px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-[#FF6B35]/50 font-mono transition-colors"
+                  className="flex h-12 w-full rounded-lg border border-zinc-200 dark:border-[#1F1F1F] bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-700 focus:outline-none focus:border-[#FF6B35]/50 font-mono transition-colors"
                 />
               </div>
               
@@ -134,7 +134,7 @@ export default function LoginPage() {
                   type="submit" 
                   disabled={loading}
                   onClick={() => setIsLoginMode(true)}
-                  className="w-full h-12 text-xs font-bold tracking-widest uppercase bg-[#FF6B35] hover:bg-[#FF8C61] text-white shadow-[0_0_20px_rgba(255,107,53,0.15)] transition-transform active:scale-95 cursor-pointer"
+                  className="w-full h-12 text-xs font-bold tracking-widest uppercase bg-[#FF6B35] hover:bg-[#FF8C61] text-zinc-900 dark:text-white shadow-[0_0_20px_rgba(255,107,53,0.15)] transition-transform active:scale-95 cursor-pointer"
                 >
                   {loading && isLoginMode ? 'VERIFYING...' : 'SIGN IN'}
                 </Button>
@@ -142,9 +142,9 @@ export default function LoginPage() {
 
               <div className="relative my-6 flex items-center justify-center">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-[#1F1F1F]" />
+                  <span className="w-full border-t border-zinc-200 dark:border-[#1F1F1F]" />
                 </div>
-                <span className="relative bg-[#111111] px-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="relative bg-white dark:bg-[#111111] px-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                   New Athlete?
                 </span>
               </div>
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 variant="outline" 
                 disabled={loading}
                 onClick={() => setIsLoginMode(false)}
-                className="w-full h-12 text-xs font-bold tracking-widest uppercase border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white bg-zinc-950 transition-colors cursor-pointer"
+                className="w-full h-12 text-xs font-bold tracking-widest uppercase border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-950 transition-colors cursor-pointer"
               >
                 {loading && !isLoginMode ? 'CREATING...' : 'CREATE AN ACCOUNT'}
               </Button>

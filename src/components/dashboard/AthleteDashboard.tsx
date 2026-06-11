@@ -3,15 +3,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronRight, Flame, CheckCircle2, Zap, Coffee, Play } from 'lucide-react';
+import { ChevronRight, Flame, CheckCircle2, Zap, Coffee, Play, BatteryCharging, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { useWorkoutStore } from '@/hooks/useWorkout';
 import { EXERCISES } from '@/constants/exercises';
+import { WorkoutHeatmap } from '@/components/heatmap/WorkoutHeatmap';
+import type { HeatmapDay } from '@/services/analytics-service';
 
 export interface AthleteDashboardProps {
   userName:      string;
   currentStreak: number;
   levelName:     string;
+  heatmap:       HeatmapDay[];
 }
 
 /** Slot-machine style count-up for numeric stats */
@@ -36,6 +39,7 @@ export default function AthleteDashboard({
   userName,
   currentStreak,
   levelName,
+  heatmap,
 }: AthleteDashboardProps) {
   const router = useRouter();
   const { startSession } = useWorkoutStore();
@@ -94,7 +98,7 @@ export default function AthleteDashboard({
   };
 
   return (
-    <div className="w-full text-white font-sans pb-12 relative">
+    <div className="w-full text-zinc-900 dark:text-white font-sans pb-12 relative">
       {/* Ambient glows */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FF4500]/15 blur-[140px] pointer-events-none will-change-transform" />
       <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#10B981]/8 blur-[140px] pointer-events-none will-change-transform" />
@@ -112,13 +116,13 @@ export default function AthleteDashboard({
             className="flex flex-col md:flex-row gap-6 justify-between items-start"
           >
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white tracking-tight leading-tight">
                 Welcome{' '}
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4500] to-[#FF8C61]">
                   {userName}
                 </span>
               </h1>
-              <p className="text-zinc-400 font-medium text-sm mt-2">
+              <p className="text-zinc-600 dark:text-zinc-400 font-medium text-sm mt-2">
                 {mounted
                   ? isRest
                     ? 'Take it easy today. Recovery is key.'
@@ -141,8 +145,8 @@ export default function AthleteDashboard({
                   <Flame className="w-6 h-6 text-[#FF4500]" fill="currentColor" />
                 </div>
                 <div>
-                  <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Current Streak</div>
-                  <div className="text-xl font-black text-white leading-none mt-1">
+                  <div className="text-[9px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Current Streak</div>
+                  <div className="text-xl font-black text-zinc-900 dark:text-white leading-none mt-1">
                     <RollingCounter value={currentStreak} suffix=" Days" />
                   </div>
                 </div>
@@ -166,13 +170,13 @@ export default function AthleteDashboard({
                     <div className="w-2 h-2 rounded-full bg-[#FF4500] animate-pulse" />
                     <span className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest">Today's Mission</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
                     {workoutName}
                   </h2>
                   {muscles.length > 0 && !isRest && (
                     <div className="flex flex-wrap gap-2 mt-4">
                       {muscles.map((m) => (
-                        <span key={m} className="px-3 py-1 bg-white/10 border border-white/10 text-white text-[11px] font-bold rounded-md capitalize">
+                        <span key={m} className="px-3 py-1 bg-white/10 border border-white/10 text-zinc-900 dark:text-white text-[11px] font-bold rounded-md capitalize">
                           {m}
                         </span>
                       ))}
@@ -186,7 +190,7 @@ export default function AthleteDashboard({
                     whileTap={{ scale: 0.97 }}
                     onClick={handleStartMission}
                     disabled={!mounted}
-                    className="w-full md:w-auto px-8 py-5 bg-gradient-to-r from-[#FF4500] to-[#E03C00] text-white rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full md:w-auto px-8 py-5 bg-gradient-to-r from-[#FF4500] to-[#E03C00] text-zinc-900 dark:text-white rounded-xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Play className="w-4 h-4" fill="currentColor" />
                     Start Mission
@@ -204,7 +208,7 @@ export default function AthleteDashboard({
                   { label: 'Kcal Burn',    value: estimatedCalories,     suffix: '' },
                 ].map((stat, i) => (
                   <div key={i}>
-                    <div className="text-2xl sm:text-3xl font-black text-white">
+                    <div className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white">
                       {mounted ? <RollingCounter value={stat.value} suffix={stat.suffix} /> : '—'}
                     </div>
                     <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{stat.label}</div>
@@ -221,7 +225,7 @@ export default function AthleteDashboard({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.4, ease: 'easeOut' }}
             >
-              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
                 <div className="w-1 h-4 bg-[#FF4500] rounded-full" />
                 Execution Protocol
               </h3>
@@ -235,11 +239,11 @@ export default function AthleteDashboard({
                     className="flex items-center justify-between p-4 sm:p-5 border-b border-white/5 last:border-b-0 hover:bg-white/10 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white group-hover:bg-[#FF4500] group-hover:border-[#FF4500] transition-colors shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-zinc-900 dark:text-white group-hover:bg-[#FF4500] group-hover:border-[#FF4500] transition-colors shrink-0">
                         {idx + 1}
                       </div>
                       <div>
-                        <div className="font-bold text-white text-sm sm:text-base">{ex.name}</div>
+                        <div className="font-bold text-zinc-900 dark:text-white text-sm sm:text-base">{ex.name}</div>
                         <div className="text-[11px] font-bold text-zinc-500 mt-0.5 uppercase tracking-widest">
                           {ex.muscleGroup}
                           <span className="text-[#FF4500] mx-1">•</span>
@@ -249,7 +253,7 @@ export default function AthleteDashboard({
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-900 dark:text-white transition-colors" />
                   </motion.div>
                 ))}
               </div>
@@ -267,8 +271,8 @@ export default function AthleteDashboard({
               <div className="w-16 h-16 rounded-full bg-[#10B981]/20 border border-[#10B981]/30 flex items-center justify-center">
                 <Coffee className="w-8 h-8 text-[#10B981]" />
               </div>
-              <h2 className="text-2xl font-black text-white">Rest Day</h2>
-              <p className="text-zinc-400 font-medium max-w-sm">
+              <h2 className="text-2xl font-black text-zinc-900 dark:text-white">Rest Day</h2>
+              <p className="text-zinc-600 dark:text-zinc-400 font-medium max-w-sm">
                 Recovery is where the gains happen. Hydrate, sleep, and come back stronger tomorrow.
               </p>
             </motion.div>
@@ -287,12 +291,12 @@ export default function AthleteDashboard({
           >
             <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">XP Level Progress</div>
             <div className="flex justify-between items-end mb-4">
-              <div className="text-2xl font-black text-white">{levelName}</div>
+              <div className="text-2xl font-black text-zinc-900 dark:text-white">{levelName}</div>
               <div className="text-[11px] font-bold text-[#FF4500] uppercase tracking-widest flex items-center gap-1">
                 <Zap className="w-3 h-3" /> Active
               </div>
             </div>
-            <div className="w-full h-3 bg-zinc-900 rounded-full overflow-hidden border border-white/10">
+            <div className="w-full h-3 bg-white dark:bg-zinc-900 rounded-full overflow-hidden border border-white/10">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: '65%' }}
@@ -310,28 +314,80 @@ export default function AthleteDashboard({
             transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
             className="bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl"
           >
-            <h3 className="text-sm font-black text-white mb-5 flex items-center gap-2 uppercase tracking-widest">
+            <h3 className="text-sm font-black text-zinc-900 dark:text-white mb-5 flex items-center gap-2 uppercase tracking-widest">
               <span className="text-[#FF4500]"><CheckCircle2 className="w-4 h-4" /></span>
               Quick Stats
             </h3>
             <div className="space-y-4">
               {[
-                { label: 'This Week',    value: '4 sessions',              color: 'bg-[#FF4500]' },
-                { label: 'Avg Duration', value: `${estimatedMinutes || '—'}m`, color: 'bg-[#10B981]' },
-                { label: 'Best Streak',  value: `${currentStreak} Days`,    color: 'bg-[#F59E0B]' },
+                { label: 'Workouts',    value: '4 sessions',              color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/20', trend: 'up', trendVal: '12%' },
+                { label: 'Volume',      value: `14,200 kg`,               color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', trend: 'up', trendVal: '5%' },
+                { label: 'Best Streak', value: `${currentStreak} Days`,   color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', trend: 'down', trendVal: '2 days' },
               ].map((stat, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${stat.color}`} />
-                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{stat.label}</span>
+                <div key={i} className={`flex items-center justify-between p-4 rounded-xl border ${stat.bg} ${stat.border} transition-colors`}>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-black uppercase tracking-widest ${stat.color}`}>{stat.label}</span>
+                    </div>
+                    <span className="text-xl font-black text-zinc-900 dark:text-white">{mounted ? stat.value : '—'}</span>
                   </div>
-                  <span className="text-sm font-black text-white">{mounted ? stat.value : '—'}</span>
+                  <div className={`flex flex-col items-end ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                    {stat.trend === 'up' ? <TrendingUp className="w-4 h-4 mb-1" /> : <TrendingDown className="w-4 h-4 mb-1" />}
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{stat.trendVal}</span>
+                  </div>
                 </div>
               ))}
             </div>
           </motion.div>
         </div>
       </main>
+
+      {/* ── BOTTOM ROW: HEATMAP + RECOVERY ─────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 mt-6 px-4 lg:px-0">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4, ease: 'easeOut' }}
+          className="lg:col-span-2"
+        >
+          <WorkoutHeatmap data={heatmap} />
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.4, ease: 'easeOut' }}
+          className="lg:col-span-1 bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl flex flex-col justify-between"
+        >
+          <div>
+            <h3 className="text-sm font-black text-zinc-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-widest">
+              <span className="text-[#10B981]"><BatteryCharging className="w-5 h-5" /></span>
+              Recovery Status
+            </h3>
+            <div className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
+              Based on recent strain
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div className="flex items-end gap-2 mb-2">
+              <span className="text-5xl font-black text-zinc-900 dark:text-white">85%</span>
+              <span className="text-sm font-bold text-[#10B981] mb-1">PRIMED</span>
+            </div>
+            <div className="w-full h-3 bg-white dark:bg-zinc-900 rounded-full overflow-hidden border border-white/10">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: '85%' }}
+                transition={{ duration: 1.5, ease: 'easeOut', delay: 0.5 }}
+                className="h-full bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-full"
+              />
+            </div>
+            <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mt-4 leading-relaxed">
+              Your central nervous system is recovered. Ideal day to push intensity or go for PRs.
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

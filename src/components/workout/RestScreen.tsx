@@ -40,9 +40,9 @@ export function RestScreen({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950/90 backdrop-blur-sm p-6"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950/90 backdrop-blur-sm p-6"
     >
-      <h2 className="text-3xl font-bold tracking-widest uppercase text-white mb-12">REST</h2>
+      <h2 className="text-3xl font-bold tracking-widest uppercase text-zinc-900 dark:text-white mb-12">REST</h2>
 
       <div className="relative w-32 h-32 flex items-center justify-center mb-12">
         <svg className="w-32 h-32 transform -rotate-90">
@@ -58,21 +58,21 @@ export function RestScreen({
             strokeLinecap="round"
           />
         </svg>
-        <span className="absolute text-4xl font-bold text-white">{timeLeft}</span>
+        <span className="absolute text-4xl font-bold text-zinc-900 dark:text-white">{timeLeft}</span>
       </div>
 
       <div className="text-center mb-16">
         <span className="text-sm font-medium text-zinc-500 uppercase tracking-widest mb-2 block">
           Next up:
         </span>
-        <span className="text-xl font-bold text-white">
+        <span className="text-xl font-bold text-zinc-900 dark:text-white">
           {nextLabel}
         </span>
       </div>
 
       <button 
         onClick={onSkip}
-        className="text-sm font-bold tracking-widest uppercase text-zinc-400 hover:text-white transition-colors"
+        className="text-sm font-bold tracking-widest uppercase text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white transition-colors"
       >
         SKIP →
       </button>

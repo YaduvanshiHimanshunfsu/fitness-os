@@ -153,7 +153,7 @@ export function WireframeRoutine({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       // Use grid/flex appropriately to prevent pushing layout below fold
-      className="min-h-[calc(100vh-6rem)] bg-[#0A0A0A] flex flex-col items-center justify-center py-6 px-4 font-sans text-white relative overflow-hidden"
+      className="min-h-[calc(100vh-6rem)] bg-zinc-50 dark:bg-[#0A0A0A] flex flex-col items-center justify-center py-6 px-4 font-sans text-zinc-900 dark:text-white relative overflow-hidden"
     >
       {/* Background Ambient Glows */}
       <div className="fixed top-[10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#10B981]/10 blur-[150px] pointer-events-none" />
@@ -161,10 +161,10 @@ export function WireframeRoutine({
 
       {/* Top Breadcrumb/Nav */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-8 relative z-10">
-        <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+        <div className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
           {title} <span className="text-[#FF4500] mx-2">•</span> {currentIndex + 1}/{exercises.length}
         </div>
-        <button onClick={() => router.push(nextRoute)} className="text-[10px] font-bold text-zinc-500 uppercase hover:text-white transition-colors tracking-widest">
+        <button onClick={() => router.push(nextRoute)} className="text-[10px] font-bold text-zinc-500 uppercase hover:text-zinc-900 dark:text-white transition-colors tracking-widest">
           Skip Routine
         </button>
       </div>
@@ -176,7 +176,7 @@ export function WireframeRoutine({
             className="w-full max-w-5xl bg-white/5 backdrop-blur-2xl rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/10 relative z-10"
           >
             {/* LEFT: Phone Frame Image - Fixed to Object Contain */}
-            <div className="w-full md:w-1/2 bg-[#0A0A0A]/50 flex items-center justify-center border-r border-white/10 relative overflow-hidden p-8">
+            <div className="w-full md:w-1/2 bg-zinc-50 dark:bg-[#0A0A0A]/50 flex items-center justify-center border-r border-white/10 relative overflow-hidden p-8">
               <div className="absolute inset-0 bg-gradient-to-tr from-[#FF4500]/5 to-transparent pointer-events-none z-0" />
 
               <motion.img 
@@ -198,10 +198,10 @@ export function WireframeRoutine({
                 transition={{ delay: 0.1 }}
                 className="mb-8"
               >
-                <h1 className="text-3xl font-black uppercase tracking-tight text-white leading-tight">
+                <h1 className="text-3xl font-black uppercase tracking-tight text-zinc-900 dark:text-white leading-tight">
                   {currentExercise.name}
                 </h1>
-                <p className="text-zinc-400 font-medium text-sm mt-2 max-w-md">
+                <p className="text-zinc-600 dark:text-zinc-400 font-medium text-sm mt-2 max-w-md">
                   Focus on form and slow, controlled movements. Quality over quantity.
                 </p>
               </motion.div>
@@ -213,7 +213,7 @@ export function WireframeRoutine({
                 className="bg-white/5 backdrop-blur-md rounded-2xl p-6 mb-8 border border-white/10 shadow-inner"
               >
                 <div className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-1">Current Set Goal</div>
-                <div className="text-2xl font-black text-white tracking-tight">
+                <div className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
                   {currentExercise.sets} SETS <span className="text-[#FF4500] mx-2">•</span> {currentExercise.reps || '15'} REPS
                 </div>
               </motion.div>
@@ -234,9 +234,9 @@ export function WireframeRoutine({
                         : 'bg-white/10 border-white/20 hover:border-[#FF4500] hover:bg-white/20'
                     }`}
                   >
-                    <span className="font-bold text-xs uppercase tracking-wider text-white">Set {idx + 1}</span>
+                    <span className="font-bold text-xs uppercase tracking-wider text-zinc-900 dark:text-white">Set {idx + 1}</span>
                     <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${
-                      isCompleted ? 'bg-[#10B981] text-white' : 'bg-black/50 text-zinc-500 border border-white/20'
+                      isCompleted ? 'bg-[#10B981] text-zinc-900 dark:text-white' : 'bg-black/50 text-zinc-500 border border-white/20'
                     }`}>
                       {isCompleted ? <CheckCircle2 className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-sm bg-zinc-600" />}
                     </div>
@@ -263,8 +263,8 @@ export function WireframeRoutine({
               <Timer className="w-10 h-10 text-[#FF4500]" />
             </motion.div>
             
-            <h2 className="text-3xl font-black uppercase text-white tracking-tight">Active Rest</h2>
-            <p className="text-zinc-400 font-medium mt-2 mb-10 max-w-sm">
+            <h2 className="text-3xl font-black uppercase text-zinc-900 dark:text-white tracking-tight">Active Rest</h2>
+            <p className="text-zinc-600 dark:text-zinc-400 font-medium mt-2 mb-10 max-w-sm">
               Take a moment to reset your posture before the next exercise.
             </p>
 
@@ -272,20 +272,20 @@ export function WireframeRoutine({
               key={restTimeLeft}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-[120px] font-black text-white tracking-tighter leading-none mb-10 drop-shadow-2xl"
+              className="text-[120px] font-black text-zinc-900 dark:text-white tracking-tighter leading-none mb-10 drop-shadow-2xl"
             >
               {restTimeLeft}
             </motion.div>
 
             <div className="flex flex-col items-center gap-4 w-full max-w-sm">
               <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Up Next</div>
-              <div className="bg-white/10 backdrop-blur-md w-full p-4 rounded-xl border border-white/20 font-bold text-white">
+              <div className="bg-white/10 backdrop-blur-md w-full p-4 rounded-xl border border-white/20 font-bold text-zinc-900 dark:text-white">
                 {exercises[currentIndex + 1]?.name || 'Routine Finished'}
               </div>
               
               <button
                 onClick={handleSkipRest}
-                className="w-full mt-4 py-4 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-colors"
+                className="w-full mt-4 py-4 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-700 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-colors"
               >
                 Skip Rest <ChevronRight className="w-4 h-4" />
               </button>

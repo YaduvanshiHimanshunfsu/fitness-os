@@ -18,8 +18,8 @@ export default function SessionPage() {
   if (todayExercises.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full pt-20">
-        <p className="text-zinc-400 mb-4">No exercises found for today.</p>
-        <button onClick={() => router.push('/dashboard')} className="text-zinc-100 underline">
+        <p className="text-zinc-600 dark:text-zinc-400 mb-4">No exercises found for today.</p>
+        <button onClick={() => router.push('/dashboard')} className="text-zinc-800 dark:text-zinc-100 underline">
           Return to Dashboard
         </button>
       </div>
@@ -29,7 +29,7 @@ export default function SessionPage() {
   return (
     <div className="flex flex-col h-full relative">
       <div className="flex items-center mb-6">
-        <button onClick={() => router.push('/workout/warmup')} className="p-2 -ml-2 text-zinc-400 hover:text-white">
+        <button onClick={() => router.push('/workout/warmup')} className="p-2 -ml-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="mx-auto text-xs font-bold tracking-widest text-zinc-500 uppercase">

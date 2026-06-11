@@ -25,10 +25,10 @@ export function StreakCounter({ currentStreak, bestStreak }: { currentStreak: nu
   if (currentStreak >= 30) iconColor = 'text-orange-500'
 
   return (
-    <div className="flex flex-col items-center p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+    <div className="flex flex-col items-center p-4 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
       <div className="flex items-center gap-2 mb-1">
         <Flame className={`w-6 h-6 ${iconColor}`} />
-        <span className="text-3xl font-bold text-white">{displayStreak}</span>
+        <span className="text-3xl font-bold text-zinc-900 dark:text-white">{displayStreak}</span>
       </div>
       <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Day Streak</span>
       <span className="text-[10px] text-zinc-600 mt-2">Best: {bestStreak}</span>
