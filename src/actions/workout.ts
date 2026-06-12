@@ -93,7 +93,10 @@ export async function saveWorkoutSession(payload: {
       .select()
       .single()
 
-    if (weError || !we) continue
+    if (weError || !we) {
+      console.error('Failed to insert workout_exercise:', weError, exerciseId);
+      continue;
+    }
 
     const { error: setsError } = await (supabase.from('workout_sets_v5') as any).insert(
       sets.map(s => ({
@@ -106,6 +109,7 @@ export async function saveWorkoutSession(payload: {
     )
 
     if (setsError) {
+      console.error('Failed to insert workout sets:', setsError);
       throw new Error(setsError.message || 'Failed to save workout sets')
     }
   }
