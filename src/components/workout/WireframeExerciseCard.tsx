@@ -32,6 +32,15 @@ export function WireframeExerciseCard({
   const [unit, setUnit] = React.useState<'kg'|'lbs'>('kg');
   const [isZoomed, setIsZoomed] = React.useState(false);
 
+  const completedCount = completedSets.filter(Boolean).length;
+  const progressPercent = Math.round((currentIndex / Math.max(1, totalExercises)) * 100);
+  const isMinSetsMet = completedCount >= Math.min(2, exercise.sets);
+  const isAllSetsMet = completedCount === exercise.sets;
+  
+  // Dummy stats for wireframe presentation
+  const duration = 45;
+  const caloriesBurned = 320;
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-900 dark:text-white flex flex-col font-sans">
       <div className="flex-1 flex flex-col lg:flex-row">
