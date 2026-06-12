@@ -27,6 +27,8 @@ interface WorkoutStore {
   startTime:          Date | null
   completedSets:      CompletedSet[]
   skippedItems:       SkippedItem[]
+  activeExerciseIndex: number
+  sessionPhase:       'exercise' | 'rest' | 'rest_exercise'
   currentPhase:       WorkoutPhase
   completionScore:    number
   xpEarned:           number
@@ -42,6 +44,9 @@ interface WorkoutStore {
   startSession:       (day: string, estimatedMinutes: number, exercises: Exercise[]) => void
   addSet:             (set: CompletedSet) => void
   addSkipped:         (item: SkippedItem) => void
+  setActiveExerciseIndex: (index: number) => void
+  setSessionPhase:    (phase: 'exercise' | 'rest' | 'rest_exercise') => void
+  restartSession:     () => void
   setPhase:           (phase: WorkoutPhase) => void
   finishSession:      (score: number) => void
   startRestTimer:     (seconds?: number) => void
@@ -60,6 +65,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
       startTime:          null,
       completedSets:      [],
       skippedItems:       [],
+      activeExerciseIndex: 0,
+      sessionPhase:       'exercise',
       currentPhase:       'posture',
       completionScore:    0,
       xpEarned:           0,
@@ -78,6 +85,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
           sessionId:        crypto.randomUUID(),
           completedSets:    [],
           skippedItems:     [],
+          activeExerciseIndex: 0,
+          sessionPhase:     'exercise',
           completionScore:  0,
           estimatedMinutes,
           todayExercises:   exercises,
@@ -91,6 +100,26 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       addSkipped: (item) =>
         set((state) => ({ skippedItems: [...state.skippedItems, item] })),
+
+      setActiveExerciseIndex: (index) => set({ activeExerciseIndex: Math.max(0, index) }),
+
+      setSessionPhase: (phase) => set({ sessionPhase: phase }),
+
+      restartSession: () =>
+        set((state) => ({
+          sessionId: crypto.randomUUID(),
+          startTime: new Date(),
+          completedSets: [],
+          skippedItems: [],
+          activeExerciseIndex: 0,
+          sessionPhase: 'exercise',
+          completionScore: 0,
+          restTimerEnd: null,
+          isSessionActive: true,
+          day: state.day,
+          estimatedMinutes: state.estimatedMinutes,
+          todayExercises: state.todayExercises,
+        })),
 
       setPhase: (p) => set({ currentPhase: p }),
 
@@ -122,6 +151,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
           startTime:          null,
           completedSets:      [],
           skippedItems:       [],
+          activeExerciseIndex: 0,
+          sessionPhase:       'exercise',
           completionScore:    0,
           estimatedMinutes:   0,
           todayExercises:     [],

@@ -254,6 +254,7 @@ export async function getStreakData(userId: string): Promise<StreakData> {
     .from('workout_sets_v5') as any)
     .select('actual_reps')
     .eq('completed', true)
+    .eq('workout_exercises_v5.workouts_v5.profile_id', userId)
 
   const sumReps = (totalReps.data ?? []).reduce((acc: number, r: any) => acc + (r.actual_reps ?? 0), 0)
 

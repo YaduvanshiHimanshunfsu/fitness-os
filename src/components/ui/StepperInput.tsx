@@ -18,16 +18,18 @@ export function StepperInput({ value, onChange, min = 0, max = 999, step = 1, la
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const intervalTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const numericValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+
   const increment = useCallback((dir: number) => {
-    onChange(Math.min(max, Math.max(min, value + dir * step)));
-  }, [value, min, max, step, onChange]);
+    onChange(Math.min(max, Math.max(min, numericValue + dir * step)));
+  }, [numericValue, min, max, step, onChange]);
 
   const handlePointerDown = (dir: number) => {
     increment(dir);
     setIsPressing(dir);
     pressTimer.current = setTimeout(() => {
       intervalTimer.current = setInterval(() => {
-        onChange(curr => Math.min(max, Math.max(min, curr + dir * step)));
+        increment(dir);
       }, 80); // Fast increment
     }, 500); // Wait 500ms before auto-incrementing
   };
@@ -47,6 +49,7 @@ export function StepperInput({ value, onChange, min = 0, max = 999, step = 1, la
       {label && <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{label}</span>}
       <div className="flex items-center justify-between bg-[#161616] border border-zinc-200 dark:border-zinc-800 rounded-xl p-2 select-none h-[60px]">
         <motion.button
+          type="button"
           whileTap={{ scale: 0.9 }}
           onPointerDown={() => handlePointerDown(-1)}
           onPointerUp={handlePointerUp}
@@ -58,11 +61,14 @@ export function StepperInput({ value, onChange, min = 0, max = 999, step = 1, la
         </motion.button>
         
         <div className="flex-1 flex flex-col items-center justify-center">
-          <span className="text-xl font-black text-zinc-900 dark:text-white leading-none">{Number.isInteger(value) ? value : value.toFixed(1)}</span>
+          <span className="text-xl font-black text-zinc-900 dark:text-white leading-none">
+            {Number.isInteger(numericValue) ? numericValue : numericValue.toFixed(1)}
+          </span>
           {unit && <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{unit}</span>}
         </div>
 
         <motion.button
+          type="button"
           whileTap={{ scale: 0.9 }}
           onPointerDown={() => handlePointerDown(1)}
           onPointerUp={handlePointerUp}

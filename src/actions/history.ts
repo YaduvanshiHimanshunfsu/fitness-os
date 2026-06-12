@@ -72,7 +72,6 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
   let totalVolumeKg = 0
 
   for (const we of w.workout_exercises_v5 || []) {
-    totalSets += we.sets_skipped // add skipped
     for (const ws of we.workout_sets_v5 || []) {
       totalSets++
       if (ws.completed) {

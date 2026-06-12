@@ -24,12 +24,10 @@ export function WireframeExerciseCard({
   onSkipExercise: () => void
 }) {
   const [currentReps, setCurrentReps] = React.useState<number[]>(
-    Array(exercise.sets).fill(parseInt(exercise.reps.split('-')[0] || '10'))
+    Array(exercise.sets).fill(
+      parseInt(typeof exercise.reps === 'string' ? exercise.reps.split('-')[0] : String(exercise.reps || '10')) || 10
+    )
   );
-  const [currentWeight, setCurrentWeight] = React.useState<number[]>(
-    Array(exercise.sets).fill(0) // Default weight 0
-  );
-  const [unit, setUnit] = React.useState<'kg'|'lbs'>('kg');
   const [isZoomed, setIsZoomed] = React.useState(false);
 
   const completedCount = completedSets.filter(Boolean).length;
@@ -116,23 +114,6 @@ export function WireframeExerciseCard({
             </button>
           </div>
 
-          <div className="flex items-center justify-end mb-4">
-            <div className="flex bg-[#161616] p-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
-              <button 
-                onClick={() => setUnit('kg')}
-                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-colors ${unit === 'kg' ? 'bg-[#FF4500] text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-300'}`}
-              >
-                KG
-              </button>
-              <button 
-                onClick={() => setUnit('lbs')}
-                className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-colors ${unit === 'lbs' ? 'bg-[#FF4500] text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-300'}`}
-              >
-                LBS
-              </button>
-            </div>
-          </div>
-
           {/* Sets Sequence List - Detailed List Format */}
           <div className="flex flex-col gap-4 w-full max-w-lg mb-8">
             {completedSets.map((isCompleted, idx) => {
@@ -171,21 +152,9 @@ export function WireframeExerciseCard({
                           min={0} max={100} step={1} 
                         />
                       </div>
-                      <div className="flex-1">
-                        <StepperInput 
-                          label="Weight" 
-                          value={currentWeight[idx]} 
-                          onChange={(val) => {
-                            const n = [...currentWeight];
-                            n[idx] = val;
-                            setCurrentWeight(n);
-                          }} 
-                          min={0} max={999} step={2.5} 
-                          unit={unit}
-                        />
-                      </div>
                       <button
-                        onClick={() => onSetComplete(idx, currentReps[idx], currentWeight[idx], unit)}
+                        type="button"
+                        onClick={() => onSetComplete(idx, currentReps[idx], 0, 'kg')}
                         className="h-[60px] mt-auto sm:w-16 flex items-center justify-center bg-[#FF4500] hover:bg-[#FF5A1F] text-zinc-900 dark:text-white rounded-xl shadow-[0_0_15px_rgba(255,69,0,0.4)] transition-all"
                       >
                         ✓
@@ -195,7 +164,6 @@ export function WireframeExerciseCard({
                     <div className="flex-1 flex items-center justify-between pl-4">
                       {isCompleted ? (
                         <div className="flex gap-6">
-                          <span className="text-zinc-900 dark:text-white font-bold">{currentWeight[idx]} <span className="text-[10px] text-zinc-500 uppercase">{unit}</span></span>
                           <span className="text-zinc-900 dark:text-white font-bold">{currentReps[idx]} <span className="text-[10px] text-zinc-500 uppercase">Reps</span></span>
                         </div>
                       ) : (

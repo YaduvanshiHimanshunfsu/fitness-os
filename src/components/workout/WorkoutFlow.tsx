@@ -9,14 +9,41 @@ import { WireframeRestScreen } from '@/components/workout/WireframeRestScreen'
 
 export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const router = useRouter()
-  const { addSet, setPhase, startRestTimer, clearRestTimer, restTimerEnd } = useWorkoutStore()
+  const {
+    addSet,
+    setPhase,
+    startRestTimer,
+    clearRestTimer,
+    restTimerEnd,
+    activeExerciseIndex,
+    sessionPhase,
+    setActiveExerciseIndex,
+    setSessionPhase,
+    restartSession,
+  } = useWorkoutStore()
   
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(activeExerciseIndex)
   const [completedSets, setCompletedSets] = useState<Record<number, boolean[]>>({})
-  const [phase, setLocalPhase] = useState<'exercise' | 'rest' | 'rest_exercise'>('exercise')
+  const [phase, setLocalPhase] = useState<'exercise' | 'rest' | 'rest_exercise'>(sessionPhase)
 
   const currentExercise = exercises[currentIndex]
   const currentCompleted = completedSets[currentExercise.id] || Array(currentExercise.sets).fill(false)
+
+  useEffect(() => {
+    setActiveExerciseIndex(currentIndex)
+  }, [currentIndex, setActiveExerciseIndex])
+
+  useEffect(() => {
+    setSessionPhase(phase)
+  }, [phase, setSessionPhase])
+
+  const handleRestartWorkout = () => {
+    restartSession()
+    setCurrentIndex(0)
+    setLocalPhase('exercise')
+    setCompletedSets({})
+    clearRestTimer()
+  }
 
   // Wait for the global rest timer to finish if we are in a rest phase
   useEffect(() => {
@@ -29,7 +56,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [phase, restTimerEnd]);
+  }, [phase, restTimerEnd, clearRestTimer]);
 
   const handleSetComplete = (setIndex: number, reps: number, weight: number, unit: string) => {
     if (currentCompleted[setIndex]) return 
@@ -99,7 +126,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const handleRestComplete = () => {
     clearRestTimer();
     if (phase === 'rest_exercise') {
-      setCurrentIndex(prev => prev + 1)
+      setCurrentIndex(prev => Math.min(prev + 1, exercises.length - 1))
     }
     setLocalPhase('exercise')
   }
@@ -122,26 +149,39 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   }, [restTimerEnd]);
 
   return (
-    <AnimatePresence mode="wait">
-      {phase === 'exercise' ? (
-        <WireframeExerciseCard 
-          key={currentExercise.id}
-          exercise={currentExercise}
-          currentIndex={currentIndex}
-          totalExercises={exercises.length}
-          completedSets={currentCompleted}
-          onSetComplete={handleSetComplete}
-          onFinishExercise={handleFinishExercise}
-          onSkipExercise={handleSkipExercise}
-        />
-      ) : (
-        <WireframeRestScreen 
-          key="rest"
-          timeLeft={displayTimeLeft}
-          nextExerciseName={nextExerciseName}
-          onSkip={handleRestComplete}
-        />
-      )}
-    </AnimatePresence>
+    <div className="space-y-4">
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={handleRestartWorkout}
+          className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:text-white transition-colors"
+        >
+          Restart Workout
+        </button>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {phase === 'exercise' ? (
+          <WireframeExerciseCard 
+            key={currentExercise.id}
+            exercise={currentExercise}
+            currentIndex={currentIndex}
+            totalExercises={exercises.length}
+            completedSets={currentCompleted}
+            onSetComplete={handleSetComplete}
+            onFinishExercise={handleFinishExercise}
+            onSkipExercise={handleSkipExercise}
+          />
+        ) : (
+          <WireframeRestScreen 
+            key="rest"
+            timeLeft={displayTimeLeft}
+            nextExerciseName={nextExerciseName}
+            onSkip={handleRestComplete}
+            onResume={() => setLocalPhase('exercise')}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   )
 }

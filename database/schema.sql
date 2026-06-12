@@ -98,13 +98,15 @@ create table if not exists user_achievements (
 
 -- Personal records per user per exercise
 create table if not exists personal_records (
-  id                 serial      primary key,
-  user_id            uuid        not null references profiles(id) on delete cascade,
-  exercise_id        integer     not null references exercises(id) on delete cascade,
-  best_reps          integer     not null default 0,
-  best_time_seconds  integer     not null default 0,
-  lifetime_reps      integer     not null default 0,
-  updated_at         timestamptz not null default now(),
+  id                  serial      primary key,
+  user_id             uuid        not null references profiles(id) on delete cascade,
+  exercise_id         integer     not null references exercises(id) on delete cascade,
+  max_weight          numeric     not null default 0,
+  max_reps            integer     not null default 0,
+  longest_hold_seconds integer     not null default 0,
+  estimated_1rm       numeric     not null default 0,
+  achieved_at         timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
   unique (user_id, exercise_id)
 );
 
@@ -136,6 +138,59 @@ alter table workout_sessions add column if not exists notes text;
 -- workout_sets: ensure actual_reps has correct default
 alter table workout_sets alter column actual_reps set default 0;
 
+-- personal_records: migrate to the current production shape used by the app
+alter table personal_records add column if not exists max_weight numeric not null default 0;
+alter table personal_records add column if not exists max_reps integer not null default 0;
+alter table personal_records add column if not exists longest_hold_seconds integer not null default 0;
+alter table personal_records add column if not exists estimated_1rm numeric not null default 0;
+alter table personal_records add column if not exists achieved_at timestamptz not null default now();
+alter table personal_records add column if not exists updated_at timestamptz not null default now();
+
+-- Body metrics tracking (used by the production UI)
+create table if not exists body_metrics (
+  id                  serial      primary key,
+  user_id             uuid        not null references profiles(id) on delete cascade,
+  weight_kg           numeric     not null,
+  body_fat_percentage numeric,
+  measured_at         timestamptz not null default now(),
+  notes               text,
+  created_at          timestamptz not null default now()
+);
+
+alter table body_metrics add column if not exists notes text;
+alter table body_metrics add column if not exists created_at timestamptz not null default now();
+
+-- Current workout storage used by the app (v5)
+create table if not exists workouts_v5 (
+  id                 uuid        primary key default gen_random_uuid(),
+  profile_id         uuid        not null references profiles(id) on delete cascade,
+  name               text        not null,
+  start_time         timestamptz not null,
+  end_time           timestamptz not null,
+  xp_earned          integer     not null default 0,
+  sets_skipped       integer     not null default 0,
+  exercises_skipped  integer     not null default 0,
+  estimated_calories integer     not null default 0,
+  created_at         timestamptz not null default now()
+);
+
+create table if not exists workout_exercises_v5 (
+  id           uuid    primary key default gen_random_uuid(),
+  workout_id   uuid    not null references workouts_v5(id) on delete cascade,
+  exercise_id  integer not null references exercises(id) on delete cascade,
+  order_index  integer not null,
+  sets_skipped integer not null default 0
+);
+
+create table if not exists workout_sets_v5 (
+  id                  uuid    primary key default gen_random_uuid(),
+  workout_exercise_id uuid    not null references workout_exercises_v5(id) on delete cascade,
+  actual_reps         integer not null,
+  weight_kg           numeric not null default 0,
+  unit                text    not null default 'kg',
+  completed           boolean not null default false
+);
+
 -- Ensure unique constraints exist for ON CONFLICT clauses (fixes ERROR 42P10)
 alter table streaks drop constraint if exists streaks_user_id_key;
 alter table streaks add constraint streaks_user_id_key unique (user_id);
@@ -145,6 +200,9 @@ alter table achievements add constraint achievements_name_key unique (name);
 
 alter table user_achievements drop constraint if exists user_achievements_user_id_achievement_id_key;
 alter table user_achievements add constraint user_achievements_user_id_achievement_id_key unique (user_id, achievement_id);
+
+alter table personal_records drop constraint if exists personal_records_user_id_exercise_id_key;
+alter table personal_records add constraint personal_records_user_id_exercise_id_key unique (user_id, exercise_id);
 
 
 -- ==============================================================================
@@ -191,6 +249,27 @@ create index if not exists idx_personal_records_user_id
 create index if not exists idx_personal_records_exercise_id
   on personal_records(exercise_id);
 
+create index if not exists idx_body_metrics_user_id
+  on body_metrics(user_id, measured_at desc);
+
+create index if not exists idx_workouts_v5_profile_id
+  on workouts_v5(profile_id);
+
+create index if not exists idx_workouts_v5_start_time
+  on workouts_v5(start_time desc);
+
+create index if not exists idx_workout_exercises_v5_workout_id
+  on workout_exercises_v5(workout_id);
+
+create index if not exists idx_workout_exercises_v5_exercise_id
+  on workout_exercises_v5(exercise_id);
+
+create index if not exists idx_workout_sets_v5_workout_exercise_id
+  on workout_sets_v5(workout_exercise_id);
+
+create index if not exists idx_workout_sets_v5_completed
+  on workout_sets_v5(workout_exercise_id, completed) where completed = true;
+
 
 -- ==============================================================================
 -- SECTION 3: ROW LEVEL SECURITY
@@ -202,6 +281,10 @@ alter table workout_sets       enable row level security;
 alter table user_achievements  enable row level security;
 alter table personal_records   enable row level security;
 alter table streaks            enable row level security;
+alter table body_metrics       enable row level security;
+alter table workouts_v5        enable row level security;
+alter table workout_exercises_v5 enable row level security;
+alter table workout_sets_v5    enable row level security;
 
 
 -- ==============================================================================
@@ -238,6 +321,28 @@ create policy "records_all_own" on personal_records for all using (auth.uid() = 
 drop policy if exists "streaks_all_own" on streaks;
 create policy "streaks_all_own" on streaks for all using (auth.uid() = user_id);
 
+-- body metrics
+drop policy if exists "body_metrics_all_own" on body_metrics;
+create policy "body_metrics_all_own" on body_metrics for all using (auth.uid() = user_id);
+
+-- current v5 workout tables used by the app
+drop policy if exists "workouts_v5_all_own" on workouts_v5;
+create policy "workouts_v5_all_own" on workouts_v5 for all using (profile_id = auth.uid());
+
+drop policy if exists "workout_exercises_v5_all_own" on workout_exercises_v5;
+create policy "workout_exercises_v5_all_own" on workout_exercises_v5 for all using (
+  workout_id in (select id from workouts_v5 where profile_id = auth.uid())
+);
+
+drop policy if exists "workout_sets_v5_all_own" on workout_sets_v5;
+create policy "workout_sets_v5_all_own" on workout_sets_v5 for all using (
+  workout_exercise_id in (
+    select id from workout_exercises_v5 where workout_id in (
+      select id from workouts_v5 where profile_id = auth.uid()
+    )
+  )
+);
+
 -- exercises & achievements are public reads
 alter table exercises    enable row level security;
 alter table achievements enable row level security;
@@ -245,6 +350,25 @@ drop policy if exists "exercises_public_read"    on exercises;
 drop policy if exists "achievements_public_read" on achievements;
 create policy "exercises_public_read"    on exercises    for select using (true);
 create policy "achievements_public_read" on achievements for select using (true);
+
+
+-- ============================================================================== 
+-- SECTION 5B: CURRENT ANALYTICS VIEW FOR V5 WORKOUTS
+-- ==============================================================================
+
+drop materialized view if exists mv_weekly_volume_v5;
+create materialized view mv_weekly_volume_v5 as
+select
+  w.profile_id,
+  date_trunc('week', w.start_time) as week_start,
+  count(ws.id) filter (where ws.completed = true) as sets_completed
+from workouts_v5 w
+join workout_exercises_v5 we on w.id = we.workout_id
+join workout_sets_v5 ws on we.id = ws.workout_exercise_id
+group by 1, 2;
+
+grant select on mv_weekly_volume_v5 to authenticated;
+grant select on mv_weekly_volume_v5 to anon;
 
 
 -- ==============================================================================

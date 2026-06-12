@@ -95,7 +95,7 @@ export async function saveWorkoutSession(payload: {
 
     if (weError || !we) continue
 
-    await (supabase.from('workout_sets_v5') as any).insert(
+    const { error: setsError } = await (supabase.from('workout_sets_v5') as any).insert(
       sets.map(s => ({
         workout_exercise_id: we.id,
         actual_reps:  s.actualReps,
@@ -104,6 +104,10 @@ export async function saveWorkoutSession(payload: {
         completed:    s.completed,
       }))
     )
+
+    if (setsError) {
+      throw new Error(setsError.message || 'Failed to save workout sets')
+    }
   }
 
   // 4. Update streak via RPC (if needed, but DB trigger handles profiles.current_streak)
@@ -112,7 +116,10 @@ export async function saveWorkoutSession(payload: {
   const newStreak = profile?.current_streak ?? 0
 
   // 5. XP update (keep rpc call if it exists)
-  await (supabase as any).rpc('increment_xp', { amount: xpEarned })
+  const { error: xpError } = await (supabase as any).rpc('increment_xp', { amount: xpEarned })
+  if (xpError) {
+    throw new Error(xpError.message || 'Failed to update XP')
+  }
 
   // Return info for summary dashboard
   return { sessionId: workout.id, xpEarned, newStreak, newRecordsHit }

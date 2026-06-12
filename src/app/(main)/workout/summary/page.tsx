@@ -98,11 +98,10 @@ export default function SummaryPage() {
     const muscleMap: Record<string, number> = {};
     completedSets.forEach(set => {
       if (set.completed) {
-        // Exercise ID in state often matches the index in planExercises
-        const ex = planExercises[set.exerciseId];
+        const ex = planExercises.find(exercise => exercise.id === set.exerciseId);
         if (ex) {
           const m = ex.muscleGroup.toUpperCase();
-          muscleMap[m] = (muscleMap[m] || 0) + set.reps;
+          muscleMap[m] = (muscleMap[m] || 0) + set.actualReps;
         }
       }
     });

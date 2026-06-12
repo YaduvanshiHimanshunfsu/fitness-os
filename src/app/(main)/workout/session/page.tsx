@@ -1,19 +1,29 @@
 'use client'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { WorkoutFlow } from '@/components/workout/WorkoutFlow'
 import { EXERCISES } from '@/constants/exercises'
 import { useWorkoutStore } from '@/hooks/useWorkout'
 import { getTodayDay } from '@/utils/date-utils'
+import { motion } from 'framer-motion'
 
 export default function SessionPage() {
   const router = useRouter()
   // Ensure we get today's exercises. In a real app, this should be selected based on the user's dashboard interaction.
   // We use useWorkoutStore day or fallback to today.
-  const { day } = useWorkoutStore()
+  const {
+    day,
+    isSessionActive,
+    completedSets,
+    activeExerciseIndex,
+    restartSession,
+  } = useWorkoutStore()
   const currentDay = day || getTodayDay()
   
   const todayExercises = EXERCISES.filter(ex => ex.day === currentDay).sort((a, b) => a.exerciseOrder - b.exerciseOrder)
+  const hasSavedProgress = isSessionActive && (completedSets.length > 0 || activeExerciseIndex > 0)
+  const [showWorkout, setShowWorkout] = useState(!hasSavedProgress)
 
   if (todayExercises.length === 0) {
     return (
@@ -38,7 +48,41 @@ export default function SessionPage() {
         <div className="w-9" />
       </div>
 
-      <WorkoutFlow exercises={todayExercises} />
+      {hasSavedProgress && !showWorkout && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        >
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#FF4500]">Saved progress found</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              Resume from where you left off or restart the workout from the beginning.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowWorkout(true)}
+              className="px-4 py-2 rounded-xl bg-[#FF4500] text-zinc-900 dark:text-white text-xs font-bold uppercase tracking-widest"
+            >
+              Resume
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                restartSession()
+                setShowWorkout(true)
+              }}
+              className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold uppercase tracking-widest"
+            >
+              Restart
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {showWorkout && <WorkoutFlow exercises={todayExercises} />}
     </div>
   )
 }

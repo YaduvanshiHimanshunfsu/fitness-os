@@ -8,11 +8,13 @@ import { useWorkoutStore } from '@/hooks/useWorkout';
 export function WireframeRestScreen({
   timeLeft,
   nextExerciseName,
-  onSkip
+  onSkip,
+  onResume,
 }: {
   timeLeft: number;
   nextExerciseName: string;
   onSkip: () => void;
+  onResume: () => void;
 }) {
   // Determine if it's set rest (15s) or exercise rest (30s)
   const totalRest = timeLeft > 15 ? 30 : 15;
@@ -100,6 +102,13 @@ export function WireframeRestScreen({
           className="w-full py-4 border border-zinc-200 dark:border-[#1F1F1F] hover:border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 hover:bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
         >
           <SkipForward className="w-4 h-4" /> Skip Rest
+        </button>
+
+        <button
+          onClick={onResume}
+          className="mt-3 w-full py-4 border border-[#FF6B35]/30 bg-[#FF6B35]/10 hover:bg-[#FF6B35]/15 text-[#FF6B35] font-bold rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
+        >
+          Resume Exercise
         </button>
       </motion.div>
     </div>

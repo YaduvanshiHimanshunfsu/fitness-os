@@ -103,9 +103,11 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
 
   if (isNewRecord) {
     if (existing) {
-      await (supabase.from('personal_records') as any).update(updates).eq('id', existing.id)
+      const { error } = await (supabase.from('personal_records') as any).update(updates).eq('id', existing.id)
+      if (error) throw error
     } else {
-      await (supabase.from('personal_records') as any).insert(updates)
+      const { error } = await (supabase.from('personal_records') as any).insert(updates)
+      if (error) throw error
     }
   }
 
