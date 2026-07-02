@@ -46,33 +46,66 @@ function LiveWorkoutTimer({ startTime }: { startTime: Date }) {
   );
 }
 
-export default function Topbar() {
-  const [time, setTime]       = useState<string>('');
+function LiveDate() {
   const [dateStr, setDateStr] = useState<string>('');
   const [dayName, setDayName] = useState<string>('');
+  
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const dayOptions: Intl.DateTimeFormatOptions = { weekday: 'long' };
+      setDayName(new Intl.DateTimeFormat('en-US', dayOptions).format(now).toUpperCase());
+      const dateOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
+      setDateStr(new Intl.DateTimeFormat('en-US', dateOptions).format(now));
+    };
+    update();
+    const interval = setInterval(update, 60000); // update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-3 w-1/3 min-w-0">
+      <span className="text-sm font-black tracking-widest text-[#FF6B35] hidden sm:block truncate">
+        {dayName}
+      </span>
+      <span className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
+      <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hidden md:block truncate">
+        {dateStr}
+      </span>
+    </div>
+  );
+}
+
+function LiveTime() {
+  const [time, setTime] = useState<string>('');
+  
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const hrs  = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      setTime(`${hrs}:${mins}:${secs}`);
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="font-mono text-sm font-semibold tracking-wider text-zinc-700 dark:text-zinc-300 min-w-[70px] text-right bg-zinc-50 dark:bg-zinc-950 px-3 py-1 rounded-md border border-zinc-200 dark:border-[#1F1F1F] hidden sm:block">
+      {time}
+    </div>
+  );
+}
+
+export default function Topbar() {
   const [streak, setStreak]   = useState<number>(0);
 
   const { isSidebarCollapsed }            = useUIStore();
   const { isSessionActive, startTime }    = useWorkoutStore();
 
   useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      const hrs  = String(now.getHours()).padStart(2, '0');
-      const mins = String(now.getMinutes()).padStart(2, '0');
-      const secs = String(now.getSeconds()).padStart(2, '0');
-      setTime(`${hrs}:${mins}:${secs}`);
-
-      const dayOptions: Intl.DateTimeFormatOptions = { weekday: 'long' };
-      setDayName(new Intl.DateTimeFormat('en-US', dayOptions).format(now).toUpperCase());
-
-      const dateOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
-      setDateStr(new Intl.DateTimeFormat('en-US', dateOptions).format(now));
-    };
-
-    updateClock();
-    const interval = setInterval(updateClock, 1000);
-
     // Fetch streak from Supabase
     const fetchStreak = async () => {
       try {
@@ -90,8 +123,6 @@ export default function Topbar() {
       }
     };
     fetchStreak();
-
-    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -101,15 +132,7 @@ export default function Topbar() {
       } right-0 h-16 z-30 flex items-center justify-between px-4 sm:px-6 bg-zinc-50 dark:bg-[#0A0A0A]/80 backdrop-blur-md border-b border-zinc-200 dark:border-[#1F1F1F] transition-all duration-300 ease-in-out`}
     >
       {/* Left: Day & Date */}
-      <div className="flex items-center gap-3 w-1/3 min-w-0">
-        <span className="text-sm font-black tracking-widest text-[#FF6B35] hidden sm:block truncate">
-          {dayName}
-        </span>
-        <span className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
-        <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hidden md:block truncate">
-          {dateStr}
-        </span>
-      </div>
+      <LiveDate />
 
       {/* Center: Fitness OS Title */}
       <div className="flex justify-center items-center w-1/3">
@@ -143,9 +166,7 @@ export default function Topbar() {
         <NotificationBell />
 
         {/* Live Clock */}
-        <div className="font-mono text-sm font-semibold tracking-wider text-zinc-700 dark:text-zinc-300 min-w-[70px] text-right bg-zinc-50 dark:bg-zinc-950 px-3 py-1 rounded-md border border-zinc-200 dark:border-[#1F1F1F] hidden sm:block">
-          {time}
-        </div>
+        <LiveTime />
       </div>
     </header>
   );
