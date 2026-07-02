@@ -5,7 +5,7 @@ export class AIService {
   private static async getGeminiKey(): Promise<string | null> {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     const { data } = await supabase
       .from('app_settings')
@@ -57,18 +57,22 @@ export class AIService {
     return result.response.text().trim()
   }
 
-  public static async chatWithFitnessAgent(history: { role: string; content: string }[], newMessage: string): Promise<string> {
+  public static async chatWithFitnessAgent(history: { role: string; content: string }[], newMessage: string, dbContext: string = ""): Promise<string> {
     const key = await this.getGeminiKey()
     if (!key) throw new Error('AI Coach is not configured.')
 
     const genAI = new GoogleGenerativeAI(key)
     
-    const systemInstruction = `You are a highly advanced elite fitness, health, and nutrition AI Agent built into FITNESS OS. 
+    let systemInstruction = `You are a highly advanced elite fitness, health, and nutrition AI Agent built into FITNESS OS. 
     Your ONLY purpose is to answer questions, clear doubts, and provide guidance strictly related to exercise, bodybuilding, diet, nutrition, recovery, and general physical health.
     IMPORTANT RULES:
     1. If the user asks about ANY topic outside of fitness, health, diet, or exercise (e.g., programming, coding, politics, history, general knowledge, writing code), you MUST politely refuse and state that you are a dedicated Fitness AI and can only answer health and fitness related questions.
     2. Be supportive, concise, and highly knowledgeable. Provide actionable and scientifically backed advice.
     3. Do NOT use hashtags.`
+
+    if (dbContext) {
+      systemInstruction += `\n\nUSER WORKOUT CONTEXT:\n${dbContext}\nUse this context to give highly personalized advice.`
+    }
 
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-1.5-flash',

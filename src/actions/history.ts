@@ -94,15 +94,25 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
 
   const durationMin = Math.round((new Date(w.end_time).getTime() - new Date(w.start_time).getTime()) / 60000)
 
+  const exercisesList = (w.workout_exercises_v5 || []).map((we: any) => {
+    const sets = we.workout_sets_v5 || []
+    return {
+      name: we.exercises?.name || 'Unknown Exercise',
+      completedSets: sets.filter((s: any) => s.completed).length,
+      totalSets: sets.length
+    }
+  })
+
   return {
     name: w.name,
     xp: w.xp_earned,
     durationMin,
-    calories: w.estimated_calories,
+    calories: w.estimated_calories || 0,
     skippedExercises: w.exercises_skipped,
     skippedSets: w.sets_skipped,
     totalSets,
     completedSets,
     volumeKg: totalVolumeKg,
+    exercises: exercisesList
   }
 }

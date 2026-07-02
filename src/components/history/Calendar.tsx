@@ -218,6 +218,23 @@ export function Calendar() {
                   <div className="text-xl font-black text-zinc-900 dark:text-white">{workoutDetails.skippedExercises} <span className="text-xs text-zinc-500 font-medium">ex</span></div>
                 </div>
               </div>
+
+              {/* Detailed Breakdown */}
+              <div className="mt-8">
+                <h5 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-widest mb-4">Exercise Breakdown</h5>
+                <div className="space-y-3">
+                  {workoutDetails.exercises?.map((ex, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-zinc-50 dark:bg-[#111111] border border-zinc-200 dark:border-zinc-800/60">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-200">{ex.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold px-2 py-1 rounded-md ${ex.completedSets === ex.totalSets ? 'bg-green-500/10 text-green-500' : ex.completedSets === 0 ? 'bg-red-500/10 text-red-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
+                          {ex.completedSets} / {ex.totalSets} Sets
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="py-12 text-center text-zinc-500 font-medium">
