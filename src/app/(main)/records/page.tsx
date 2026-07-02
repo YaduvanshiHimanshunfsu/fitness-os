@@ -4,7 +4,8 @@ import { PageHeader } from '@/components/analytics/PageHeader'
 
 export const dynamic = 'force-dynamic'
 import { getPersonalRecords } from '@/services/record-service'
-import { Trophy, Dumbbell, Timer } from 'lucide-react'
+import { getStreakData } from '@/services/analytics-service'
+import { Trophy, Dumbbell, Timer, Flame, Clock, Activity, Zap } from 'lucide-react'
 
 export default async function RecordsPage() {
   const supabase = await createClient()
@@ -12,10 +13,61 @@ export default async function RecordsPage() {
   if (!user) redirect('/login')
 
   const records = await getPersonalRecords(user.id)
+  const streakData = await getStreakData(user.id)
+
+  const hours = Math.floor(streakData.totalDurationMinutes / 60)
+  const minutes = streakData.totalDurationMinutes % 60
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-8 pb-24">
-      <PageHeader title="Personal Records" subtitle="Your all-time best performances" />
+    <div className="max-w-4xl mx-auto p-4 sm:p-8 pb-24 space-y-12">
+      <div>
+        <PageHeader title="Consistency & Dedication" subtitle="Your lifetime training statistics" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-white dark:bg-[#161616] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              <Flame className="w-5 h-5 text-[#FF6B35]" />
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Best Streak</span>
+            </div>
+            <div className="text-3xl font-black text-zinc-900 dark:text-white leading-none">
+              {streakData.bestStreak} <span className="text-sm text-zinc-500 font-medium">Days</span>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-[#161616] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-5 h-5 text-blue-500" />
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Total Time</span>
+            </div>
+            <div className="text-3xl font-black text-zinc-900 dark:text-white leading-none">
+              {hours > 0 && <>{hours}<span className="text-sm text-zinc-500 font-medium mr-1">h</span></>}
+              {minutes}<span className="text-sm text-zinc-500 font-medium">m</span>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#161616] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-5 h-5 text-purple-500" />
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Workouts</span>
+            </div>
+            <div className="text-3xl font-black text-zinc-900 dark:text-white leading-none">
+              {streakData.totalWorkouts}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#161616] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              <Activity className="w-5 h-5 text-green-500" />
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Sets Done</span>
+            </div>
+            <div className="text-3xl font-black text-zinc-900 dark:text-white leading-none">
+              {streakData.totalSets.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <PageHeader title="Personal Records" subtitle="Your all-time best performances" />
 
       {records.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">

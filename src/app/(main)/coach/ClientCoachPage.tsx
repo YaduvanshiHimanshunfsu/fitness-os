@@ -59,7 +59,7 @@ export default function ClientCoachPage() {
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          content: "Sorry, I'm having trouble connecting to my database right now. Please try again."
+          content: res.error || "Sorry, I encountered an unexpected error. Please try again."
         }])
       }
     } catch (error) {

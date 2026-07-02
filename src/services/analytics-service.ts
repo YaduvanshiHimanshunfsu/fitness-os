@@ -32,6 +32,40 @@ export interface MuscleVolumeData {
   sets:        number
   percentage:  number
 }
+import { createClient } from '@/lib/supabase/server'
+
+// ─── Types ───────────────────────────────────────────────────────────────
+
+export interface HeatmapDay {
+  date:      string   // 'YYYY-MM-DD'
+  completed: boolean
+  isRestDay: boolean  // Thursday
+  sets:      number
+}
+
+export interface WeeklyChartData {
+  week:      string   // 'Mon', 'Tue', etc.
+  sets:      number
+  completed: boolean
+}
+
+export interface MonthlyChartData {
+  date:       string  // 'Jun 1', 'Jun 2', etc.
+  sets:       number
+  workouts:   number
+}
+
+export interface YearlyChartData {
+  month:    string    // 'Jan', 'Feb', etc.
+  sets:     number
+  workouts: number
+}
+
+export interface MuscleVolumeData {
+  muscleGroup: string
+  sets:        number
+  percentage:  number
+}
 
 export interface StreakData {
   currentStreak:   number
@@ -40,6 +74,7 @@ export interface StreakData {
   totalWorkouts:   number
   totalSets:       number
   totalReps:       number
+  totalDurationMinutes: number
 }
 
 // ─── Heatmap ─────────────────────────────────────────────────────────────
@@ -251,12 +286,21 @@ export async function getStreakData(userId: string): Promise<StreakData> {
     .eq('profile_id', userId)
 
   const { data: workoutsWithSets } = await supabase.from('workouts_v5')
-    .select('workout_exercises_v5(workout_sets_v5(actual_reps, completed))')
+    .select('start_time, end_time, workout_exercises_v5(workout_sets_v5(actual_reps, completed))')
     .eq('profile_id', userId)
 
   let totalSetsCount = 0
   let totalRepsCount = 0
+  let totalDurationMinutes = 0
+  
   for (const w of workoutsWithSets ?? []) {
+    if (w.start_time && w.end_time) {
+      const start = new Date(w.start_time).getTime()
+      const end = new Date(w.end_time).getTime()
+      const durationMins = Math.round((end - start) / 60000)
+      if (durationMins > 0) totalDurationMinutes += durationMins
+    }
+    
     for (const we of w.workout_exercises_v5 || []) {
       for (const s of we.workout_sets_v5 || []) {
         if (s.completed) {
@@ -279,5 +323,6 @@ export async function getStreakData(userId: string): Promise<StreakData> {
     totalWorkouts:   totalWorkouts                ?? 0,
     totalSets:       totalSetsCount,
     totalReps:       totalRepsCount,
+    totalDurationMinutes,
   }
 }
