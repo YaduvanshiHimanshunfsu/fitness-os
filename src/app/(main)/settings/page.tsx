@@ -6,6 +6,7 @@ import { logout } from '@/actions/auth'
 import { RestTimerSettings } from '@/components/settings/RestTimerSettings'
 
 import { ThemeToggle } from '@/components/settings/ThemeToggle'
+import { DataExportButton } from '@/components/settings/DataExportButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,16 +46,7 @@ export default async function SettingsPage() {
         <section>
           <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3 px-2">Data & Privacy</h3>
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-zinc-200 dark:bg-zinc-800/50 transition-colors border-b border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-3">
-                <Download className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Export Workout Data</span>
-                  <span className="text-xs text-zinc-500">Download your history as CSV</span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-600" />
-            </div>
+            <DataExportButton />
           </div>
         </section>
 

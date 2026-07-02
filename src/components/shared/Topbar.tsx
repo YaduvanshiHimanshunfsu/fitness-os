@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useUIStore } from '@/hooks/useUI';
 import { useWorkoutStore } from '@/hooks/useWorkout';
 import { NotificationBell } from '@/components/ui/NotificationBell';
+import { CommandPalette } from '@/components/shared/CommandPalette';
 
 // Live Workout Timer — only visible during an active session
 function LiveWorkoutTimer({ startTime }: { startTime: Date }) {
@@ -134,6 +135,9 @@ export default function Topbar() {
             {streak} <span className="text-zinc-500 font-normal hidden sm:inline">DAYS</span>
           </span>
         </div>
+
+        {/* Command Palette Search */}
+        <CommandPalette />
 
         {/* Notification Bell */}
         <NotificationBell />
