@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Flame, CheckCircle2, Zap, Coffee, Play, BatteryCharging, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { useWorkoutStore } from '@/hooks/useWorkout';
@@ -10,6 +10,7 @@ import { EXERCISES } from '@/constants/exercises';
 import { WorkoutHeatmap } from '@/components/heatmap/WorkoutHeatmap';
 import type { HeatmapDay } from '@/services/analytics-service';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getDailyInsight } from '@/actions/ai';
 
 export interface AthleteDashboardProps {
   userName:      string;
@@ -56,6 +57,7 @@ export default function AthleteDashboard({
   const [muscles,          setMuscles]          = useState<string[]>([]);
   const [estimatedMinutes, setEstimatedMinutes] = useState(0);
   const [estimatedCalories,setEstimatedCalories]= useState(0);
+  const [aiInsight,        setAiInsight]        = useState<string | null>(null);
 
   const computeDay = useCallback(() => {
     const localNow  = new Date();                                       // guaranteed client-local
@@ -90,6 +92,16 @@ export default function AthleteDashboard({
     const clockTick = setInterval(computeDay, 60_000); // refresh every minute
     return () => clearInterval(clockTick);
   }, [computeDay]);
+
+  useEffect(() => {
+    if (mounted && !aiInsight) {
+      getDailyInsight(userName, currentStreak, levelName).then(res => {
+        if (res.success && res.insight) {
+          setAiInsight(res.insight);
+        }
+      });
+    }
+  }, [mounted, aiInsight, userName, currentStreak, levelName]);
 
   const totalSets = todayExercises.reduce((acc, ex) => acc + (ex.sets || 0), 0);
 
@@ -154,6 +166,31 @@ export default function AthleteDashboard({
               </div>
             </motion.div>
           </motion.div>
+
+          {/* AI Coach Insight Banner */}
+          <AnimatePresence>
+            {aiInsight && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(99,102,241,0.3)]">
+                    <span className="text-xl">🤖</span>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">AI Coach Note</div>
+                    <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                      "{aiInsight}"
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Today's Mission Card */}
           <motion.div

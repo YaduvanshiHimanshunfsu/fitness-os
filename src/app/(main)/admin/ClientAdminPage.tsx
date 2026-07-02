@@ -5,6 +5,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { Button } from '@/components/ui/button'
 import { Database } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
+import { saveGlobalSettings } from '@/actions/settings'
 
 type Exercise = Database['public']['Tables']['exercises']['Row']
 
@@ -17,7 +18,26 @@ export default function ClientAdminPage({
 }) {
   const [exercises, setExercises] = useState(initialExercises)
   const [settings, setSettings] = useState(initialSettings)
+  const [geminiApiKey, setGeminiApiKey] = useState(settings.find(s => s.key === 'gemini_api_key')?.value || '')
+  const [userLimit, setUserLimit] = useState(settings.find(s => s.key === 'user_registration_limit')?.value || 100)
+  const [isSaving, setIsSaving] = useState(false)
   const supabase = createClient()
+
+  const handleSaveSettings = async () => {
+    try {
+      setIsSaving(true)
+      await saveGlobalSettings({
+        geminiApiKey,
+        userRegistrationLimit: Number(userLimit)
+      })
+      alert('Settings saved successfully!')
+    } catch (err) {
+      console.error(err)
+      alert('Failed to save settings')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <Tabs.Root defaultValue="exercises" className="flex flex-col w-full">
@@ -90,6 +110,8 @@ export default function ClientAdminPage({
             <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Gemini API Key</label>
             <input 
               type="password" 
+              value={geminiApiKey}
+              onChange={e => setGeminiApiKey(e.target.value)}
               placeholder="AI_xxxxxxxxxxxxxxxxxxxx"
               className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 focus:outline-none focus:border-[#FF6B35]/50 transition-colors font-mono" 
             />
@@ -100,14 +122,19 @@ export default function ClientAdminPage({
             <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400">User Registration Limit</label>
             <input 
               type="number" 
-              defaultValue={100}
+              value={userLimit}
+              onChange={e => setUserLimit(e.target.value)}
               className="w-full max-w-xs bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 focus:outline-none focus:border-[#FF6B35]/50 transition-colors font-mono" 
             />
             <p className="text-xs text-zinc-500">Maximum number of users allowed to register (0 for unlimited).</p>
           </div>
 
-          <Button className="bg-[#FF6B35] hover:bg-[#FF8C61] text-zinc-900 font-bold uppercase tracking-widest text-xs mt-4">
-            Save Settings
+          <Button 
+            onClick={handleSaveSettings}
+            disabled={isSaving}
+            className="bg-[#FF6B35] hover:bg-[#FF8C61] text-zinc-900 font-bold uppercase tracking-widest text-xs mt-4 disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
       </Tabs.Content>

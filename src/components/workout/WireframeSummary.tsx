@@ -12,6 +12,8 @@ import { useWorkoutStore, SkippedItem } from '@/hooks/useWorkout';
 import { useNotifications } from '@/hooks/useNotifications';
 import confetti from 'canvas-confetti';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
+import { getPostWorkoutSummary } from '@/actions/ai';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
 function AnimatedValue({
@@ -144,8 +146,20 @@ export function WireframeSummary({
 }: WireframeSummaryProps) {
   const router = useRouter();
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
   const { completedSets, reset } = useWorkoutStore();
   const { addNotification }      = useNotifications();
+
+  // ── AI Coach Note Fetching ─────────────────────────────────────────────
+  useEffect(() => {
+    let mounted = true;
+    getPostWorkoutSummary(duration, calories, muscleVolume).then(res => {
+      if (mounted && res.success && res.summary) {
+        setAiSummary(res.summary);
+      }
+    });
+    return () => { mounted = false; };
+  }, [duration, calories, muscleVolume]);
 
   // ── Confetti burst on mount ──────────────────────────────────────────────
   useEffect(() => {
@@ -308,6 +322,31 @@ export function WireframeSummary({
           >
             {date} &nbsp;·&nbsp; {startTime} → {endTime}
           </motion.p>
+        </motion.div>
+
+        {/* ── AI Coach Summary ──────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.5 }}
+          className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex items-start gap-4"
+        >
+          <div className="w-10 h-10 rounded-full bg-[#FF4500]/20 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(255,69,0,0.3)]">
+            <span className="text-xl">🤖</span>
+          </div>
+          <div className="flex-1">
+            <div className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-1">Coach's Note</div>
+            {aiSummary ? (
+              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                "{aiSummary}"
+              </p>
+            ) : (
+              <div className="space-y-2 mt-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* ── Time Breakdown & XP Card ──────────────────────────────────────────── */}
