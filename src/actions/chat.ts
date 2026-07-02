@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function sendChatMessage(history: { role: string; content: string }[], newMessage: string) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     let contextStr = ""
