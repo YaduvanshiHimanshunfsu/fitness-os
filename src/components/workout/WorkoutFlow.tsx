@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { Exercise } from '@/types/exercise'
@@ -45,6 +45,14 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     clearRestTimer()
   }
 
+  const handleRestComplete = useCallback(() => {
+    clearRestTimer();
+    if (phase === 'rest_exercise') {
+      setCurrentIndex(prev => Math.min(prev + 1, exercises.length - 1))
+    }
+    setLocalPhase('exercise')
+  }, [clearRestTimer, phase, exercises.length]);
+
   // Wait for the global rest timer to finish if we are in a rest phase
   useEffect(() => {
     if (phase === 'exercise' || !restTimerEnd) return;
@@ -56,7 +64,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [phase, restTimerEnd, clearRestTimer]);
+  }, [phase, restTimerEnd, clearRestTimer, handleRestComplete]);
 
   const handleSetComplete = (setIndex: number, reps: number, weight: number, unit: string) => {
     if (currentCompleted[setIndex]) return 
@@ -123,13 +131,6 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     }
   }
 
-  const handleRestComplete = () => {
-    clearRestTimer();
-    if (phase === 'rest_exercise') {
-      setCurrentIndex(prev => Math.min(prev + 1, exercises.length - 1))
-    }
-    setLocalPhase('exercise')
-  }
 
   const nextExerciseName = phase === 'rest_exercise'
     ? (exercises[currentIndex + 1]?.name || 'Posture Routine')
