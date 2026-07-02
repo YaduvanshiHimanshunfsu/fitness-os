@@ -35,6 +35,13 @@ export function WireframeExerciseCard({
   const isMinSetsMet = completedCount >= Math.min(2, exercise.sets);
   const isAllSetsMet = completedCount === exercise.sets;
   
+  const handleSetComplete = (idx: number, reps: number, weight: number, unit: 'kg'|'lbs') => {
+    if (typeof window !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([30, 50, 30]);
+    }
+    onSetComplete(idx, reps, weight, unit);
+  };
+  
   // Dummy stats for wireframe presentation
   const duration = 45;
   const caloriesBurned = 320;
@@ -154,8 +161,8 @@ export function WireframeExerciseCard({
                       </div>
                       <button
                         type="button"
-                        onClick={() => onSetComplete(idx, currentReps[idx], 0, 'kg')}
-                        className="h-[60px] mt-auto sm:w-16 flex items-center justify-center bg-[#FF4500] hover:bg-[#FF5A1F] text-zinc-900 dark:text-white rounded-xl shadow-[0_0_15px_rgba(255,69,0,0.4)] transition-all"
+                        onClick={() => handleSetComplete(idx, currentReps[idx], 0, 'kg')}
+                        className="h-[60px] mt-auto sm:w-16 flex items-center justify-center bg-[#FF4500] hover:bg-[#FF5A1F] text-zinc-900 dark:text-white rounded-xl shadow-[0_0_15px_rgba(255,69,0,0.4)] transition-all active:scale-95"
                       >
                         ✓
                       </button>

@@ -3,6 +3,7 @@ export interface UserProfile {
   name: string
   email: string
   avatarUrl?: string
+  role: string
   createdAt: Date
 }
 

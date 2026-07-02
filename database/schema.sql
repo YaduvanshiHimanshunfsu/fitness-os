@@ -131,6 +131,7 @@ create table if not exists streaks (
 alter table profiles add column if not exists xp_total    integer     not null default 0;
 alter table profiles add column if not exists updated_at  timestamptz not null default now();
 alter table profiles add column if not exists avatar_url  text;
+alter table profiles add column if not exists role        text        not null default 'user';
 
 -- workout_sessions: add notes column if missing
 alter table workout_sessions add column if not exists notes text;
@@ -189,6 +190,22 @@ create table if not exists workout_sets_v5 (
   weight_kg           numeric not null default 0,
   unit                text    not null default 'kg',
   completed           boolean not null default false
+);
+
+-- Admin and System Tables
+create table if not exists app_settings (
+  id          serial      primary key,
+  key         text        not null unique,
+  value       jsonb       not null,
+  updated_at  timestamptz not null default now()
+);
+
+create table if not exists admin_logs (
+  id          serial      primary key,
+  admin_id    uuid        not null references profiles(id) on delete cascade,
+  action      text        not null,
+  details     jsonb,
+  created_at  timestamptz not null default now()
 );
 
 -- Ensure unique constraints exist for ON CONFLICT clauses (fixes ERROR 42P10)
@@ -285,6 +302,8 @@ alter table body_metrics       enable row level security;
 alter table workouts_v5        enable row level security;
 alter table workout_exercises_v5 enable row level security;
 alter table workout_sets_v5    enable row level security;
+alter table app_settings       enable row level security;
+alter table admin_logs         enable row level security;
 
 
 -- ==============================================================================
@@ -343,13 +362,37 @@ create policy "workout_sets_v5_all_own" on workout_sets_v5 for all using (
   )
 );
 
--- exercises & achievements are public reads
+-- exercises & achievements are public reads, admin writes
 alter table exercises    enable row level security;
 alter table achievements enable row level security;
 drop policy if exists "exercises_public_read"    on exercises;
 drop policy if exists "achievements_public_read" on achievements;
+drop policy if exists "exercises_admin_all"      on exercises;
+drop policy if exists "achievements_admin_all"   on achievements;
+
 create policy "exercises_public_read"    on exercises    for select using (true);
 create policy "achievements_public_read" on achievements for select using (true);
+
+create policy "exercises_admin_all" on exercises for all using (
+  (select role from profiles where id = auth.uid()) = 'admin'
+);
+create policy "achievements_admin_all" on achievements for all using (
+  (select role from profiles where id = auth.uid()) = 'admin'
+);
+
+-- app_settings (public read, admin write)
+drop policy if exists "settings_public_read" on app_settings;
+drop policy if exists "settings_admin_all" on app_settings;
+create policy "settings_public_read" on app_settings for select using (true);
+create policy "settings_admin_all" on app_settings for all using (
+  (select role from profiles where id = auth.uid()) = 'admin'
+);
+
+-- admin_logs (admin read/write)
+drop policy if exists "admin_logs_admin_all" on admin_logs;
+create policy "admin_logs_admin_all" on admin_logs for all using (
+  (select role from profiles where id = auth.uid()) = 'admin'
+);
 
 
 -- ============================================================================== 

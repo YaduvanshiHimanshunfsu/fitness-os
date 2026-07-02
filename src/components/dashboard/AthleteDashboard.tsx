@@ -9,6 +9,7 @@ import { useWorkoutStore } from '@/hooks/useWorkout';
 import { EXERCISES } from '@/constants/exercises';
 import { WorkoutHeatmap } from '@/components/heatmap/WorkoutHeatmap';
 import type { HeatmapDay } from '@/services/analytics-service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface AthleteDashboardProps {
   userName:      string;
@@ -129,7 +130,7 @@ export default function AthleteDashboard({
                     : now
                       ? `${format(now, 'EEEE, MMMM d')} · Ready to crush your goals?`
                       : 'Ready to crush your goals?'
-                  : ''}
+                  : <Skeleton className="h-4 w-48 mt-1" />}
               </p>
             </div>
 
@@ -208,8 +209,8 @@ export default function AthleteDashboard({
                   { label: 'Kcal Burn',    value: estimatedCalories,     suffix: '' },
                 ].map((stat, i) => (
                   <div key={i}>
-                    <div className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white">
-                      {mounted ? <RollingCounter value={stat.value} suffix={stat.suffix} /> : '—'}
+                    <div className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white flex justify-center">
+                      {mounted ? <RollingCounter value={stat.value} suffix={stat.suffix} /> : <Skeleton className="h-8 w-16" />}
                     </div>
                     <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{stat.label}</div>
                   </div>
@@ -329,7 +330,9 @@ export default function AthleteDashboard({
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-xs font-black uppercase tracking-widest ${stat.color}`}>{stat.label}</span>
                     </div>
-                    <span className="text-xl font-black text-zinc-900 dark:text-white">{mounted ? stat.value : '—'}</span>
+                    <span className="text-xl font-black text-zinc-900 dark:text-white">
+                      {mounted ? stat.value : <Skeleton className="h-6 w-20" />}
+                    </span>
                   </div>
                   <div className={`flex flex-col items-end ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
                     {stat.trend === 'up' ? <TrendingUp className="w-4 h-4 mb-1" /> : <TrendingDown className="w-4 h-4 mb-1" />}
