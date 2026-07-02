@@ -25,6 +25,7 @@ import { useUIStore } from '@/hooks/useUI';
 import { createClient } from '@/lib/supabase/client';
 import { getLevelFromXP } from '@/utils/level-calculator';
 
+const NAV_ITEMS = [
   { name: 'Dashboard',    path: '/dashboard',    icon: LayoutDashboard },
   { name: 'Schedule',     path: '/schedule',     icon: Dumbbell        },
   { name: 'AI Coach',     path: '/coach',        icon: Bot             },

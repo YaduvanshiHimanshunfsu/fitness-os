@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- FITNESS OS — COMPLETE DATABASE SCHEMA
--- Version: 5.0 (Production-Grade, Idempotent, Advanced)
+-- Version: 6.0 (Production-Grade, Idempotent, Advanced)
 -- Run this entire file in one shot in Supabase SQL Editor.
 -- Safe to re-run: uses IF NOT EXISTS / CREATE OR REPLACE everywhere.
 -- ==============================================================================

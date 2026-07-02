@@ -1,5 +1,4 @@
-# FITNESS OS 🏋️‍♂️
-
+# FITNESS OS 🏋️‍♂️ v6.0
 
 > **A premium, high-performance web application designed for elite athlete tracking.**
 > *This is a personal, self-learned project built by Himanshu Yadav to master advanced web architecture, complex state management, and modern UI/UX design.*
@@ -10,10 +9,15 @@
 
 FITNESS OS is not just another workout tracker—it's a comprehensive, hardware-accelerated dashboard designed to offer a seamless, premium user experience. Built with Next.js and Supabase, it handles complex relational data, live streak computations, and sophisticated global state management across an uninterrupted, highly animated workout flow.
 
-The core philosophy of this project was to push the boundaries of modern web development, focusing heavily on:
-- **Flawless UI/UX:** Smooth, 60fps animations utilizing hardware acceleration (`translateZ`).
-- **Robust Architecture:** Advanced Database Triggers and complex Row Level Security.
-- **Future-Proofing:** Strict type safety and component-driven modular design.
+With Version 6.0, the app has received a **massive** upgrade including a dedicated AI Coach, an Admin Command Center, and extreme performance optimizations.
+
+## ✨ New in Version 6.0
+
+- **Dedicated AI Fitness Coach**: Powered by Google Gemini AI, the coach analyzes your past workouts, answers health and diet questions (with strict safety guardrails), and generates dynamic post-workout summaries.
+- **Admin Command Center**: A secure `/admin` portal restricted to authorized users. Includes a beautiful drag-and-drop UI to manage the exercise library and upload exercise images directly to Supabase Storage.
+- **Admin Audit Logs**: Complete tracking of system changes, ensuring a secure audit trail for app settings and exercise modifications.
+- **Extreme Performance Caching**: Utilizing Next.js `unstable_cache` with custom invalidation tags to serve heavy relational data instantly.
+- **Premium Glassmorphic UI**: Completely overhauled visual language featuring deep dark modes, ambient glows, dynamic haptics, and 60fps GPU-accelerated micro-animations.
 
 ## 🏗️ Architecture & Tech Stack
 
@@ -31,6 +35,7 @@ The core philosophy of this project was to push the boundaries of modern web dev
   - Live Database Triggers calculate workout `completion_score` automatically upon set insertion.
   - Streak Achievement Triggers award XP and unlock milestones natively on the database layer.
 - **Security:** Strict Row Level Security (RLS) policies ensure users can only query their own session data.
+- **Storage:** Supabase Storage integration for dynamic exercise media handling.
 
 ## 🔄 The Core Workout Flow
 
@@ -43,6 +48,7 @@ FITNESS OS utilizes a highly engineered sequence to track athletes:
    - A highly optimized page using strictly ordered React Hooks.
    - Computes time deltas (actual vs estimated), total calories, and completion percentages.
    - Flags skipped exercises dynamically.
+   - **NEW**: Generates a live Gemini AI analysis of the workout.
 5. **Persistence (`saveWorkoutSession`)**: A Next.js Server Action that safely unwraps the global store payload, inserts the session into PostgreSQL, triggers backend XP recalculation, and commands an animated UI redirect.
 
 ## 💡 Key Learnings & Engineering Decisions
@@ -51,13 +57,14 @@ During the development of this project, several complex challenges were overcome
 
 - **React 'Rules of Hooks' Violations:** Engineered strict functional component layouts, moving all `useMemo` and `useEffect` calls above conditional returns to prevent infinite render loops and application freezing.
 - **GPU Rendering Optimization:** Solved "black screen" rendering blocks by stripping heavy top-level `opacity: 0` wrappers and animating child elements directly with Z-axis transforms.
-- **Idempotent SQL Schema:** Wrote a highly advanced, 500-line `schema.sql` file capable of running idempotently, featuring safe column migrations (`ADD COLUMN IF NOT EXISTS`) and robust conflict resolution to prevent `42P10` and `40P01` deadlock errors.
+- **Idempotent SQL Schema:** Wrote a highly advanced `schema.sql` file capable of running idempotently, featuring safe column migrations (`ADD COLUMN IF NOT EXISTS`) and robust conflict resolution to prevent `42P10` and `40P01` deadlock errors.
+- **Type-Safety Enforcement:** Refactored complex nested Supabase queries from loose `as any` casts to strict generated `Database` interface types.
 
 ---
 
 ## 👨‍💻 Developer & Contact
 
 **Created by:** Himanshu Yadav  
-**Contact:** [mrhimanshu1234567@gmail.com](mailto:mrhimanshu1234567@gmail.com)  
+**Contact:** [himanshu.btmtcs4242906@nfsu.ac.in](mailto:himanshu.btmtcs4242906@nfsu.ac.in)  
 
 *Built with passion, sweat, and thousands of lines of code. Keep Going!*
