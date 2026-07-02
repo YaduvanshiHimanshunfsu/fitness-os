@@ -41,6 +41,27 @@ export default function LoginPage() {
     }
   }
 
+  async function handleAdminLogin() {
+    setLoading(true);
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          login_hint: 'himanshu.btmtcs4242906@nfsu.ac.in'
+        }
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    }
+  }
+
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-4 bg-zinc-50 dark:bg-[#0A0A0A] bg-noise relative">
       {/* Glow effect in background */}
@@ -173,6 +194,16 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Admin Login Corner Button */}
+      <button 
+        onClick={handleAdminLogin}
+        disabled={loading}
+        className="absolute bottom-6 right-6 flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-full bg-zinc-900/10 dark:bg-white/10 hover:bg-zinc-900/20 dark:hover:bg-white/20 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all z-50 cursor-pointer disabled:opacity-50"
+      >
+        <ShieldCheck className="w-3.5 h-3.5" />
+        Admin Login
+      </button>
     </div>
   );
 }
