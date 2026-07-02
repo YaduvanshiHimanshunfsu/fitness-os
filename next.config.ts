@@ -31,14 +31,11 @@ const securityHeaders = [
   },
   {
     key: 'Content-Security-Policy',
-    value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.googleusercontent.com *.githubusercontent.com; connect-src 'self' *.supabase.co wss://*.supabase.co https://*.supabase.co;"
+    value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *.googleusercontent.com *.githubusercontent.com *.supabase.co; connect-src 'self' *.supabase.co wss://*.supabase.co https://*.supabase.co;"
   }
 ];
 
-const nextConfig: any = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },

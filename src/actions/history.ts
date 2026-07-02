@@ -37,11 +37,24 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
-  // Parse local date bounds safely to UTC
-  const localDate = new Date(dateStr)
-  // Shift to start of day local -> UTC approx
-  const startOfDay = new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), 0, 0, 0)
-  const endOfDay = new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), 23, 59, 59)
+  // Parse date string safely (expected format: 'YYYY-MM-DD' or parsable date string)
+  const parts = dateStr.split('-')
+  let year: number, month: number, day: number
+
+  if (parts.length === 3) {
+    // Explicit YYYY-MM-DD parse to avoid timezone ambiguity
+    year = parseInt(parts[0], 10)
+    month = parseInt(parts[1], 10) - 1 // JS months are 0-indexed
+    day = parseInt(parts[2], 10)
+  } else {
+    const parsed = new Date(dateStr)
+    year = parsed.getFullYear()
+    month = parsed.getMonth()
+    day = parsed.getDate()
+  }
+
+  const startOfDay = new Date(year, month, day, 0, 0, 0)
+  const endOfDay = new Date(year, month, day, 23, 59, 59, 999)
 
   const { data: workouts, error } = await (supabase
     .from('workouts_v5') as any)

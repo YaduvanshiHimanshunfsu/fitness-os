@@ -63,51 +63,40 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
     .single()
 
   let isNewRecord = false
-  const updates: any = {
-    user_id: userId,
-    exercise_id: exerciseId,
-    achieved_at: new Date().toISOString()
-  }
-
   const current1RM = (weight !== null && reps > 0) ? calculate1RM(weight, reps) : null;
 
+  // Determine new values (use existing values as baseline, or defaults for first record)
+  const newMaxReps = Math.max(reps, existing?.max_reps ?? 0)
+  const newMaxWeight = Math.max(weight ?? 0, existing?.max_weight ?? 0)
+  const newLongestHold = Math.max(holdTime ?? 0, existing?.longest_hold_seconds ?? 0)
+  const new1RM = Math.max(current1RM ?? 0, existing?.estimated_1rm ?? 0)
+
+  // Check if any value improved
   if (!existing) {
     isNewRecord = true
-    updates.max_reps = reps
-    updates.max_weight = weight
-    updates.longest_hold_seconds = holdTime
-    updates.estimated_1rm = current1RM
   } else {
-    updates.max_reps = existing.max_reps
-    updates.max_weight = existing.max_weight
-    updates.longest_hold_seconds = existing.longest_hold_seconds
-    updates.estimated_1rm = existing.estimated_1rm
-
-    if (reps > (existing.max_reps ?? 0)) {
-      updates.max_reps = reps
-      isNewRecord = true
-    }
-    if (weight !== null && weight > (existing.max_weight ?? 0)) {
-      updates.max_weight = weight
-      isNewRecord = true
-    }
-    if (holdTime !== null && holdTime > (existing.longest_hold_seconds ?? 0)) {
-      updates.longest_hold_seconds = holdTime
-      isNewRecord = true
-    }
-    if (current1RM !== null && current1RM > (existing.estimated_1rm ?? 0)) {
-      updates.estimated_1rm = current1RM
-      isNewRecord = true
-    }
+    if (newMaxReps > (existing.max_reps ?? 0)) isNewRecord = true
+    if (newMaxWeight > (existing.max_weight ?? 0)) isNewRecord = true
+    if (newLongestHold > (existing.longest_hold_seconds ?? 0)) isNewRecord = true
+    if (new1RM > (existing.estimated_1rm ?? 0)) isNewRecord = true
   }
 
   if (isNewRecord) {
-    if (existing) {
-      const { error } = await (supabase.from('personal_records') as any).update(updates).eq('id', existing.id)
-      if (error) throw error
-    } else {
-      const { error } = await (supabase.from('personal_records') as any).insert(updates)
-      if (error) throw error
+    // Use upsert to atomically handle both insert and update, avoiding race conditions
+    const { error } = await (supabase.from('personal_records') as any).upsert({
+      user_id:              userId,
+      exercise_id:          exerciseId,
+      max_reps:             newMaxReps,
+      max_weight:           newMaxWeight,
+      longest_hold_seconds: newLongestHold,
+      estimated_1rm:        new1RM,
+      achieved_at:          new Date().toISOString(),
+      updated_at:           new Date().toISOString(),
+    }, { onConflict: 'user_id,exercise_id' })
+
+    if (error) {
+      console.error('Personal record upsert error:', error)
+      throw error
     }
   }
 

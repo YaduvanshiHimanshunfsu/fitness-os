@@ -114,15 +114,45 @@ export async function saveWorkoutSession(payload: {
     }
   }
 
-  // 4. Update streak via RPC (if needed, but DB trigger handles profiles.current_streak)
-  // We will just fetch the latest profile streak
-  const { data: profile } = await (supabase.from('profiles') as any).select('current_streak').eq('id', user.id).single()
-  const newStreak = profile?.current_streak ?? 0
+  // 4. Update streak — read from `streaks` table, calculate, and write back
+  const { data: streakRow } = await (supabase
+    .from('streaks') as any)
+    .select('current_streak, best_streak, last_workout_date')
+    .eq('user_id', user.id)
+    .single()
 
-  // 5. XP update (keep rpc call if it exists)
+  const lastWorkoutDate = streakRow?.last_workout_date ? new Date(streakRow.last_workout_date) : null
+  const currentStreak = streakRow?.current_streak ?? 0
+  const bestStreak = streakRow?.best_streak ?? 0
+  const newStreak = calculateNewStreak(lastWorkoutDate, currentStreak)
+  const newBestStreak = Math.max(bestStreak, newStreak)
+
+  const { error: streakError } = await (supabase
+    .from('streaks') as any)
+    .upsert({
+      user_id:            user.id,
+      current_streak:     newStreak,
+      best_streak:        newBestStreak,
+      last_workout_date:  new Date().toISOString().split('T')[0],
+      updated_at:         new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+
+  if (streakError) {
+    console.error('Streak update error:', streakError)
+  }
+
+  // 5. XP update
   const { error: xpError } = await (supabase as any).rpc('increment_xp', { amount: xpEarned })
   if (xpError) {
     throw new Error(xpError.message || 'Failed to update XP')
+  }
+
+  // 6. Check and unlock achievements after workout save
+  try {
+    const { checkAndUnlockAchievements } = await import('@/services/achievement-service')
+    await checkAndUnlockAchievements(user.id)
+  } catch (e) {
+    console.error('Achievement check error:', e)
   }
 
   // Return info for summary dashboard

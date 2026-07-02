@@ -13,10 +13,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmitWithAction(formData: FormData, action: typeof login | typeof signup) {
     setLoading(true);
     setError(null);
-    const action = isLoginMode ? login : signup;
     const result = await action(formData);
     
     if (result?.error) {
@@ -100,7 +99,7 @@ export default function LoginPage() {
               </span>
             </div>
 
-            <form action={handleSubmit} className="space-y-4">
+            <form className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400" htmlFor="email">
                   Email Address
@@ -131,9 +130,13 @@ export default function LoginPage() {
               
               <div className="pt-2">
                 <Button 
-                  type="submit" 
+                  type="button" 
                   disabled={loading}
-                  onClick={() => setIsLoginMode(true)}
+                  onClick={async () => {
+                    setIsLoginMode(true);
+                    const formData = new FormData(document.querySelector('form')!);
+                    await handleSubmitWithAction(formData, login);
+                  }}
                   className="w-full h-12 text-xs font-bold tracking-widest uppercase bg-[#FF6B35] hover:bg-[#FF8C61] text-zinc-900 dark:text-white shadow-[0_0_20px_rgba(255,107,53,0.15)] transition-transform active:scale-95 cursor-pointer"
                 >
                   {loading && isLoginMode ? 'VERIFYING...' : 'SIGN IN'}
@@ -150,10 +153,14 @@ export default function LoginPage() {
               </div>
 
               <Button 
-                type="submit"
+                type="button"
                 variant="outline" 
                 disabled={loading}
-                onClick={() => setIsLoginMode(false)}
+                onClick={async () => {
+                  setIsLoginMode(false);
+                  const formData = new FormData(document.querySelector('form')!);
+                  await handleSubmitWithAction(formData, signup);
+                }}
                 className="w-full h-12 text-xs font-bold tracking-widest uppercase border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-950 transition-colors cursor-pointer"
               >
                 {loading && !isLoginMode ? 'CREATING...' : 'CREATE AN ACCOUNT'}

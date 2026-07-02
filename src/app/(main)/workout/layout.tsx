@@ -16,14 +16,16 @@ export default function WorkoutLayout({ children }: { children: React.ReactNode 
     }
   }, [pathname, router])
 
-  let step = 1
-  if (pathname.includes('/session')) step = 2
-  else if (pathname.includes('/posture')) step = 3
-  else if (pathname.includes('/knockknee')) step = 4
-  else if (pathname.includes('/cooldown')) step = 5
-  else if (pathname.includes('/summary')) step = 6
+  const totalSteps = 7
+  let step = 1 // /workout (template page)
+  if (pathname.includes('/warmup'))    step = 2
+  else if (pathname.includes('/session'))   step = 3
+  else if (pathname.includes('/posture'))   step = 4
+  else if (pathname.includes('/knockknee')) step = 5
+  else if (pathname.includes('/cooldown'))  step = 6
+  else if (pathname.includes('/summary'))   step = 7
 
-  const progressPercent = (step / 6) * 100
+  const progressPercent = (step / totalSteps) * 100
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent text-zinc-800 dark:text-zinc-100 relative">

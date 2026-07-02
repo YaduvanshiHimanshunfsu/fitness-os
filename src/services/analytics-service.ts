@@ -212,18 +212,24 @@ export async function getMuscleVolumeData(
   if (period === 'month') fromDate.setMonth(fromDate.getMonth() - 1)
   if (period === 'year')  fromDate.setFullYear(fromDate.getFullYear() - 1)
 
-  // Join workout_sets -> workout_exercises -> exercises, and filter by user via workouts
-  const { data: sets } = await (supabase
-    .from('workout_sets_v5') as any)
-    .select('workout_exercises_v5!inner(exercises(muscle_group), workouts_v5!inner(profile_id, start_time))')
-    .eq('completed', true)
-    .eq('workout_exercises_v5.workouts_v5.profile_id', userId)
-    .gte('workout_exercises_v5.workouts_v5.start_time', fromDate.toISOString())
+  const { data: workouts } = await (supabase
+    .from('workouts_v5') as any)
+    .select(`
+      workout_exercises_v5(
+        exercises(muscle_group),
+        workout_sets_v5(id, completed)
+      )
+    `)
+    .eq('profile_id', userId)
+    .gte('start_time', fromDate.toISOString())
 
   const volumeMap: Record<string, number> = {}
-  for (const s of (sets as any[]) ?? []) {
-    const group = s.workout_exercises_v5?.exercises?.muscle_group ?? 'unknown'
-    volumeMap[group] = (volumeMap[group] ?? 0) + 1
+  for (const w of (workouts as any[]) ?? []) {
+    for (const we of w.workout_exercises_v5 || []) {
+      const group = we.exercises?.muscle_group ?? 'unknown'
+      const completedSets = (we.workout_sets_v5 || []).filter((s: any) => s.completed).length
+      volumeMap[group] = (volumeMap[group] ?? 0) + completedSets
+    }
   }
 
   const total = Object.values(volumeMap).reduce((a, b) => a + b, 0) || 1
@@ -242,28 +248,41 @@ export async function getMuscleVolumeData(
 export async function getStreakData(userId: string): Promise<StreakData> {
   const supabase = await createClient()
 
-  const [{ count: totalWorkouts }, { count: totalSets }] =
-    await Promise.all([
-      (supabase.from('workouts_v5') as any).select('*', { count: 'exact', head: true }).eq('profile_id', userId),
-      (supabase.from('workout_sets_v5') as any).select('workout_exercises_v5!inner(workout_id)', { count: 'exact', head: true }).eq('completed', true).eq('workout_exercises_v5.workouts_v5.profile_id', userId),
-    ])
+  const { count: totalWorkouts } = await (supabase
+    .from('workouts_v5') as any)
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', userId)
 
-  const { data: profile } = await (supabase.from('profiles') as any).select('current_streak, longest_streak').eq('id', userId).single()
+  const { data: workoutsWithSets } = await (supabase
+    .from('workouts_v5') as any)
+    .select('workout_exercises_v5(workout_sets_v5(actual_reps, completed))')
+    .eq('profile_id', userId)
 
-  const totalReps = await (supabase
-    .from('workout_sets_v5') as any)
-    .select('actual_reps')
-    .eq('completed', true)
-    .eq('workout_exercises_v5.workouts_v5.profile_id', userId)
+  let totalSetsCount = 0
+  let totalRepsCount = 0
+  for (const w of (workoutsWithSets as any[]) ?? []) {
+    for (const we of w.workout_exercises_v5 || []) {
+      for (const s of we.workout_sets_v5 || []) {
+        if (s.completed) {
+          totalSetsCount++
+          totalRepsCount += s.actual_reps ?? 0
+        }
+      }
+    }
+  }
 
-  const sumReps = (totalReps.data ?? []).reduce((acc: number, r: any) => acc + (r.actual_reps ?? 0), 0)
+  const { data: streakRow } = await (supabase
+    .from('streaks') as any)
+    .select('current_streak, best_streak, last_workout_date')
+    .eq('user_id', userId)
+    .single()
 
   return {
-    currentStreak:   profile?.current_streak   ?? 0,
-    bestStreak:      profile?.longest_streak   ?? 0,
-    lastWorkoutDate: null,
+    currentStreak:   streakRow?.current_streak   ?? 0,
+    bestStreak:      streakRow?.best_streak       ?? 0,
+    lastWorkoutDate: streakRow?.last_workout_date ?? null,
     totalWorkouts:   totalWorkouts                ?? 0,
-    totalSets:       totalSets                    ?? 0,
-    totalReps:       sumReps,
+    totalSets:       totalSetsCount,
+    totalReps:       totalRepsCount,
   }
 }
