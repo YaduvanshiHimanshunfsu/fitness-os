@@ -127,6 +127,7 @@ export default async function RecordsPage() {
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

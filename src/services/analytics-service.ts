@@ -32,40 +32,7 @@ export interface MuscleVolumeData {
   sets:        number
   percentage:  number
 }
-import { createClient } from '@/lib/supabase/server'
 
-// ─── Types ───────────────────────────────────────────────────────────────
-
-export interface HeatmapDay {
-  date:      string   // 'YYYY-MM-DD'
-  completed: boolean
-  isRestDay: boolean  // Thursday
-  sets:      number
-}
-
-export interface WeeklyChartData {
-  week:      string   // 'Mon', 'Tue', etc.
-  sets:      number
-  completed: boolean
-}
-
-export interface MonthlyChartData {
-  date:       string  // 'Jun 1', 'Jun 2', etc.
-  sets:       number
-  workouts:   number
-}
-
-export interface YearlyChartData {
-  month:    string    // 'Jan', 'Feb', etc.
-  sets:     number
-  workouts: number
-}
-
-export interface MuscleVolumeData {
-  muscleGroup: string
-  sets:        number
-  percentage:  number
-}
 
 export interface StreakData {
   currentStreak:   number
