@@ -24,15 +24,23 @@ export class AIService {
     if (!key) throw new Error('AI Coach is not configured.')
 
     const genAI = new GoogleGenerativeAI(key)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-
     const prompt = `You are a supportive, high-energy AI Fitness Coach. 
     The athlete's name is ${userName}. 
     They have a current workout streak of ${currentStreak} days and their current XP level is ${activeLevel}.
     Write a short, punchy, 2-sentence motivational daily tip for them. Do not use hashtags. Keep it under 150 characters if possible.`
 
-    const result = await model.generateContent(prompt)
-    return result.response.text().trim()
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      const result = await model.generateContent(prompt)
+      return result.response.text().trim()
+    } catch (error: any) {
+      if (error.message && error.message.includes('404')) {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+        const result = await model.generateContent(prompt)
+        return result.response.text().trim()
+      }
+      throw error;
+    }
   }
 
   public static async generatePostWorkoutSummary(
@@ -44,7 +52,6 @@ export class AIService {
     if (!key) throw new Error('AI Coach is not configured.')
 
     const genAI = new GoogleGenerativeAI(key)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
     const volumeContext = muscleVolume.map(m => `${m.reps} reps of ${m.name}`).join(', ')
 
@@ -53,8 +60,18 @@ export class AIService {
     They completed the following volume: ${volumeContext}.
     Write a short, exciting 2-sentence coach's note praising their effort on those specific muscles. Do not use hashtags.`
 
-    const result = await model.generateContent(prompt)
-    return result.response.text().trim()
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      const result = await model.generateContent(prompt)
+      return result.response.text().trim()
+    } catch (error: any) {
+      if (error.message && error.message.includes('404')) {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+        const result = await model.generateContent(prompt)
+        return result.response.text().trim()
+      }
+      throw error;
+    }
   }
 
   public static async chatWithFitnessAgent(history: { role: string; content: string }[], newMessage: string, dbContext: string = ""): Promise<string> {
@@ -74,19 +91,35 @@ export class AIService {
       systemInstruction += `\n\nUSER WORKOUT CONTEXT:\n${dbContext}\nUse this context to give highly personalized advice.`
     }
 
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      systemInstruction: systemInstruction 
-    })
+    try {
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemInstruction 
+      })
 
-    const chat = model.startChat({
-      history: history.map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }))
-    })
+      const chat = model.startChat({
+        history: history.map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        }))
+      })
 
-    const result = await chat.sendMessage([{ text: newMessage }])
-    return result.response.text().trim()
+      const result = await chat.sendMessage([{ text: newMessage }])
+      return result.response.text().trim()
+    } catch (error: any) {
+      if (error.message && error.message.includes('404')) {
+        console.warn('gemini-1.5-flash not found, falling back to gemini-pro')
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+        const chat = model.startChat({
+          history: history.map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+          }))
+        })
+        const result = await chat.sendMessage([{ text: `System Instruction: ${systemInstruction}\n\nUser Message: ${newMessage}` }])
+        return result.response.text().trim()
+      }
+      throw error;
+    }
   }
 }

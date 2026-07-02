@@ -48,9 +48,34 @@ export function ScheduleBuilder({ templates, exercises }: { templates: any[], ex
     window.location.reload()
   }
 
+  const handleInitialize = async () => {
+    try {
+      const res = await fetch('/api/admin/seed')
+      if (res.ok) {
+        window.location.reload()
+      } else {
+        alert('Failed to initialize schedule')
+      }
+    } catch (e) {
+      alert('Error initializing schedule')
+    }
+  }
+
+  if (!templates || templates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+        <h3 className="text-xl font-bold font-mono uppercase tracking-widest mb-2">Schedule Not Initialized</h3>
+        <p className="text-zinc-500 mb-6 text-center max-w-md">Your global workout schedule database is currently empty. Click below to seed it with the default initial routine.</p>
+        <Button onClick={handleInitialize} className="bg-[#FF6B35] text-white hover:bg-[#FF8C61] font-bold uppercase tracking-widest">
+          Initialize Default Schedule
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex gap-6 items-start">
-      <div className="w-48 flex flex-col gap-2 shrink-0">
+    <div className="flex flex-col md:flex-row gap-6 items-start">
+      <div className="w-full md:w-48 flex flex-col gap-2 shrink-0">
         {templates.map(t => (
           <button
             key={t.id}
