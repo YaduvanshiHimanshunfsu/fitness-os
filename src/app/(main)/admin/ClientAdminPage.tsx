@@ -14,13 +14,16 @@ type Exercise = Database['public']['Tables']['exercises']['Row']
 
 export default function ClientAdminPage({ 
   initialExercises, 
-  initialSettings 
+  initialSettings,
+  initialLogs
 }: { 
   initialExercises: Exercise[],
-  initialSettings: any[]
+  initialSettings: any[],
+  initialLogs: any[]
 }) {
   const [exercises, setExercises] = useState(initialExercises)
   const [settings, setSettings] = useState(initialSettings)
+  const [logs, setLogs] = useState(initialLogs)
   const [geminiApiKey, setGeminiApiKey] = useState(settings.find(s => s.key === 'gemini_api_key')?.value || '')
   const [userLimit, setUserLimit] = useState(settings.find(s => s.key === 'user_registration_limit')?.value || 100)
   const [isSaving, setIsSaving] = useState(false)
@@ -71,6 +74,12 @@ export default function ClientAdminPage({
           className="px-6 py-3 font-mono text-sm tracking-widest uppercase text-zinc-500 data-[state=active]:text-zinc-900 dark:data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#FF6B35] transition-colors"
         >
           Settings
+        </Tabs.Trigger>
+        <Tabs.Trigger 
+          value="logs" 
+          className="px-6 py-3 font-mono text-sm tracking-widest uppercase text-zinc-500 data-[state=active]:text-zinc-900 dark:data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#FF6B35] transition-colors"
+        >
+          Audit Logs
         </Tabs.Trigger>
       </Tabs.List>
 
@@ -170,6 +179,51 @@ export default function ClientAdminPage({
           >
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
+        </div>
+      </Tabs.Content>
+
+      <Tabs.Content value="logs" className="space-y-4">
+        <h2 className="text-xl font-bold font-mono uppercase tracking-widest mb-4">Admin Audit Logs</h2>
+        
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-200 dark:border-zinc-800">
+              <tr>
+                <th className="p-4 font-mono font-bold tracking-widest text-xs text-zinc-500 uppercase">Timestamp</th>
+                <th className="p-4 font-mono font-bold tracking-widest text-xs text-zinc-500 uppercase">Admin</th>
+                <th className="p-4 font-mono font-bold tracking-widest text-xs text-zinc-500 uppercase">Action</th>
+                <th className="p-4 font-mono font-bold tracking-widest text-xs text-zinc-500 uppercase">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log.id} className="border-b border-zinc-200 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                  <td className="p-4 font-mono text-zinc-500 whitespace-nowrap">
+                    {new Date(log.created_at).toLocaleString()}
+                  </td>
+                  <td className="p-4">
+                    <div className="font-medium">{log.profiles?.name || 'Unknown'}</div>
+                    <div className="text-xs text-zinc-500">{log.profiles?.email}</div>
+                  </td>
+                  <td className="p-4">
+                    <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded text-[10px] font-bold uppercase tracking-widest">
+                      {log.action}
+                    </span>
+                  </td>
+                  <td className="p-4 font-mono text-xs text-zinc-500 max-w-xs truncate">
+                    {log.details || '-'}
+                  </td>
+                </tr>
+              ))}
+              {logs.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-zinc-500 font-mono text-sm">
+                    No logs found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </Tabs.Content>
 

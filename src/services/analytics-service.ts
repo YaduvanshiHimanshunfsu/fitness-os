@@ -50,8 +50,8 @@ export async function getHeatmapData(userId: string, days = 365): Promise<Heatma
   const fromDate = new Date()
   fromDate.setDate(fromDate.getDate() - days)
 
-  const { data: sessions } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: sessions } = await supabase
+    .from('workouts_v5')
     .select('start_time, workout_exercises_v5(workout_sets_v5(id))')
     .eq('profile_id', userId)
     .gte('start_time', fromDate.toISOString())
@@ -60,7 +60,7 @@ export async function getHeatmapData(userId: string, days = 365): Promise<Heatma
   // Correct for UTC drift by extracting local YYYY-MM-DD from the DB timestamps
   const dateSetsMap: Record<string, number> = {}
   
-  for (const s of (sessions as any[]) ?? []) {
+  for (const s of sessions ?? []) {
     const d = new Date(s.start_time)
     const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]
     
@@ -125,8 +125,7 @@ export async function getMonthlyChartData(userId: string): Promise<MonthlyChartD
   const now = new Date()
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const { data: sessions } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: sessions } = await supabase.from()
     .select('start_time, workout_exercises_v5(workout_sets_v5(id))')
     .eq('profile_id', userId)
     .gte('start_time', firstOfMonth.toISOString())
@@ -134,7 +133,7 @@ export async function getMonthlyChartData(userId: string): Promise<MonthlyChartD
 
   // Group by date
   const map: Record<string, { sets: number; workouts: number }> = {}
-  for (const s of (sessions as any[]) ?? []) {
+  for (const s of sessions ?? []) {
     const d = new Date(s.start_time)
     const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]
     
@@ -172,8 +171,7 @@ export async function getYearlyChartData(userId: string): Promise<YearlyChartDat
 
   const year = new Date().getFullYear()
 
-  const { data: sessions } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: sessions } = await supabase.from()
     .select('start_time, workout_exercises_v5(workout_sets_v5(id))')
     .eq('profile_id', userId)
     .gte('start_time', `${year}-01-01T00:00:00.000Z`)
@@ -181,7 +179,7 @@ export async function getYearlyChartData(userId: string): Promise<YearlyChartDat
 
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   return months.map((label, i) => {
-    const monthSessions = ((sessions ?? []) as any[]).filter((s: any) => {
+    const monthSessions = (sessions ?? []).filter((s: any) => {
       return new Date(s.start_time).getMonth() === i
     })
     
@@ -212,8 +210,8 @@ export async function getMuscleVolumeData(
   if (period === 'month') fromDate.setMonth(fromDate.getMonth() - 1)
   if (period === 'year')  fromDate.setFullYear(fromDate.getFullYear() - 1)
 
-  const { data: workouts } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: workouts } = await supabase
+    .from('workouts_v5')
     .select(`
       workout_exercises_v5(
         exercises(muscle_group),
@@ -224,7 +222,7 @@ export async function getMuscleVolumeData(
     .gte('start_time', fromDate.toISOString())
 
   const volumeMap: Record<string, number> = {}
-  for (const w of (workouts as any[]) ?? []) {
+  for (const w of workouts ?? []) {
     for (const we of w.workout_exercises_v5 || []) {
       const group = we.exercises?.muscle_group ?? 'unknown'
       const completedSets = (we.workout_sets_v5 || []).filter((s: any) => s.completed).length
@@ -248,19 +246,17 @@ export async function getMuscleVolumeData(
 export async function getStreakData(userId: string): Promise<StreakData> {
   const supabase = await createClient()
 
-  const { count: totalWorkouts } = await (supabase
-    .from('workouts_v5') as any)
+  const { count: totalWorkouts } = await supabase.from()
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', userId)
 
-  const { data: workoutsWithSets } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: workoutsWithSets } = await supabase.from()
     .select('workout_exercises_v5(workout_sets_v5(actual_reps, completed))')
     .eq('profile_id', userId)
 
   let totalSetsCount = 0
   let totalRepsCount = 0
-  for (const w of (workoutsWithSets as any[]) ?? []) {
+  for (const w of workoutsWithSets ?? []) {
     for (const we of w.workout_exercises_v5 || []) {
       for (const s of we.workout_sets_v5 || []) {
         if (s.completed) {
@@ -271,8 +267,7 @@ export async function getStreakData(userId: string): Promise<StreakData> {
     }
   }
 
-  const { data: streakRow } = await (supabase
-    .from('streaks') as any)
+  const { data: streakRow } = await supabase.from()
     .select('current_streak, best_streak, last_workout_date')
     .eq('user_id', userId)
     .single()

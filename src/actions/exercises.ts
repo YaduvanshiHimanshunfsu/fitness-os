@@ -1,14 +1,14 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 async function verifyAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await (supabase.from('profiles') as any)
+  const { data: profile } = await supabase.from('profiles')
     .select('role, email')
     .eq('id', user.id)
     .single()
@@ -30,21 +30,23 @@ export async function addExercise(data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase.from('exercises') as any).insert({
+    const { error } = await supabase.from('exercises').insert({
       ...data,
       created_at: new Date().toISOString()
     })
 
     if (error) throw error
 
-    await (supabase.from('admin_logs') as any).insert({
+    await supabase.from().insert({
       admin_id: user.id,
       action: 'add_exercise',
       details: JSON.stringify({ name: data.name })
     })
 
     revalidatePath('/admin')
-    revalidatePath('/dashboard') // Also invalidate where exercises are listed
+    revalidatePath('/dashboard')
+    revalidateTag('exercises')
+    revalidateTag('exercises')
     return { success: true }
   } catch (error: any) {
     console.error('Error adding exercise:', error)
@@ -63,13 +65,13 @@ export async function updateExercise(id: number, data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase.from('exercises') as any)
+    const { error } = await supabase.from()
       .update(data)
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase.from('admin_logs') as any).insert({
+    await supabase.from().insert({
       admin_id: user.id,
       action: 'update_exercise',
       details: JSON.stringify({ id, name: data.name })
@@ -77,6 +79,7 @@ export async function updateExercise(id: number, data: {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
+    revalidateTag('exercises')
     return { success: true }
   } catch (error: any) {
     console.error('Error updating exercise:', error)
@@ -88,13 +91,13 @@ export async function deleteExercise(id: number) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase.from('exercises') as any)
+    const { error } = await supabase.from()
       .delete()
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase.from('admin_logs') as any).insert({
+    await supabase.from().insert({
       admin_id: user.id,
       action: 'delete_exercise',
       details: JSON.stringify({ id })
@@ -102,6 +105,7 @@ export async function deleteExercise(id: number) {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
+    revalidateTag('exercises')
     return { success: true }
   } catch (error: any) {
     console.error('Error deleting exercise:', error)

@@ -57,8 +57,7 @@ export async function saveWorkoutSession(payload: {
   const estimatedCalories = Math.round(totalVolumeKg * 0.00205)
 
   // 2. Insert workout
-  const { data: workout, error: workoutError } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: workout, error: workoutError } = await supabase.from()
     .insert({
       profile_id:        user.id,
       name:              payload.day, // Using day as name for now
@@ -82,8 +81,7 @@ export async function saveWorkoutSession(payload: {
   for (const [exerciseId, sets] of exerciseMap.entries()) {
     const exerciseSetsSkipped = sets.filter(s => !s.completed).length
 
-    const { data: we, error: weError } = await (supabase
-      .from('workout_exercises_v5') as any)
+    const { data: we, error: weError } = await supabase.from()
       .insert({
         workout_id:   workout.id,
         exercise_id:  exerciseId,
@@ -98,7 +96,7 @@ export async function saveWorkoutSession(payload: {
       continue;
     }
 
-    const { error: setsError } = await (supabase.from('workout_sets_v5') as any).insert(
+    const { error: setsError } = await supabase.from().insert(
       sets.map(s => ({
         workout_exercise_id: we.id,
         actual_reps:  s.actualReps,
@@ -115,8 +113,7 @@ export async function saveWorkoutSession(payload: {
   }
 
   // 4. Update streak — read from `streaks` table, calculate, and write back
-  const { data: streakRow } = await (supabase
-    .from('streaks') as any)
+  const { data: streakRow } = await supabase.from()
     .select('current_streak, best_streak, last_workout_date')
     .eq('user_id', user.id)
     .single()
@@ -127,8 +124,7 @@ export async function saveWorkoutSession(payload: {
   const newStreak = calculateNewStreak(lastWorkoutDate, currentStreak)
   const newBestStreak = Math.max(bestStreak, newStreak)
 
-  const { error: streakError } = await (supabase
-    .from('streaks') as any)
+  const { error: streakError } = await supabase.from()
     .upsert({
       user_id:            user.id,
       current_streak:     newStreak,

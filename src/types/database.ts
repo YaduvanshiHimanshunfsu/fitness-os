@@ -68,7 +68,76 @@ export interface Database {
           common_mistakes?: string | null
         }
       }
-      // Added other tables here to satisfy the typescript compiler for now
+
+      admin_logs: {
+        Row: {
+          id: number
+          admin_id: string
+          action: string
+          details: string | null
+          created_at: string
+        }
+        Insert: {
+          admin_id: string
+          action: string
+          details?: string | null
+        }
+        Update: {
+          action?: string
+          details?: string | null
+        }
+      }
+      app_settings: {
+        Row: {
+          id: number
+          key: string
+          value: any
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: any
+        }
+        Update: {
+          value?: any
+        }
+      }
+      workouts_v5: {
+        Row: {
+          id: number
+          profile_id: string
+          start_time: string
+          end_time: string | null
+          notes: string | null
+        }
+        Insert: {
+          profile_id: string
+          start_time: string
+          end_time?: string | null
+          notes?: string | null
+        }
+        Update: {
+          end_time?: string | null
+          notes?: string | null
+        }
+      }
+      workout_exercises_v5: {
+        Row: {
+          id: number
+          workout_id: number
+          exercise_id: number
+          order_index: number
+        }
+      }
+      workout_sets_v5: {
+        Row: {
+          id: number
+          workout_exercise_id: number
+          weight_lbs: number
+          reps: number
+          completed: boolean
+        }
+      }
     }
     Views: {
       [_ in never]: never

@@ -138,7 +138,7 @@ export default function SummaryPage() {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user && !cancelled) {
-          const { data } = await (supabase.from('streaks') as any)
+          const { data } = await supabase.from()
             .select('current_streak')
             .eq('user_id', user.id)
             .single();

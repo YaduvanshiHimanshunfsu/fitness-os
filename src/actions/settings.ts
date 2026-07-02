@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 export async function saveGlobalSettings(settings: { geminiApiKey?: string, userRegistrationLimit?: number }) {
   const supabase = await createClient()
@@ -10,7 +10,7 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await (supabase.from('profiles') as any)
+  const { data: profile } = await supabase.from()
     .select('role, email')
     .eq('id', user.id)
     .single()
@@ -21,7 +21,7 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
 
   // Update Gemini API Key
   if (settings.geminiApiKey !== undefined) {
-    const { error } = await (supabase.from('app_settings') as any).upsert({
+    const { error } = await supabase.from().upsert({
       key: 'gemini_api_key',
       value: JSON.stringify(settings.geminiApiKey)
     }, { onConflict: 'key' })
@@ -30,7 +30,7 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
 
   // Update Registration Limit
   if (settings.userRegistrationLimit !== undefined) {
-    const { error } = await (supabase.from('app_settings') as any).upsert({
+    const { error } = await supabase.from().upsert({
       key: 'user_registration_limit',
       value: JSON.stringify(settings.userRegistrationLimit)
     }, { onConflict: 'key' })
@@ -38,12 +38,13 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
   }
 
   // Log action
-  await (supabase.from('admin_logs') as any).insert({
+  await supabase.from().insert({
     admin_id: user.id,
     action: 'updated_settings',
     details: JSON.stringify(settings)
   })
 
   revalidatePath('/admin')
+    revalidateTag('settings')
   return { success: true }
 }

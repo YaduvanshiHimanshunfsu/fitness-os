@@ -61,7 +61,7 @@ export async function signup(formData: FormData) {
   // Insert profile immediately if possible
   if (data.user) {
     const name = email.split('@')[0]
-    const { error: profileError } = await (supabase.from('profiles') as any).upsert({
+    const { error: profileError } = await supabase.from().upsert({
       id: data.user.id,
       email: email,
       name: name.charAt(0).toUpperCase() + name.slice(1)

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ClientAdminPage from './ClientAdminPage'
+import { getCachedExercises, getCachedSettings } from '@/services/cache-service'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -8,7 +9,7 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await (supabase.from('profiles') as any)
+  const { data: profile } = await supabase.from('profiles')
     .select('role, email')
     .eq('id', user.id)
     .single()
@@ -19,12 +20,13 @@ export default async function AdminPage() {
   }
 
   // Fetch initial data for admin
-  const { data: exercises } = await (supabase.from('exercises') as any)
-    .select('*')
-    .order('id')
-    
-  const { data: settings } = await (supabase.from('app_settings') as any)
-    .select('*')
+  const exercises = await getCachedExercises()
+  const settings = await getCachedSettings()
+
+  const { data: logs } = await supabase.from('admin_logs')
+    .select('*, profiles(name, email)')
+    .order('created_at', { ascending: false })
+    .limit(50)
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -37,7 +39,11 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <ClientAdminPage initialExercises={exercises ?? []} initialSettings={settings ?? []} />
+      <ClientAdminPage 
+        initialExercises={exercises ?? []} 
+        initialSettings={settings ?? []} 
+        initialLogs={logs ?? []}
+      />
     </div>
   )
 }

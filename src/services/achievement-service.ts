@@ -16,8 +16,7 @@ export interface AchievementStats {
 export async function getUserAchievements(userId: string): Promise<UserAchievement[]> {
   const supabase = await createClient()
 
-  const { data } = await (supabase
-    .from('user_achievements') as any)
+  const { data } = await supabase.from()
     .select('achievement_id, unlocked_at')
     .eq('user_id', userId)
 
@@ -27,8 +26,7 @@ export async function getUserAchievements(userId: string): Promise<UserAchieveme
 export async function getLevelInfo(userId: string) {
   const supabase = await createClient()
 
-  const { data: profile } = await (supabase
-    .from('profiles') as any)
+  const { data: profile } = await supabase.from()
     .select('xp_total')
     .eq('id', userId)
     .single()
@@ -63,39 +61,34 @@ export async function getLevelInfo(userId: string) {
 export async function checkAndUnlockAchievements(userId: string) {
   const supabase = await createClient()
 
-  const { count: totalWorkouts } = await (supabase
-    .from('workouts_v5') as any)
+  const { count: totalWorkouts } = await supabase.from()
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', userId)
 
-  const { data: workoutsWithSets } = await (supabase
-    .from('workouts_v5') as any)
+  const { data: workoutsWithSets } = await supabase.from()
     .select('workout_exercises_v5(workout_sets_v5(completed))')
     .eq('profile_id', userId)
 
   let totalSetsCompleted = 0
-  for (const w of (workoutsWithSets as any[]) ?? []) {
+  for (const w of workoutsWithSets ?? []) {
     for (const we of w.workout_exercises_v5 || []) {
       totalSetsCompleted += (we.workout_sets_v5 || []).filter((s: any) => s.completed).length
     }
   }
 
-  const { data: streakRow } = await (supabase
-    .from('streaks') as any)
+  const { data: streakRow } = await supabase.from()
     .select('current_streak')
     .eq('user_id', userId)
     .single()
 
   const currentStreak = streakRow?.current_streak ?? 0
 
-  const { data: allAchievements } = await (supabase
-    .from('achievements') as any)
+  const { data: allAchievements } = await supabase.from()
     .select('id, condition_type, condition_value')
 
   if (!allAchievements) return
 
-  const { data: alreadyUnlocked } = await (supabase
-    .from('user_achievements') as any)
+  const { data: alreadyUnlocked } = await supabase.from()
     .select('achievement_id')
     .eq('user_id', userId)
 
@@ -121,7 +114,7 @@ export async function checkAndUnlockAchievements(userId: string) {
     }
 
     if (qualifies) {
-      await (supabase.from('user_achievements') as any).insert({
+      await supabase.from().insert({
         user_id: userId,
         achievement_id: achievement.id,
       })
