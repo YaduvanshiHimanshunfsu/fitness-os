@@ -9,17 +9,20 @@ import { saveGlobalSettings } from '@/actions/settings'
 import { ExerciseModal } from '@/components/admin/ExerciseModal'
 import { deleteExercise } from '@/actions/exercises'
 import { Edit2, Trash2 } from 'lucide-react'
+import { ScheduleBuilder } from '@/components/admin/ScheduleBuilder'
 
 type Exercise = Database['public']['Tables']['exercises']['Row']
 
 export default function ClientAdminPage({ 
   initialExercises, 
   initialSettings,
-  initialLogs
+  initialLogs,
+  initialTemplates
 }: { 
   initialExercises: Exercise[],
   initialSettings: any[],
-  initialLogs: any[]
+  initialLogs: any[],
+  initialTemplates: any[]
 }) {
   const [exercises, setExercises] = useState(initialExercises)
   const [settings, setSettings] = useState(initialSettings)
@@ -68,6 +71,12 @@ export default function ClientAdminPage({
           className="px-6 py-3 font-mono text-sm tracking-widest uppercase text-zinc-500 data-[state=active]:text-zinc-900 dark:data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#FF6B35] transition-colors"
         >
           Exercises
+        </Tabs.Trigger>
+        <Tabs.Trigger 
+          value="schedule" 
+          className="px-6 py-3 font-mono text-sm tracking-widest uppercase text-zinc-500 data-[state=active]:text-zinc-900 dark:data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#FF6B35] transition-colors"
+        >
+          Daily Schedule
         </Tabs.Trigger>
         <Tabs.Trigger 
           value="settings" 
@@ -180,6 +189,11 @@ export default function ClientAdminPage({
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
+      </Tabs.Content>
+
+      <Tabs.Content value="schedule" className="space-y-4">
+        <h2 className="text-xl font-bold font-mono uppercase tracking-widest mb-4">Daily Schedule Builder</h2>
+        <ScheduleBuilder templates={initialTemplates} exercises={exercises} />
       </Tabs.Content>
 
       <Tabs.Content value="logs" className="space-y-4">

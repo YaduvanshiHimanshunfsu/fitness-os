@@ -13,7 +13,7 @@ async function verifyAdmin() {
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'admin' && profile?.email !== 'himanshu98075@gmail.com') {
+  if (profile?.role !== 'admin' && profile?.email !== 'himanshu.btmtcs4242906@nfsu.ac.in') {
     throw new Error('Forbidden: Admin access required')
   }
   return { supabase, user }

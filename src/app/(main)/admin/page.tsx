@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ClientAdminPage from './ClientAdminPage'
 import { getCachedExercises, getCachedSettings } from '@/services/cache-service'
+import { getTemplates } from '@/actions/templates'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -22,6 +23,7 @@ export default async function AdminPage() {
   // Fetch initial data for admin
   const exercises = await getCachedExercises()
   const settings = await getCachedSettings()
+  const initialTemplates = await getTemplates()
 
   const { data: logs } = await supabase.from('admin_logs')
     .select('*, profiles(name, email)')
@@ -43,6 +45,7 @@ export default async function AdminPage() {
         initialExercises={exercises ?? []} 
         initialSettings={settings ?? []} 
         initialLogs={logs ?? []}
+        initialTemplates={initialTemplates ?? []}
       />
     </div>
   )

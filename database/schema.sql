@@ -673,3 +673,34 @@ on conflict (name) do nothing;
 -- END OF SCHEMA
 -- All sections are idempotent and safe to re-run at any time.
 -- ==============================================================================
+- -   1 .   E n a b l e   R L S   o n   t h e   t a b l e s   ( i f   n o t   a l r e a d y   e n a b l e d )  
+ a l t e r   t a b l e   w o r k o u t _ t e m p l a t e s   e n a b l e   r o w   l e v e l   s e c u r i t y ;  
+ a l t e r   t a b l e   w o r k o u t _ t e m p l a t e _ e x e r c i s e s   e n a b l e   r o w   l e v e l   s e c u r i t y ;  
+  
+ - -   2 .   D r o p   e x i s t i n g   p o l i c i e s   t o   b e   s a f e  
+ d r o p   p o l i c y   i f   e x i s t s   " t e m p l a t e s _ p u b l i c _ r e a d "   o n   w o r k o u t _ t e m p l a t e s ;  
+ d r o p   p o l i c y   i f   e x i s t s   " t e m p l a t e s _ a d m i n _ a l l "   o n   w o r k o u t _ t e m p l a t e s ;  
+ d r o p   p o l i c y   i f   e x i s t s   " t e m p l a t e _ e x e r c i s e s _ p u b l i c _ r e a d "   o n   w o r k o u t _ t e m p l a t e _ e x e r c i s e s ;  
+ d r o p   p o l i c y   i f   e x i s t s   " t e m p l a t e _ e x e r c i s e s _ a d m i n _ a l l "   o n   w o r k o u t _ t e m p l a t e _ e x e r c i s e s ;  
+  
+ - -   3 .   C r e a t e   P u b l i c   R e a d   P o l i c i e s  
+ c r e a t e   p o l i c y   " t e m p l a t e s _ p u b l i c _ r e a d "   o n   w o r k o u t _ t e m p l a t e s   f o r   s e l e c t   u s i n g   ( t r u e ) ;  
+ c r e a t e   p o l i c y   " t e m p l a t e _ e x e r c i s e s _ p u b l i c _ r e a d "   o n   w o r k o u t _ t e m p l a t e _ e x e r c i s e s   f o r   s e l e c t   u s i n g   ( t r u e ) ;  
+  
+ - -   4 .   C r e a t e   A d m i n   A l l   P o l i c i e s  
+ c r e a t e   p o l i c y   " t e m p l a t e s _ a d m i n _ a l l "   o n   w o r k o u t _ t e m p l a t e s   f o r   a l l   u s i n g   (  
+     e x i s t s   (  
+         s e l e c t   1   f r o m   p r o f i l e s  
+         w h e r e   p r o f i l e s . i d   =   a u t h . u i d ( )  
+         a n d   ( p r o f i l e s . r o l e   =   ' a d m i n '   o r   p r o f i l e s . e m a i l   =   ' h i m a n s h u . b t m t c s 4 2 4 2 9 0 6 @ n f s u . a c . i n ' )  
+     )  
+ ) ;  
+  
+ c r e a t e   p o l i c y   " t e m p l a t e _ e x e r c i s e s _ a d m i n _ a l l "   o n   w o r k o u t _ t e m p l a t e _ e x e r c i s e s   f o r   a l l   u s i n g   (  
+     e x i s t s   (  
+         s e l e c t   1   f r o m   p r o f i l e s  
+         w h e r e   p r o f i l e s . i d   =   a u t h . u i d ( )  
+         a n d   ( p r o f i l e s . r o l e   =   ' a d m i n '   o r   p r o f i l e s . e m a i l   =   ' h i m a n s h u . b t m t c s 4 2 4 2 9 0 6 @ n f s u . a c . i n ' )  
+     )  
+ ) ;  
+ 
