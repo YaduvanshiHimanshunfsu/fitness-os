@@ -19,7 +19,8 @@ import {
   Scale,
   Menu,
   Bot,
-  Users
+  Users,
+  ShieldCheck
 } from 'lucide-react';
 import { logout } from '@/actions/auth';
 import { useUIStore } from '@/hooks/useUI';
@@ -48,6 +49,7 @@ export default function Sidebar() {
   const [levelLabel,   setLevelLabel]   = useState('Loading...');
   const [avatarLetter, setAvatarLetter] = useState('?');
   const [avatarUrl,    setAvatarUrl]    = useState<string | null>(null);
+  const [isAdmin,      setIsAdmin]      = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,11 +60,14 @@ export default function Sidebar() {
         if (!user || cancelled) return;
 
         const { data: profile } = await supabase.from('profiles')
-          .select('name, xp_total, avatar_url')
+          .select('name, xp_total, avatar_url, role')
           .eq('id', user.id)
           .single();
 
         if (cancelled) return;
+
+        const isUserAdmin = profile?.role === 'admin' || user.email === 'himanshu.btmtcs4242906@nfsu.ac.in';
+        setIsAdmin(isUserAdmin);
 
         const name = profile?.name || user.email?.split('@')[0] || 'Athlete';
         const xp   = profile?.xp_total ?? 0;
@@ -115,7 +120,7 @@ export default function Sidebar() {
 
       {/* Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
-        {NAV_ITEMS.map((item) => {
+        {[...NAV_ITEMS, ...(isAdmin ? [{ name: 'Command Center', path: '/admin', icon: ShieldCheck }] : [])].map((item) => {
           const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
           const Icon = item.icon;
           return (

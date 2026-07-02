@@ -15,7 +15,7 @@ export default async function AdminPage() {
     .single()
 
   // Only allow admin role OR specific email
-  if (profile?.role !== 'admin' && profile?.email !== 'himanshu98075@gmail.com') {
+  if (profile?.role !== 'admin' && profile?.email !== 'himanshu.btmtcs4242906@nfsu.ac.in') {
     redirect('/dashboard')
   }
 
