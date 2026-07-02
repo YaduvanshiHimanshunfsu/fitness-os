@@ -56,4 +56,33 @@ export class AIService {
     const result = await model.generateContent(prompt)
     return result.response.text().trim()
   }
+
+  public static async chatWithFitnessAgent(history: { role: string; content: string }[], newMessage: string): Promise<string> {
+    const key = await this.getGeminiKey()
+    if (!key) throw new Error('AI Coach is not configured.')
+
+    const genAI = new GoogleGenerativeAI(key)
+    
+    const systemInstruction = `You are a highly advanced elite fitness, health, and nutrition AI Agent built into FITNESS OS. 
+    Your ONLY purpose is to answer questions, clear doubts, and provide guidance strictly related to exercise, bodybuilding, diet, nutrition, recovery, and general physical health.
+    IMPORTANT RULES:
+    1. If the user asks about ANY topic outside of fitness, health, diet, or exercise (e.g., programming, coding, politics, history, general knowledge, writing code), you MUST politely refuse and state that you are a dedicated Fitness AI and can only answer health and fitness related questions.
+    2. Be supportive, concise, and highly knowledgeable. Provide actionable and scientifically backed advice.
+    3. Do NOT use hashtags.`
+
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemInstruction 
+    })
+
+    const chat = model.startChat({
+      history: history.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }))
+    })
+
+    const result = await chat.sendMessage([{ text: newMessage }])
+    return result.response.text().trim()
+  }
 }

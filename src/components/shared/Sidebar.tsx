@@ -17,16 +17,17 @@ import {
   User,
   Calendar,
   Scale,
-  Menu
+  Menu,
+  Bot
 } from 'lucide-react';
 import { logout } from '@/actions/auth';
 import { useUIStore } from '@/hooks/useUI';
 import { createClient } from '@/lib/supabase/client';
 import { getLevelFromXP } from '@/utils/level-calculator';
 
-const NAV_ITEMS = [
   { name: 'Dashboard',    path: '/dashboard',    icon: LayoutDashboard },
   { name: 'Schedule',     path: '/schedule',     icon: Dumbbell        },
+  { name: 'AI Coach',     path: '/coach',        icon: Bot             },
   { name: 'Analytics',    path: '/analytics',    icon: BarChart3       },
   { name: 'History',      path: '/history',      icon: Calendar        },
   { name: 'Records',      path: '/records',      icon: History         },
