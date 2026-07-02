@@ -125,7 +125,7 @@ export async function getMonthlyChartData(userId: string): Promise<MonthlyChartD
   const now = new Date()
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const { data: sessions } = await supabase.from()
+  const { data: sessions } = await supabase.from('workouts_v5')
     .select('start_time, workout_exercises_v5(workout_sets_v5(id))')
     .eq('profile_id', userId)
     .gte('start_time', firstOfMonth.toISOString())
@@ -171,7 +171,7 @@ export async function getYearlyChartData(userId: string): Promise<YearlyChartDat
 
   const year = new Date().getFullYear()
 
-  const { data: sessions } = await supabase.from()
+  const { data: sessions } = await supabase.from('workouts_v5')
     .select('start_time, workout_exercises_v5(workout_sets_v5(id))')
     .eq('profile_id', userId)
     .gte('start_time', `${year}-01-01T00:00:00.000Z`)
@@ -246,11 +246,11 @@ export async function getMuscleVolumeData(
 export async function getStreakData(userId: string): Promise<StreakData> {
   const supabase = await createClient()
 
-  const { count: totalWorkouts } = await supabase.from()
+  const { count: totalWorkouts } = await supabase.from('workouts_v5')
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', userId)
 
-  const { data: workoutsWithSets } = await supabase.from()
+  const { data: workoutsWithSets } = await supabase.from('workouts_v5')
     .select('workout_exercises_v5(workout_sets_v5(actual_reps, completed))')
     .eq('profile_id', userId)
 
@@ -267,7 +267,7 @@ export async function getStreakData(userId: string): Promise<StreakData> {
     }
   }
 
-  const { data: streakRow } = await supabase.from()
+  const { data: streakRow } = await supabase.from('streaks')
     .select('current_streak, best_streak, last_workout_date')
     .eq('user_id', userId)
     .single()

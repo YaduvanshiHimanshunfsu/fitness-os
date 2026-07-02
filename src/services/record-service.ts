@@ -22,7 +22,7 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
 
   // In the current schema, personal_records has:
   // id, user_id, exercise_id, max_weight, max_reps, longest_hold_seconds, achieved_at
-  const { data } = await supabase.from()
+  const { data } = await supabase.from('personal_records')
     .select(`
       id,
       max_weight,
@@ -54,7 +54,7 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
   const supabase = await createClient()
 
   // Get current record
-  const { data: existing } = await supabase.from()
+  const { data: existing } = await supabase.from('personal_records')
     .select('*')
     .eq('user_id', userId)
     .eq('exercise_id', exerciseId)
@@ -81,7 +81,7 @@ export async function checkAndUpdateRecords(userId: string, exerciseId: string, 
 
   if (isNewRecord) {
     // Use upsert to atomically handle both insert and update, avoiding race conditions
-    const { error } = await supabase.from().upsert({
+    const { error } = await supabase.from('personal_records').upsert({
       user_id:              userId,
       exercise_id:          exerciseId,
       max_reps:             newMaxReps,

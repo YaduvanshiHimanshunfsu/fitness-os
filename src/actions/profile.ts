@@ -12,7 +12,7 @@ export async function updateProfile(formData: FormData) {
   const name = (formData.get('name') as string)?.trim()
   if (!name) return { error: 'Name cannot be empty' }
 
-  const { error } = await supabase.from()
+  const { error } = await supabase.from('profiles')
     .update({ name })
     .eq('id', user.id)
 

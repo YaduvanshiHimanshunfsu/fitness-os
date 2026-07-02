@@ -10,7 +10,7 @@ export async function getWorkoutDatesForMonth(year: number, month: number) {
   const startDate = new Date(Date.UTC(year, month, 1));
   const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
 
-  const { data, error } = await supabase.from()
+  const { data, error } = await supabase.from('workouts_v5')
     .select('start_time, xp_earned')
     .eq('profile_id', user.id)
     .gte('start_time', startDate.toISOString())
@@ -55,7 +55,7 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
   const startOfDay = new Date(year, month, day, 0, 0, 0)
   const endOfDay = new Date(year, month, day, 23, 59, 59, 999)
 
-  const { data: workouts, error } = await supabase.from()
+  const { data: workouts, error } = await supabase.from('workouts_v5')
     .select(`
       id, name, start_time, end_time, xp_earned, sets_skipped, exercises_skipped, estimated_calories,
       workout_exercises_v5 (

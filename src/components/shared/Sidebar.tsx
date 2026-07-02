@@ -57,7 +57,7 @@ export default function Sidebar() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || cancelled) return;
 
-        const { data: profile } = await supabase.from()
+        const { data: profile } = await supabase.from('profiles')
           .select('name, xp_total, avatar_url')
           .eq('id', user.id)
           .single();
@@ -157,7 +157,7 @@ export default function Sidebar() {
           <div className="px-5 py-4 border-b border-zinc-200 dark:border-[#1F1F1F]/50">
             <div className="text-[10px] text-zinc-500 font-medium leading-relaxed">
               <p className="text-zinc-600 dark:text-zinc-400 font-bold mb-0.5">Created by Himanshu Yadav</p>
-              <p>&copy; {new Date().getFullYear()} Fitness OS</p>
+              <p>&copy; {new Date().getFullYear()} Fitness OS v6.0</p>
             </div>
           </div>
         )}

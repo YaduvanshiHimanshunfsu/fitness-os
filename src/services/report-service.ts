@@ -77,7 +77,7 @@ export async function getWeeklyReport(userId: string): Promise<WeeklyReport> {
   sunday.setHours(23, 59, 59, 999)
 
   // Query from v5 tables with nested joins
-  const { data: workouts } = await supabase.from()
+  const { data: workouts } = await supabase.from('workouts_v5')
     .select(`
       id, name, start_time, end_time,
       workout_exercises_v5(
@@ -144,7 +144,7 @@ export async function getMonthlyReport(userId: string): Promise<MonthlyReport> {
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastOfMonth  = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
 
-  const { data: workouts } = await supabase.from()
+  const { data: workouts } = await supabase.from('workouts_v5')
     .select(`
       id, start_time,
       workout_exercises_v5(
@@ -173,7 +173,7 @@ export async function getMonthlyReport(userId: string): Promise<MonthlyReport> {
   const bestWeek = Object.entries(weekMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
 
   // Streak from streaks table
-  const { data: streakRow } = await supabase.from()
+  const { data: streakRow } = await supabase.from('streaks')
     .select('current_streak, best_streak')
     .eq('user_id', userId)
     .single()
@@ -199,7 +199,7 @@ export async function getYearlyReport(userId: string): Promise<YearlyReport> {
 
   const year = new Date().getFullYear()
 
-  const { data: workouts } = await supabase.from()
+  const { data: workouts } = await supabase.from('workouts_v5')
     .select(`
       id, start_time, end_time,
       workout_exercises_v5(
@@ -230,12 +230,12 @@ export async function getYearlyReport(userId: string): Promise<YearlyReport> {
   }
   const bestMonth = Object.entries(monthMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
 
-  const { data: streakRow } = await supabase.from()
+  const { data: streakRow } = await supabase.from('streaks')
     .select('best_streak')
     .eq('user_id', userId)
     .single()
 
-  const { data: profile } = await supabase.from()
+  const { data: profile } = await supabase.from('profiles')
     .select('xp_total')
     .eq('id', userId)
     .single()

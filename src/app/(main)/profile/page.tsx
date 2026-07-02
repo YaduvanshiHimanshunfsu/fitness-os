@@ -10,7 +10,7 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from()
+  const { data: profile } = await supabase.from('profiles')
     .select('name, xp_total, total_workouts, total_sets, avatar_url')
     .eq('id', user.id)
     .single()

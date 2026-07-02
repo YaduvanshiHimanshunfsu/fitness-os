@@ -79,7 +79,7 @@ export default function Topbar() {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data, error } = await supabase.from()
+          const { data, error } = await supabase.from('streaks')
             .select('current_streak')
             .eq('user_id', user.id)
             .single();

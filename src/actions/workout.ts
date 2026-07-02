@@ -57,9 +57,8 @@ export async function saveWorkoutSession(payload: {
   const estimatedCalories = Math.round(totalVolumeKg * 0.00205)
 
   // 2. Insert workout
-  const { data: workout, error: workoutError } = await supabase.from()
-    .insert({
-      profile_id:        user.id,
+  const { data: workout, error: workoutError } = await supabase.from('workouts_v5')
+    .insert({ profile_id:        user.id,
       name:              payload.day, // Using day as name for now
       start_time:        payload.startTime.toISOString(),
       end_time:          payload.endTime.toISOString(),
@@ -81,9 +80,8 @@ export async function saveWorkoutSession(payload: {
   for (const [exerciseId, sets] of exerciseMap.entries()) {
     const exerciseSetsSkipped = sets.filter(s => !s.completed).length
 
-    const { data: we, error: weError } = await supabase.from()
-      .insert({
-        workout_id:   workout.id,
+    const { data: we, error: weError } = await supabase.from('workout_exercises_v5')
+      .insert({ workout_id:   workout.id,
         exercise_id:  exerciseId,
         order_index:  orderIndex++,
         sets_skipped: exerciseSetsSkipped
@@ -96,7 +94,7 @@ export async function saveWorkoutSession(payload: {
       continue;
     }
 
-    const { error: setsError } = await supabase.from().insert(
+    const { error: setsError } = await supabase.from('workout_sets_v5').insert(
       sets.map(s => ({
         workout_exercise_id: we.id,
         actual_reps:  s.actualReps,
@@ -113,7 +111,7 @@ export async function saveWorkoutSession(payload: {
   }
 
   // 4. Update streak — read from `streaks` table, calculate, and write back
-  const { data: streakRow } = await supabase.from()
+  const { data: streakRow } = await supabase.from('streaks')
     .select('current_streak, best_streak, last_workout_date')
     .eq('user_id', user.id)
     .single()
@@ -124,7 +122,7 @@ export async function saveWorkoutSession(payload: {
   const newStreak = calculateNewStreak(lastWorkoutDate, currentStreak)
   const newBestStreak = Math.max(bestStreak, newStreak)
 
-  const { error: streakError } = await supabase.from()
+  const { error: streakError } = await supabase.from('streaks')
     .upsert({
       user_id:            user.id,
       current_streak:     newStreak,

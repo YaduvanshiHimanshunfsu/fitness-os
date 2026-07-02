@@ -37,7 +37,7 @@ export async function addExercise(data: {
 
     if (error) throw error
 
-    await supabase.from().insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'add_exercise',
       details: JSON.stringify({ name: data.name })
@@ -65,13 +65,13 @@ export async function updateExercise(id: number, data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await supabase.from()
+    const { error } = await supabase.from('exercises')
       .update(data)
       .eq('id', id)
 
     if (error) throw error
 
-    await supabase.from().insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'update_exercise',
       details: JSON.stringify({ id, name: data.name })
@@ -91,13 +91,13 @@ export async function deleteExercise(id: number) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await supabase.from()
+    const { error } = await supabase.from('exercises')
       .delete()
       .eq('id', id)
 
     if (error) throw error
 
-    await supabase.from().insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'delete_exercise',
       details: JSON.stringify({ id })
