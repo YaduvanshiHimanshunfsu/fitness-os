@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Database } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { saveGlobalSettings } from '@/actions/settings'
+import { ExerciseModal } from '@/components/admin/ExerciseModal'
+import { deleteExercise } from '@/actions/exercises'
+import { Edit2, Trash2 } from 'lucide-react'
 
 type Exercise = Database['public']['Tables']['exercises']['Row']
 
@@ -21,6 +24,10 @@ export default function ClientAdminPage({
   const [geminiApiKey, setGeminiApiKey] = useState(settings.find(s => s.key === 'gemini_api_key')?.value || '')
   const [userLimit, setUserLimit] = useState(settings.find(s => s.key === 'user_registration_limit')?.value || 100)
   const [isSaving, setIsSaving] = useState(false)
+  
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [exerciseToEdit, setExerciseToEdit] = useState<Exercise | null>(null)
+  
   const supabase = createClient()
 
   const handleSaveSettings = async () => {
@@ -36,6 +43,17 @@ export default function ClientAdminPage({
       alert('Failed to save settings')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this exercise? This action cannot be undone.')) return
+    
+    const res = await deleteExercise(id)
+    if (res.success) {
+      setExercises(exercises.filter(ex => ex.id !== id))
+    } else {
+      alert(res.error || 'Failed to delete exercise')
     }
   }
 
@@ -59,7 +77,10 @@ export default function ClientAdminPage({
       <Tabs.Content value="exercises" className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold font-mono uppercase tracking-widest">Exercise Library</h2>
-          <Button className="bg-[#FF6B35] hover:bg-[#FF8C61] text-zinc-900 font-bold uppercase tracking-widest text-xs">
+          <Button 
+            onClick={() => { setExerciseToEdit(null); setIsModalOpen(true); }}
+            className="bg-[#FF6B35] hover:bg-[#FF8C61] text-zinc-900 font-bold uppercase tracking-widest text-xs"
+          >
             + New Exercise
           </Button>
         </div>
@@ -90,9 +111,22 @@ export default function ClientAdminPage({
                       {ex.difficulty}
                     </span>
                   </td>
-                  <td className="p-4 text-right">
-                    <Button variant="outline" size="sm" className="text-xs uppercase tracking-widest h-8 px-3">
-                      Edit
+                  <td className="p-4 text-right flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => { setExerciseToEdit(ex); setIsModalOpen(true); }}
+                      className="text-xs uppercase tracking-widest h-8 w-8 p-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleDelete(ex.id)}
+                      className="text-xs uppercase tracking-widest h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900/50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </td>
                 </tr>
@@ -138,6 +172,16 @@ export default function ClientAdminPage({
           </Button>
         </div>
       </Tabs.Content>
+
+      <ExerciseModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          // To get updated exercises immediately without hard reload, we can trigger a router refresh
+          window.location.reload() 
+        }}
+        exerciseToEdit={exerciseToEdit}
+      />
     </Tabs.Root>
   )
 }
