@@ -1,24 +1,11 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { Trophy, Medal, Crown } from 'lucide-react'
 import { getLevelFromXP } from '@/utils/level-calculator'
-import Image from 'next/image'
 
-export const revalidate = 60 // Revalidate leaderboard every 60 seconds
+export const revalidate = 60
 
-async function getLeaderboard() {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
+export default async function CommunityLeaderboard() {
+  const supabase = await createClient()
 
   const { data: profiles, error } = await supabase
     .from('profiles')
@@ -26,15 +13,7 @@ async function getLeaderboard() {
     .order('xp_total', { ascending: false })
     .limit(100)
 
-  if (error) {
-    console.error('Error fetching leaderboard:', error)
-    return []
-  }
-  return profiles
-}
-
-export default async function CommunityLeaderboard() {
-  const leaderboard = await getLeaderboard()
+  const leaderboard = error ? [] : (profiles ?? [])
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -62,7 +41,10 @@ export default async function CommunityLeaderboard() {
             <tbody className="divide-y divide-zinc-200 dark:divide-[#1F1F1F]">
               {leaderboard.map((profile, index) => {
                 const rank = index + 1
-                const level = getLevelFromXP(profile.xp_total)
+                const levelInfo = getLevelFromXP(profile.xp_total ?? 0)
+                const levelName = typeof levelInfo === 'object' && levelInfo !== null && 'current' in levelInfo
+                  ? (levelInfo as any).current?.name ?? `Lv ${rank}`
+                  : String(levelInfo)
                 let RankIcon = null
                 
                 if (rank === 1) RankIcon = <Crown className="w-5 h-5 text-yellow-500" />
@@ -100,12 +82,12 @@ export default async function CommunityLeaderboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
-                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Level {level}</span>
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{levelName}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span className="font-mono font-bold text-[#FF4500]">
-                        {profile.xp_total.toLocaleString()} XP
+                        {(profile.xp_total ?? 0).toLocaleString()} XP
                       </span>
                     </td>
                   </tr>

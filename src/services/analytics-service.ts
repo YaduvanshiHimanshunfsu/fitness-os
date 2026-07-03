@@ -97,26 +97,48 @@ export async function getHeatmapData(userId: string, days = 365): Promise<Heatma
 export async function getWeeklyChartData(userId: string): Promise<WeeklyChartData[]> {
   const supabase = await createClient()
 
-  // As per P1: Use mv_weekly_volume
-  const { data: weeklyVols, error } = await supabase
-    .from('mv_weekly_volume_v5')
-    .select('*')
+  // Compute last 8 weeks directly from workouts_v5 instead of materialized view
+  const eightWeeksAgo = new Date()
+  eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56)
+
+  const { data: sessions } = await supabase.from('workouts_v5')
+    .select('start_time, workout_exercises_v5(workout_sets_v5(id, completed))')
     .eq('profile_id', userId)
-    .order('week_start', { ascending: true })
-    .limit(8)
+    .gte('start_time', eightWeeksAgo.toISOString())
+    .order('start_time', { ascending: true })
 
-  if (error || !weeklyVols) return []
+  // Group by ISO week
+  const weekMap: Record<string, { sets: number; label: string }> = {}
 
-  return weeklyVols.map((v: any) => {
-    // Label as 'Jun 1' or 'Wk 24'
-    const d = new Date(v.week_start)
-    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    return {
-      week: label,
-      sets: v.sets_completed ?? 0,
-      completed: (v.sets_completed ?? 0) > 0,
+  for (const s of sessions ?? []) {
+    const d = new Date(s.start_time)
+    // Get Monday of that week
+    const day = d.getDay()
+    const monday = new Date(d)
+    monday.setDate(d.getDate() - ((day + 6) % 7))
+    const weekKey = monday.toISOString().split('T')[0]
+
+    if (!weekMap[weekKey]) {
+      weekMap[weekKey] = {
+        sets: 0,
+        label: monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }
     }
-  })
+
+    for (const we of s.workout_exercises_v5 || []) {
+      const completedSets = (we.workout_sets_v5 || []).filter((ws: any) => ws.completed).length
+      weekMap[weekKey].sets += completedSets
+    }
+  }
+
+  return Object.entries(weekMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-8)
+    .map(([, v]) => ({
+      week: v.label,
+      sets: v.sets,
+      completed: v.sets > 0,
+    }))
 }
 
 // ─── Monthly Chart ────────────────────────────────────────────────────────

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EXERCISES } from '@/constants/exercises';
 import { ChevronDown, Calendar, Dumbbell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

@@ -11,10 +11,13 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const router = useRouter()
   const {
     addSet,
+    undoLastSet,
     setPhase,
     startRestTimer,
     clearRestTimer,
     restTimerEnd,
+    isPaused,
+    pausedTimeRemaining,
     activeExerciseIndex,
     sessionPhase,
     setActiveExerciseIndex,
@@ -53,9 +56,9 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     setLocalPhase('exercise')
   }, [clearRestTimer, phase, exercises.length]);
 
-  // Wait for the global rest timer to finish if we are in a rest phase
+  // Auto-advance when rest timer expires (skip if paused)
   useEffect(() => {
-    if (phase === 'exercise' || !restTimerEnd) return;
+    if (phase === 'exercise' || isPaused || !restTimerEnd) return;
     
     const interval = setInterval(() => {
       if (Date.now() >= restTimerEnd) {
@@ -64,7 +67,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [phase, restTimerEnd, clearRestTimer, handleRestComplete]);
+  }, [phase, restTimerEnd, isPaused, clearRestTimer, handleRestComplete]);
 
   const handleSetComplete = (setIndex: number, reps: number, weight: number, unit: string) => {
     if (currentCompleted[setIndex]) return 
@@ -88,21 +91,34 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       timestamp:    new Date()
     })
 
-    // If it's the very last set of the very last exercise, we don't need a rest
     const isLastSet = setIndex === currentExercise.sets - 1
     const isLastExercise = currentIndex === exercises.length - 1
 
     if (isLastSet && isLastExercise) {
-      // Don't trigger 15s rest if it's the very last set, wait for user to click Finish
+      // Don't trigger rest on the very last set
     } else {
-      // Trigger rest between sets using Zustand
       startRestTimer(15) 
       setLocalPhase('rest')
     }
   }
 
+  // ─── Undo handler ─────────────────────────────────────────────────
+  const handleUndoSet = (exerciseId: number, setIndex: number) => {
+    // Remove from Zustand global store
+    const removed = undoLastSet()
+    if (!removed) return
+
+    // Reset local completed state for this set
+    const current = completedSets[exerciseId] || []
+    const updated = [...current]
+    updated[setIndex] = false
+    setCompletedSets(prev => ({
+      ...prev,
+      [exerciseId]: updated
+    }))
+  }
+
   const handleSkipExercise = () => {
-    // Log all remaining incomplete sets as completed: false
     currentCompleted.forEach((isCompleted, setIndex) => {
       if (!isCompleted) {
         addSet({
@@ -125,20 +141,24 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
       setPhase('cooldown')
       router.push('/workout/posture')
     } else {
-      // 30s rest between exercises
       startRestTimer(30)
-      setLocalPhase('rest_exercise') // special phase for 30s rest
+      setLocalPhase('rest_exercise')
     }
   }
-
 
   const nextExerciseName = phase === 'rest_exercise'
     ? (exercises[currentIndex + 1]?.name || 'Posture Routine')
     : currentExercise.name
 
+  // ─── Display timer (handles both running and paused) ──────────────
   const [displayTimeLeft, setDisplayTimeLeft] = useState(0);
 
   useEffect(() => {
+    if (isPaused && pausedTimeRemaining !== null) {
+      // Show frozen time when paused
+      setDisplayTimeLeft(Math.max(0, Math.ceil(pausedTimeRemaining / 1000)));
+      return;
+    }
     if (!restTimerEnd) return;
     const updateTime = () => {
       const remaining = Math.max(0, Math.ceil((restTimerEnd - Date.now()) / 1000));
@@ -147,7 +167,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     updateTime();
     const iv = setInterval(updateTime, 100);
     return () => clearInterval(iv);
-  }, [restTimerEnd]);
+  }, [restTimerEnd, isPaused, pausedTimeRemaining]);
 
   return (
     <div className="space-y-4">
@@ -155,7 +175,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
         <button
           type="button"
           onClick={handleRestartWorkout}
-          className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:text-white transition-colors"
+          className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
         >
           Restart Workout
         </button>
@@ -172,6 +192,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
             onSetComplete={handleSetComplete}
             onFinishExercise={handleFinishExercise}
             onSkipExercise={handleSkipExercise}
+            onUndoSet={handleUndoSet}
           />
         ) : (
           <WireframeRestScreen 

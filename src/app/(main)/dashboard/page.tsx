@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   // Fetch Profile, Streak, and Heatmap in parallel
   const [{ data: profile }, { data: streak }, heatmap] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('streaks').select('current_streak').eq('id', user.id).single(),
+    supabase.from('streaks').select('current_streak, best_streak, last_workout_date').eq('user_id', user.id).single(),
     getHeatmapData(user.id, 90),
   ]);
 

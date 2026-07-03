@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Exercise } from '@/types/exercise';
-import { ArrowRight, Flame, Clock } from 'lucide-react';
+import { ArrowRight, Flame, Clock, Undo2 } from 'lucide-react';
 import { StepperInput } from '@/components/ui/StepperInput';
+import { useWorkoutStore } from '@/hooks/useWorkout';
 
 export function WireframeExerciseCard({ 
   exercise, 
@@ -13,7 +14,8 @@ export function WireframeExerciseCard({
   completedSets, 
   onSetComplete,
   onFinishExercise,
-  onSkipExercise
+  onSkipExercise,
+  onUndoSet,
 }: { 
   exercise: Exercise, 
   currentIndex: number, 
@@ -21,14 +23,45 @@ export function WireframeExerciseCard({
   completedSets: boolean[], 
   onSetComplete: (idx: number, reps: number, weight: number, unit: 'kg'|'lbs') => void,
   onFinishExercise: () => void,
-  onSkipExercise: () => void
+  onSkipExercise: () => void,
+  onUndoSet?: (exerciseId: number, setIndex: number) => void,
 }) {
-  const [currentReps, setCurrentReps] = React.useState<number[]>(
+  const { startTime, completedSets: allCompletedSets } = useWorkoutStore();
+
+  const [currentReps, setCurrentReps] = useState<number[]>(
     Array(exercise.sets).fill(
       parseInt(typeof exercise.reps === 'string' ? exercise.reps.split('-')[0] : String(exercise.reps || '10')) || 10
     )
   );
-  const [isZoomed, setIsZoomed] = React.useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  // ─── Live Duration Timer ───────────────────────────────────────────
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!startTime) return;
+    const start = new Date(startTime).getTime();
+    const update = () => setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }, [startTime]);
+
+  const elapsedMin = Math.floor(elapsedSeconds / 60);
+  const elapsedSec = elapsedSeconds % 60;
+
+  // ─── Live Calories from actual completed volume ────────────────────
+  const liveCalories = React.useMemo(() => {
+    let totalVolumeKg = 0;
+    for (const s of allCompletedSets) {
+      if (s.completed && s.weight_kg) {
+        totalVolumeKg += s.weight_kg * s.actualReps;
+      }
+    }
+    // Rough MET-based estimate: ~0.00205 kcal per kg·rep for strength training
+    // Also add time-based base burn: ~5 kcal/min for moderate exercise
+    return Math.round(totalVolumeKg * 0.00205) + Math.round(elapsedMin * 5);
+  }, [allCompletedSets, elapsedMin]);
 
   const completedCount = completedSets.filter(Boolean).length;
   const progressPercent = Math.round((currentIndex / Math.max(1, totalExercises)) * 100);
@@ -41,10 +74,6 @@ export function WireframeExerciseCard({
     }
     onSetComplete(idx, reps, weight, unit);
   };
-  
-  // Dummy stats for wireframe presentation
-  const duration = 45;
-  const caloriesBurned = 320;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-900 dark:text-white flex flex-col font-sans">
@@ -55,7 +84,7 @@ export function WireframeExerciseCard({
           <div className="absolute top-4 right-4 z-30">
             <button 
               onClick={() => setIsZoomed(!isZoomed)}
-              className="bg-black/50 text-zinc-900 dark:text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/10 hover:bg-black/70 transition"
+              className="bg-black/50 text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/10 hover:bg-black/70 transition"
             >
               {isZoomed ? 'Zoom Out' : 'Zoom In (Drag)'}
             </button>
@@ -87,7 +116,7 @@ export function WireframeExerciseCard({
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0A0A0A]/40 to-[#0A0A0A] pointer-events-none" />
           
           <div className="absolute bottom-12 left-12 right-12 z-10 hidden lg:block">
-            <h1 className="text-6xl xl:text-8xl font-black italic tracking-tighter text-zinc-900 dark:text-white opacity-90 drop-shadow-2xl uppercase">
+            <h1 className="text-6xl xl:text-8xl font-black italic tracking-tighter text-white opacity-90 drop-shadow-2xl uppercase">
               {exercise.name}
             </h1>
           </div>
@@ -115,13 +144,13 @@ export function WireframeExerciseCard({
             
             <button
               onClick={onSkipExercise}
-              className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest hover:text-zinc-900 dark:text-white transition-colors"
+              className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
               Skip
             </button>
           </div>
 
-          {/* Sets Sequence List - Detailed List Format */}
+          {/* Sets Sequence List */}
           <div className="flex flex-col gap-4 w-full max-w-lg mb-8">
             {completedSets.map((isCompleted, idx) => {
               const active = !isCompleted && (idx === 0 || completedSets[idx - 1]);
@@ -133,13 +162,13 @@ export function WireframeExerciseCard({
                       ? 'bg-[#10B981]/10 border-[#10B981]/30 opacity-75' 
                       : active 
                         ? 'bg-white/5 border-[#FF4500]/50 shadow-[0_0_20px_rgba(255,69,0,0.1)]' 
-                        : 'bg-[#161616] border-zinc-200 dark:border-zinc-800 opacity-50'
+                        : 'bg-zinc-100 dark:bg-[#161616] border-zinc-200 dark:border-zinc-800 opacity-50'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full sm:w-auto sm:flex-col gap-2">
                     <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Set {idx + 1}</span>
                     <div className={`w-8 h-8 flex items-center justify-center font-bold text-xs rounded-full border transition-colors ${
-                      isCompleted ? 'bg-[#10B981] border-[#10B981] text-zinc-900 dark:text-white' : active ? 'bg-[#FF4500] border-[#FF4500] text-zinc-900 dark:text-white' : 'border-zinc-600 text-zinc-600'
+                      isCompleted ? 'bg-[#10B981] border-[#10B981] text-white' : active ? 'bg-[#FF4500] border-[#FF4500] text-white' : 'border-zinc-600 text-zinc-600'
                     }`}>
                       {isCompleted ? '✓' : idx + 1}
                     </div>
@@ -162,7 +191,7 @@ export function WireframeExerciseCard({
                       <button
                         type="button"
                         onClick={() => handleSetComplete(idx, currentReps[idx], 0, 'kg')}
-                        className="h-[60px] mt-auto sm:w-16 flex items-center justify-center bg-[#FF4500] hover:bg-[#FF5A1F] text-zinc-900 dark:text-white rounded-xl shadow-[0_0_15px_rgba(255,69,0,0.4)] transition-all active:scale-95"
+                        className="h-[60px] mt-auto sm:w-16 flex items-center justify-center bg-[#FF4500] hover:bg-[#FF5A1F] text-white rounded-xl shadow-[0_0_15px_rgba(255,69,0,0.4)] transition-all active:scale-95"
                       >
                         ✓
                       </button>
@@ -170,8 +199,17 @@ export function WireframeExerciseCard({
                   ) : (
                     <div className="flex-1 flex items-center justify-between pl-4">
                       {isCompleted ? (
-                        <div className="flex gap-6">
+                        <div className="flex items-center gap-4">
                           <span className="text-zinc-900 dark:text-white font-bold">{currentReps[idx]} <span className="text-[10px] text-zinc-500 uppercase">Reps</span></span>
+                          {/* Undo Button */}
+                          {onUndoSet && idx === completedSets.lastIndexOf(true) && (
+                            <button
+                              onClick={() => onUndoSet(exercise.id, idx)}
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-[#FF4500] hover:border-[#FF4500]/50 transition-colors text-[10px] font-bold uppercase tracking-widest"
+                            >
+                              <Undo2 className="w-3 h-3" /> Redo
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <span className="text-zinc-600 font-bold uppercase tracking-widest text-xs">Waiting...</span>
@@ -183,7 +221,7 @@ export function WireframeExerciseCard({
             })}
           </div>
           
-          <div className="flex items-center gap-2 mt-auto pt-4 border-t border-white/10">
+          <div className="flex items-center gap-2 mt-auto pt-4 border-t border-zinc-200 dark:border-white/10">
             <div className="w-2 h-2 rounded-full bg-[#FF4500] animate-pulse" />
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
               Minimum 2 sets required to proceed
@@ -203,25 +241,27 @@ export function WireframeExerciseCard({
             <div className="flex items-center gap-3">
               <span className="text-xl font-black text-zinc-900 dark:text-white">{progressPercent}%</span>
               <div className="w-24 lg:w-48 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-[#FF4500] rounded-full" style={{ width: `${progressPercent}%` }} />
+                <div className="h-full bg-[#FF4500] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
               </div>
             </div>
           </div>
           
-          {/* Stats (Hidden on small mobile) */}
+          {/* Live Stats */}
           <div className="hidden md:flex gap-8 border-l border-zinc-200 dark:border-zinc-800 pl-8">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                 <Clock className="w-3 h-3 text-[#FF4500]" /> Duration
               </span>
-              <span className="text-xl font-black text-zinc-900 dark:text-white">{duration}:00</span>
+              <span className="text-xl font-black text-zinc-900 dark:text-white tabular-nums">
+                {String(elapsedMin).padStart(2, '0')}:{String(elapsedSec).padStart(2, '0')}
+              </span>
             </div>
             
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                 <Flame className="w-3 h-3 text-[#FF4500]" /> Calories
               </span>
-              <span className="text-xl font-black text-zinc-900 dark:text-white">{caloriesBurned}</span>
+              <span className="text-xl font-black text-zinc-900 dark:text-white tabular-nums">{liveCalories}</span>
             </div>
           </div>
           
@@ -233,7 +273,7 @@ export function WireframeExerciseCard({
           disabled={!isMinSetsMet}
           className={`px-6 lg:px-10 py-4 rounded-xl font-bold uppercase tracking-widest text-sm flex items-center gap-3 transition-all ${
             isMinSetsMet
-              ? 'bg-[#FF4500] hover:bg-[#FF5A1F] text-zinc-900 dark:text-white shadow-[0_0_20px_rgba(255,69,0,0.3)]'
+              ? 'bg-[#FF4500] hover:bg-[#FF5A1F] text-white shadow-[0_0_20px_rgba(255,69,0,0.3)]'
               : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 cursor-not-allowed'
           }`}
         >
