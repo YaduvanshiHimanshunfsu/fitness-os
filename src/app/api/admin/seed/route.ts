@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { EXERCISES } from '@/constants/exercises';
 
 const DAYS_OF_WEEK = [
@@ -12,12 +12,13 @@ const DAYS_OF_WEEK = [
   { day: 'sunday', focus: 'Full Body & Athletic' },
 ];
 
+export async function POST() {
+  return GET();
+}
+
 export async function GET() {
-  // Use service-level client (anon key) — seed route is idempotent and safe
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Use authenticated client so RLS allows admin insertions
+  const supabase = await createClient();
 
   try {
     // Check if already seeded
