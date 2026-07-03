@@ -66,9 +66,9 @@ export class AIService {
           return result.response.text().trim()
         } catch (innerError: any) {
           const innerMsg = (innerError?.message || '').toLowerCase()
-          // If the error is a 400 Bad Request, it's likely because Search Grounding is not supported by this API key/tier/region.
+          // If the error is a 400 Bad Request or 403 Forbidden, it's likely because Search Grounding is not supported by this API key/tier/region.
           // Retry the EXACT same model, but without the tools.
-          if (innerMsg.includes('400') || innerMsg.includes('bad request') || innerMsg.includes('invalid argument')) {
+          if (innerMsg.includes('400') || innerMsg.includes('bad request') || innerMsg.includes('invalid argument') || innerMsg.includes('403') || innerMsg.includes('forbidden')) {
             console.warn(`Search grounding failed for ${modelName} (${innerMsg}). Retrying without tools...`)
             const fallbackModel = genAI.getGenerativeModel({ model: modelName })
             const fallbackResult = await fallbackModel.generateContent(prompt)
@@ -133,7 +133,7 @@ export class AIService {
         } catch (innerError: any) {
           const innerMsg = (innerError?.message || '').toLowerCase()
           // If the error is a 400 Bad Request (search grounding not supported), retry without tools
-          if (innerMsg.includes('400') || innerMsg.includes('bad request') || innerMsg.includes('invalid argument')) {
+          if (innerMsg.includes('400') || innerMsg.includes('bad request') || innerMsg.includes('invalid argument') || innerMsg.includes('403') || innerMsg.includes('forbidden')) {
             console.warn(`Search grounding failed for chat on ${modelName} (${innerMsg}). Retrying without tools...`)
             const fallbackModel = genAI.getGenerativeModel({ model: modelName, systemInstruction })
             const fallbackChat = fallbackModel.startChat({ history: chatHistory })
