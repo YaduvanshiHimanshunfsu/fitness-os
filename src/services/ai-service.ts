@@ -2,12 +2,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@supabase/supabase-js'
 
 const MODELS_IN_ORDER = [
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
   'gemini-2.0-flash',
   'gemini-1.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b'
+  'gemini-1.5-flash'
 ] as const
 
 export class AIService {
@@ -61,14 +58,31 @@ export class AIService {
           model: modelName,
           tools: [{ googleSearchRetrieval: {} }]
         }
-        const model = genAI.getGenerativeModel(modelConfig)
-        const result = await model.generateContent(prompt)
-        return result.response.text().trim()
+        
+        try {
+          // First attempt: with Google Search Grounding
+          const model = genAI.getGenerativeModel(modelConfig)
+          const result = await model.generateContent(prompt)
+          return result.response.text().trim()
+        } catch (innerError: any) {
+          const innerMsg = (innerError?.message || '').toLowerCase()
+          // If the error is a 400 Bad Request, it's likely because Search Grounding is not supported by this API key/tier/region.
+          // Retry the EXACT same model, but without the tools.
+          if (innerMsg.includes('400') || innerMsg.includes('bad request') || innerMsg.includes('invalid argument')) {
+            console.warn(`Search grounding failed for ${modelName} (${innerMsg}). Retrying without tools...`)
+            const fallbackModel = genAI.getGenerativeModel({ model: modelName })
+            const fallbackResult = await fallbackModel.generateContent(prompt)
+            return fallbackResult.response.text().trim()
+          }
+          // If it wasn't a 400, throw it up to the outer catch block to try the next model
+          throw innerError
+        }
+
       } catch (error: any) {
         lastError = error
         const msg = (error?.message || '').toLowerCase()
-        // If model not found or unsupported, or search grounding is invalid, try next model
-        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests') || msg.includes('400') || msg.includes('bad request') || msg.includes('invalid argument')) {
+        // If model not found or quota exceeded, try next model
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
           console.warn(`Model ${modelName} failed (${msg}), trying next...`)
           continue
         }
@@ -98,31 +112,41 @@ export class AIService {
           model: modelName,
           tools: [{ googleSearchRetrieval: {} }]
         }
-        // Only newer models support systemInstruction param
+        
         if (modelName !== 'gemini-pro') {
           modelConfig.systemInstruction = systemInstruction
         }
-
-        const model = genAI.getGenerativeModel(modelConfig)
 
         const chatHistory = history.map(msg => ({
           role: msg.role === 'user' ? 'user' as const : 'model' as const,
           parts: [{ text: msg.content }]
         }))
+        
+        const messageText = newMessage
 
-        const chat = model.startChat({ history: chatHistory })
+        try {
+          // First attempt: with Google Search Grounding
+          const model = genAI.getGenerativeModel(modelConfig)
+          const chat = model.startChat({ history: chatHistory })
+          const result = await chat.sendMessage([{ text: messageText }])
+          return result.response.text().trim()
+        } catch (innerError: any) {
+          const innerMsg = (innerError?.message || '').toLowerCase()
+          // If the error is a 400 Bad Request (search grounding not supported), retry without tools
+          if (innerMsg.includes('400') || innerMsg.includes('bad request') || innerMsg.includes('invalid argument')) {
+            console.warn(`Search grounding failed for chat on ${modelName} (${innerMsg}). Retrying without tools...`)
+            const fallbackModel = genAI.getGenerativeModel({ model: modelName, systemInstruction })
+            const fallbackChat = fallbackModel.startChat({ history: chatHistory })
+            const fallbackResult = await fallbackChat.sendMessage([{ text: messageText }])
+            return fallbackResult.response.text().trim()
+          }
+          throw innerError
+        }
 
-        // For gemini-pro (no system instruction support), prepend context
-        const messageText = modelName === 'gemini-pro'
-          ? `Context: ${systemInstruction}\n\nUser: ${newMessage}`
-          : newMessage
-
-        const result = await chat.sendMessage([{ text: messageText }])
-        return result.response.text().trim()
       } catch (error: any) {
         lastError = error
         const msg = (error?.message || '').toLowerCase()
-        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests') || msg.includes('400') || msg.includes('bad request') || msg.includes('invalid argument')) {
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
           console.warn(`Chat model ${modelName} failed (${msg}), trying next...`)
           continue
         }
