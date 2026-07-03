@@ -18,7 +18,10 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
   const [isSeeding, setIsSeeding] = useState(false);
 
   React.useEffect(() => {
-    if (templates.length === 0 && !isSeeding) {
+    const hasTemplates = templates.length > 0;
+    const hasExercises = templates.some(t => t.workout_template_exercises?.length > 0);
+
+    if ((!hasTemplates || !hasExercises) && !isSeeding) {
       setIsSeeding(true);
       fetch('/api/admin/seed', { method: 'POST' }).then(() => {
         window.location.reload();
@@ -27,7 +30,7 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
         setIsSeeding(false);
       });
     }
-  }, [templates.length, isSeeding]);
+  }, [templates, isSeeding]);
 
   const toggleDay = (day: string) => {
     setExpandedDay(expandedDay === day ? null : day);

@@ -21,11 +21,7 @@ export async function GET() {
   const supabase = await createClient();
 
   try {
-    // Check if already seeded
-    const { count } = await supabase.from('workout_templates').select('*', { count: 'exact', head: true });
-    if (count && count > 0) {
-      return NextResponse.json({ success: true, message: 'Already seeded!', templates: count });
-    }
+    // Force re-seed (upsert) to fix half-seeded states where templates exist but exercises don't.
 
     // Seed templates
     for (const day of DAYS_OF_WEEK) {

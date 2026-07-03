@@ -61,7 +61,10 @@ export function ScheduleBuilder({ templates, exercises }: { templates: any[], ex
     }
   }
 
-  if (!templates || templates.length === 0) {
+  const hasTemplates = templates && templates.length > 0;
+  const hasExercises = templates && templates.some(t => t.workout_template_exercises?.length > 0);
+
+  if (!hasTemplates || !hasExercises) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
         <h3 className="text-xl font-bold font-mono uppercase tracking-widest mb-2">Schedule Not Initialized</h3>
