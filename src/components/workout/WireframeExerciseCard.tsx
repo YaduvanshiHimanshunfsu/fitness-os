@@ -28,11 +28,15 @@ export function WireframeExerciseCard({
 }) {
   const { startTime, completedSets: allCompletedSets } = useWorkoutStore();
 
-  const [currentReps, setCurrentReps] = useState<number[]>(
-    Array(exercise.sets).fill(
-      parseInt(typeof exercise.reps === 'string' ? exercise.reps.split('-')[0] : String(exercise.reps || '10')) || 10
-    )
-  );
+  const [currentReps, setCurrentReps] = useState<number[]>(() => {
+    const defaultReps = parseInt(typeof exercise.reps === 'string' ? exercise.reps.split('-')[0] : String(exercise.reps || '10')) || 10;
+    const existingSets = allCompletedSets.filter(s => s.exerciseId === exercise.id);
+    
+    return Array(exercise.sets).fill(defaultReps).map((def, idx) => {
+      const savedSet = existingSets.find(s => s.setNumber === idx + 1);
+      return savedSet ? savedSet.actualReps : def;
+    });
+  });
   const [isZoomed, setIsZoomed] = useState(false);
 
   // ─── Live Duration Timer ───────────────────────────────────────────
