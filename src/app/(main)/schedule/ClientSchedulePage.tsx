@@ -23,8 +23,13 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
 
     if ((!hasTemplates || !hasExercises) && !isSeeding) {
       setIsSeeding(true);
-      fetch('/api/admin/seed', { method: 'POST' }).then(() => {
-        window.location.reload();
+      fetch('/api/admin/seed', { method: 'POST' }).then((res) => {
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          console.error('Failed to auto-seed schedule: Server returned', res.status);
+          setIsSeeding(false);
+        }
       }).catch(err => {
         console.error('Failed to auto-seed schedule:', err);
         setIsSeeding(false);

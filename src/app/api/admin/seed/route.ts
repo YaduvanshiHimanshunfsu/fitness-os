@@ -41,7 +41,22 @@ export async function GET() {
       return acc;
     }, {});
 
-    // Clear old exercises before re-seeding
+    // Ensure all exercises exist in the database before linking them to templates
+    for (const ex of EXERCISES) {
+      const { error } = await supabase.from('exercises').upsert({
+        id: ex.id,
+        name: ex.name,
+        muscle_group: ex.muscleGroup,
+        image_url: ex.imageUrl
+      }, { onConflict: 'id' });
+      
+      if (error) {
+        console.error('Error seeding exercise', ex.name, error);
+        throw error;
+      }
+    }
+
+    // Clear old template links before re-seeding
     await supabase.from('workout_template_exercises').delete().neq('id', -1);
 
     for (const ex of EXERCISES) {
