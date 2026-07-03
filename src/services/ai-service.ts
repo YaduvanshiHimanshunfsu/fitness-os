@@ -1,7 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@supabase/supabase-js'
 
-const MODELS_IN_ORDER = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-pro'] as const
+const MODELS_IN_ORDER = [
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b'
+] as const
 
 export class AIService {
   private static async getGeminiKey(): Promise<string | null> {
@@ -50,15 +57,19 @@ export class AIService {
 
     for (const modelName of MODELS_IN_ORDER) {
       try {
-        const model = genAI.getGenerativeModel({ model: modelName })
+        const modelConfig: any = { 
+          model: modelName,
+          tools: [{ googleSearchRetrieval: {} }]
+        }
+        const model = genAI.getGenerativeModel(modelConfig)
         const result = await model.generateContent(prompt)
         return result.response.text().trim()
       } catch (error: any) {
         lastError = error
-        const msg = error?.message || ''
-        // If model not found or unsupported, try next model
-        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
-          console.warn(`Model ${modelName} not available, trying next...`)
+        const msg = (error?.message || '').toLowerCase()
+        // If model not found or unsupported, or search grounding is invalid, try next model
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests') || msg.includes('400') || msg.includes('bad request') || msg.includes('invalid argument')) {
+          console.warn(`Model ${modelName} failed (${msg}), trying next...`)
           continue
         }
         // For auth errors or other fatal errors, don't retry
@@ -83,7 +94,10 @@ export class AIService {
 
     for (const modelName of MODELS_IN_ORDER) {
       try {
-        const modelConfig: any = { model: modelName }
+        const modelConfig: any = { 
+          model: modelName,
+          tools: [{ googleSearchRetrieval: {} }]
+        }
         // Only newer models support systemInstruction param
         if (modelName !== 'gemini-pro') {
           modelConfig.systemInstruction = systemInstruction
@@ -107,9 +121,9 @@ export class AIService {
         return result.response.text().trim()
       } catch (error: any) {
         lastError = error
-        const msg = error?.message || ''
-        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
-          console.warn(`Chat model ${modelName} not available, trying next...`)
+        const msg = (error?.message || '').toLowerCase()
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests') || msg.includes('400') || msg.includes('bad request') || msg.includes('invalid argument')) {
+          console.warn(`Chat model ${modelName} failed (${msg}), trying next...`)
           continue
         }
         throw error
