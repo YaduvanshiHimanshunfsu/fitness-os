@@ -15,6 +15,19 @@ const DAYS_OF_WEEK = [
 ];
 export default function ClientSchedulePage({ templates }: { templates: any[] }) {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  React.useEffect(() => {
+    if (templates.length === 0 && !isSeeding) {
+      setIsSeeding(true);
+      fetch('/api/admin/seed', { method: 'POST' }).then(() => {
+        window.location.reload();
+      }).catch(err => {
+        console.error('Failed to auto-seed schedule:', err);
+        setIsSeeding(false);
+      });
+    }
+  }, [templates.length, isSeeding]);
 
   const toggleDay = (day: string) => {
     setExpandedDay(expandedDay === day ? null : day);

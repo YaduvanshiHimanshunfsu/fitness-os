@@ -8,6 +8,7 @@ import { useUIStore } from '@/hooks/useUI';
 import { useWorkoutStore } from '@/hooks/useWorkout';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { CommandPalette } from '@/components/shared/CommandPalette';
+import { usePathname } from 'next/navigation';
 
 // Live Workout Timer — only visible during an active session
 function LiveWorkoutTimer({ startTime }: { startTime: Date }) {
@@ -104,6 +105,7 @@ export default function Topbar() {
 
   const { isSidebarCollapsed }            = useUIStore();
   const { isSessionActive, startTime }    = useWorkoutStore();
+  const pathname                          = usePathname();
 
   useEffect(() => {
     // Fetch streak from Supabase
@@ -144,9 +146,9 @@ export default function Topbar() {
       {/* Right: Live Timer (when active), Streak, Bell, Clock */}
       <div className="flex items-center justify-end gap-2 sm:gap-3 w-1/3">
 
-        {/* Live Workout Timer — only during active session */}
+        {/* Live Workout Timer — only during active session and on workout pages */}
         <AnimatePresence mode="wait">
-          {isSessionActive && startTime && (
+          {isSessionActive && startTime && pathname.startsWith('/workout') && (
             <LiveWorkoutTimer startTime={new Date(startTime)} />
           )}
         </AnimatePresence>

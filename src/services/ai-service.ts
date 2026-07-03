@@ -57,7 +57,7 @@ export class AIService {
         lastError = error
         const msg = error?.message || ''
         // If model not found or unsupported, try next model
-        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported')) {
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
           console.warn(`Model ${modelName} not available, trying next...`)
           continue
         }
@@ -108,7 +108,7 @@ export class AIService {
       } catch (error: any) {
         lastError = error
         const msg = error?.message || ''
-        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported')) {
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('not supported') || msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
           console.warn(`Chat model ${modelName} not available, trying next...`)
           continue
         }

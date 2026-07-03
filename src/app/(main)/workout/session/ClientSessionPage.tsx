@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { WorkoutFlow } from '@/components/workout/WorkoutFlow'
@@ -14,10 +14,22 @@ export default function ClientSessionPage({ templates }: { templates: any[] }) {
   const {
     day,
     isSessionActive,
+    isPaused,
     completedSets,
     activeExerciseIndex,
     restartSession,
+    pauseRestTimer
   } = useWorkoutStore()
+  
+  useEffect(() => {
+    // When the user leaves the session page, auto-pause the rest timer if it isn't already paused
+    return () => {
+      const state = useWorkoutStore.getState();
+      if (state.isSessionActive && !state.isPaused) {
+        state.pauseRestTimer();
+      }
+    };
+  }, []);
   const currentDay = day || getTodayDay()
   
   const todayTemplate = templates.find(t => t.day === currentDay)
