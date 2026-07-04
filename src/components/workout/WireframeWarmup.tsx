@@ -3,20 +3,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Activity, X, Pause, Play } from 'lucide-react';
-import { WARMUP_IMAGE } from '@/constants/warmup';
+import { Activity, X, Pause, Play, Plus } from 'lucide-react';
+import { WARMUP_IMAGE, WARMUP_EXERCISES } from '@/constants/warmup';
 
 export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: string }) {
   const router = useRouter();
 
   // Phase state
   const [phase,        setPhase]        = useState<'warmup' | 'rest'>('warmup');
-  const [timeLeft,     setTimeLeft]     = useState(30);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [timeLeft,     setTimeLeft]     = useState(WARMUP_EXERCISES[0].durationSeconds);
+  const [totalTime,    setTotalTime]    = useState(WARMUP_EXERCISES[0].durationSeconds);
   const [restTimeLeft, setRestTimeLeft] = useState(20);
   const [isPaused,     setIsPaused]     = useState(false);
 
-  const totalWarmupTime = 30;
   const totalRestTime   = 20;
+  const currentExercise = WARMUP_EXERCISES[currentIndex];
+
+  // When current exercise changes, reset the timer
+  useEffect(() => {
+    if (phase === 'warmup') {
+      const dur = WARMUP_EXERCISES[currentIndex].durationSeconds;
+      setTimeLeft(dur);
+      setTotalTime(dur);
+    }
+  }, [currentIndex, phase]);
 
   // Warmup countdown — respects isPaused
   useEffect(() => {
@@ -31,7 +42,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [phase, isPaused, timeLeft]);  // re-create when pause toggles
+  }, [phase, isPaused, timeLeft]);
 
   // Rest countdown — respects isPaused
   useEffect(() => {
@@ -48,13 +59,17 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
     return () => clearInterval(id);
   }, [phase, isPaused, restTimeLeft]);
 
-  // Transition warmup → rest
+  // Transition warmup → next exercise OR rest
   useEffect(() => {
     if (phase === 'warmup' && timeLeft === 0) {
-      setIsPaused(false);     // always resume for rest phase
-      setPhase('rest');
+      if (currentIndex < WARMUP_EXERCISES.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      } else {
+        setIsPaused(false);     // always resume for rest phase
+        setPhase('rest');
+      }
     }
-  }, [phase, timeLeft]);
+  }, [phase, timeLeft, currentIndex]);
 
   // Navigate when rest ends
   useEffect(() => {
@@ -63,11 +78,13 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
     }
   }, [phase, restTimeLeft, nextRoute, router]);
 
-  const warmupPercent = timeLeft / totalWarmupTime * 100;
-  const restPercent   = restTimeLeft / totalRestTime * 100;
+  const warmupPercent = (timeLeft / totalTime) * 100;
+  const restPercent   = (restTimeLeft / totalRestTime) * 100;
 
-  const currentPercent = phase === 'warmup' ? warmupPercent : restPercent;
-  const currentTime    = phase === 'warmup' ? timeLeft       : restTimeLeft;
+  const handleAdd10Sec = () => {
+    setTimeLeft(prev => prev + 10);
+    setTotalTime(prev => prev + 10);
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex flex-col justify-center items-center p-4 md:p-8 font-sans">
@@ -87,10 +104,13 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
             {phase === 'warmup' ? 'WARMUP ROUTINE' : 'TRANSITION REST'}
           </span>
           <div className="flex gap-1.5 mt-2">
-            <div className={`h-1 rounded-full transition-all ${phase === 'warmup' ? 'w-6 bg-[#FF4500]' : 'w-4 bg-zinc-300'}`} />
+            {WARMUP_EXERCISES.map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`h-1 rounded-full transition-all ${phase === 'warmup' && currentIndex >= idx ? 'w-6 bg-[#FF4500]' : phase === 'rest' ? 'w-6 bg-[#FF4500]' : 'w-4 bg-zinc-300'}`} 
+              />
+            ))}
             <div className={`h-1 rounded-full transition-all ${phase === 'rest'   ? 'w-6 bg-[#FF4500]' : 'w-4 bg-zinc-300'}`} />
-            <div className="w-4 h-1 rounded-full bg-zinc-300" />
-            <div className="w-4 h-1 rounded-full bg-zinc-300" />
           </div>
         </div>
 
@@ -159,8 +179,8 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
             {/* Controls */}
             <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col items-center justify-center bg-white">
               <div className="text-center mb-10">
-                <h1 className="text-4xl font-black text-zinc-900 tracking-tight">Full Body Warmup</h1>
-                <p className="text-sm font-bold text-[#FF4500] mt-2">Warmup • Set 1</p>
+                <h1 className="text-4xl font-black text-zinc-900 tracking-tight">{currentExercise.name}</h1>
+                <p className="text-sm font-bold text-[#FF4500] mt-2">Warmup • Set {currentIndex + 1} of {WARMUP_EXERCISES.length}</p>
               </div>
 
               {/* Timer Circle */}
@@ -185,15 +205,26 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
 
               <div className="w-full max-w-sm flex items-center justify-between mb-4 px-2">
                 <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Next Up</span>
-                <span className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest">Active Stretching</span>
+                <span className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest">
+                  {currentIndex < WARMUP_EXERCISES.length - 1 ? WARMUP_EXERCISES[currentIndex + 1].name : 'Rest Transition'}
+                </span>
               </div>
 
-              <button
-                onClick={() => setTimeLeft(0)}
-                className="w-full max-w-sm py-5 px-6 bg-[#F9FAFB] hover:bg-zinc-100 border border-zinc-200 rounded-2xl flex items-center gap-4 transition-colors group cursor-pointer"
-              >
-                <span className="text-lg font-bold text-zinc-900">Mark Complete</span>
-              </button>
+              <div className="w-full max-w-sm flex gap-4">
+                <button
+                  onClick={() => setTimeLeft(0)}
+                  className="flex-1 py-5 px-6 bg-[#F9FAFB] hover:bg-zinc-100 border border-zinc-200 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <span className="text-lg font-bold text-zinc-900">Mark Complete</span>
+                </button>
+                <button
+                  onClick={handleAdd10Sec}
+                  className="w-16 flex items-center justify-center bg-[#F9FAFB] hover:bg-zinc-100 border border-zinc-200 rounded-2xl transition-colors cursor-pointer"
+                  title="Add 10 seconds"
+                >
+                  <Plus className="w-6 h-6 text-zinc-900" />
+                </button>
+              </div>
             </div>
           </motion.div>
 
