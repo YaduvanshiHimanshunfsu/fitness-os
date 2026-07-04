@@ -407,7 +407,7 @@ export default function AthleteDashboard({
                       mappedExercises = maTemplate.martial_arts_template_exercises
                         .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
                         .map((d: any, index: number) => ({
-                          id: d.martial_arts_exercises.id,
+                          id: typeof d.martial_arts_exercises.id === 'string' ? (parseInt(d.martial_arts_exercises.id.replace(/\D/g, ''), 10) || (index + 2000)) : (d.martial_arts_exercises.id || (index + 2000)),
                           name: d.martial_arts_exercises.name,
                           muscleGroup: 'Martial Arts',
                           imageUrl: d.martial_arts_exercises.image_url || '/placeholder.png',
@@ -418,7 +418,7 @@ export default function AthleteDashboard({
                         }));
                     } else if (maTemplate.drills) {
                       mappedExercises = maTemplate.drills.map((d: any, index: number) => ({
-                        id: d.id,
+                        id: typeof d.id === 'string' ? (parseInt(d.id.replace(/\D/g, ''), 10) || (index + 2000)) : (d.id || (index + 2000)),
                         name: d.name,
                         muscleGroup: 'Martial Arts',
                         imageUrl: d.image_url || '/placeholder.png',

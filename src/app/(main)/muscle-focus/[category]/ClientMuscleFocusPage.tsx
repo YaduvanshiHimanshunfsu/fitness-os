@@ -34,16 +34,25 @@ export default function ClientMuscleFocusPage({ category, drills }: { category: 
           {drills.length > 0 && (
             <button
               onClick={() => {
-                const mappedExercises = drills.map((d, index) => ({
-                  id: typeof d.id === 'string' ? undefined : d.id, // Support DB or hardcoded
-                  name: d.name,
-                  muscleGroup: category.title,
-                  imageUrl: d.image_url || '/placeholder.png',
-                  sets: d.sets,
-                  reps: String(d.reps),
-                  exerciseOrder: index,
-                  day: 'muscle_focus'
-                }));
+                const mappedExercises = drills.map((d, index) => {
+                  let parsedSets = 3;
+                  if (typeof d.sets === 'number') parsedSets = d.sets;
+                  else if (typeof d.sets === 'string') {
+                    const match = d.sets.match(/\d+/);
+                    if (match) parsedSets = parseInt(match[0], 10);
+                  }
+                  
+                  return {
+                    id: typeof d.id === 'string' ? (parseInt(d.id.replace(/\D/g, ''), 10) || (index + 1000)) : (d.id || index + 1000),
+                    name: d.name,
+                    muscleGroup: category.title,
+                    imageUrl: d.image_url || '/placeholder.png',
+                    sets: parsedSets,
+                    reps: String(d.reps),
+                    exerciseOrder: index,
+                    day: 'muscle_focus'
+                  };
+                });
                 // Estimate minutes (naive 1 min per set)
                 const estMins = mappedExercises.reduce((acc, ex) => acc + (ex.sets || 1), 0) + 5;
                 startSession(category.title, estMins, mappedExercises as any, 'muscle_focus');
