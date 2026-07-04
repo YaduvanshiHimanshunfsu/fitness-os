@@ -751,8 +751,13 @@ alter table muscle_focus_exercises enable row level security;
 -- 2. Drop existing policies to be safe
 drop policy if exists "martial_arts_public_read" on martial_arts_templates;
 drop policy if exists "martial_arts_admin_all" on martial_arts_templates;
+drop policy if exists "martial_arts_exercises_public_read" on martial_arts_exercises;
+drop policy if exists "martial_arts_template_exercises_public_read" on martial_arts_template_exercises;
+
 drop policy if exists "muscle_focus_public_read" on muscle_focus_templates;
 drop policy if exists "muscle_focus_admin_all" on muscle_focus_templates;
+drop policy if exists "muscle_focus_exercises_public_read" on muscle_focus_exercises;
+drop policy if exists "muscle_focus_template_exercises_public_read" on muscle_focus_template_exercises;
 
 -- 3. Create Public Read Policies
 create policy "martial_arts_public_read" on martial_arts_templates for select using (true);
