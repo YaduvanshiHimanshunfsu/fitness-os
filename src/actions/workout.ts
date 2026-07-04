@@ -59,50 +59,57 @@ export async function saveWorkoutSession(payload: {
   }
   const estimatedCalories = Math.round(totalVolumeKg * 0.00205)
 
-  // 2. Insert workout
-  const { data: workout, error: workoutError } = await supabase.from('workouts_v5')
-    .insert({ profile_id:        user.id,
-      name:              payload.day, // Using day as name for now
-      start_time:        payload.startTime.toISOString(),
-      end_time:          payload.endTime.toISOString(),
-      xp_earned:         xpEarned,
-      sets_skipped:      setsSkipped,
-      exercises_skipped: exercisesSkipped,
-      estimated_calories: estimatedCalories
-    })
-    .select()
-    .single()
+    // 1. Better workout name
+    let workoutName = payload.day;
+    if (payload.workoutType === 'martial_arts') workoutName = `Martial Arts: ${payload.day}`;
+    if (payload.workoutType === 'muscle_focus') workoutName = `Muscle Focus: ${payload.day}`;
 
-  if (workoutError || !workout) {
-    console.error('Workout Insert Error:', workoutError)
-    throw new Error(workoutError?.message || 'Failed to save workout')
-  }
+    // 2. Insert workout
+    const { data: workout, error: workoutError } = await supabase.from('workouts_v5')
+      .insert({ profile_id:        user.id,
+        name:              workoutName,
+        start_time:        payload.startTime.toISOString(),
+        end_time:          payload.endTime.toISOString(),
+        xp_earned:         xpEarned,
+        sets_skipped:      setsSkipped,
+        exercises_skipped: exercisesSkipped,
+        estimated_calories: estimatedCalories
+      })
+      .select()
+      .single()
 
-  // 3. Insert exercises and sets
-  let orderIndex = 0
-  for (const [exerciseKey, sets] of exerciseMap.entries()) {
-    const exerciseSetsSkipped = sets.filter(s => !s.completed).length
-
-    // First set provides the details
-    const firstSet = sets[0];
-    const isNumberId = typeof firstSet.exerciseId === 'number';
-
-    const insertPayload: any = {
-      workout_id:   workout.id,
-      order_index:  orderIndex++,
-      sets_skipped: exerciseSetsSkipped,
-      exercise_name: firstSet.exerciseName
+    if (workoutError || !workout) {
+      console.error('Workout Insert Error:', workoutError)
+      throw new Error(workoutError?.message || 'Failed to save workout')
     }
 
-    if (isNumberId) {
-      if (payload.workoutType === 'martial_arts') {
-        insertPayload.martial_arts_exercise_id = firstSet.exerciseId;
-      } else if (payload.workoutType === 'muscle_focus') {
-        insertPayload.muscle_focus_exercise_id = firstSet.exerciseId;
-      } else {
-        insertPayload.exercise_id = firstSet.exerciseId;
+    // 3. Insert exercises and sets
+    let orderIndex = 0
+    for (const [exerciseKey, sets] of exerciseMap.entries()) {
+      const exerciseSetsSkipped = sets.filter(s => !s.completed).length
+
+      // First set provides the details
+      const firstSet = sets[0];
+      const isNumberId = typeof firstSet.exerciseId === 'number';
+      const isHardcoded = isNumberId && firstSet.exerciseId >= 1000;
+
+      const insertPayload: any = {
+        workout_id:   workout.id,
+        order_index:  orderIndex++,
+        sets_skipped: exerciseSetsSkipped,
+        exercise_name: firstSet.exerciseName
       }
-    }
+
+      // Only map foreign keys for real DB exercises (id < 1000) to prevent foreign key errors!
+      if (isNumberId && !isHardcoded) {
+        if (payload.workoutType === 'martial_arts') {
+          insertPayload.martial_arts_exercise_id = firstSet.exerciseId;
+        } else if (payload.workoutType === 'muscle_focus') {
+          insertPayload.muscle_focus_exercise_id = firstSet.exerciseId;
+        } else {
+          insertPayload.exercise_id = firstSet.exerciseId;
+        }
+      }
 
     const { data: we, error: weError } = await supabase.from('workout_exercises_v5')
       .insert(insertPayload)

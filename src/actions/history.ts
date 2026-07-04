@@ -124,6 +124,7 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
     totalSets,
     completedSets,
     volumeKg: totalVolumeKg,
-    exercises: exercisesList
+    exercises: exercisesList,
+    startTime: w.start_time
   }
 }

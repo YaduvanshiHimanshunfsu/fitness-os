@@ -15,6 +15,7 @@ interface WorkoutDetails {
   totalSets: number
   completedSets: number
   volumeKg: number
+  startTime?: string
 }
 
 export function Calendar() {
@@ -178,9 +179,17 @@ export function Calendar() {
               <div className="flex items-center justify-between pb-6 border-b border-zinc-200 dark:border-zinc-800">
                 <div>
                   <h4 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">{workoutDetails.name}</h4>
-                  <div className="flex items-center gap-2 mt-2 text-sm font-bold text-[#FF4500] uppercase tracking-widest">
-                    <Flame className="w-4 h-4" />
-                    {workoutDetails.xp} XP Earned
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-1.5 text-sm font-bold text-[#FF4500] uppercase tracking-widest">
+                      <Flame className="w-4 h-4" />
+                      {workoutDetails.xp} XP Earned
+                    </div>
+                    {workoutDetails.startTime && (
+                      <div className="flex items-center gap-1.5 text-sm font-bold text-zinc-500 uppercase tracking-widest border-l border-zinc-200 dark:border-zinc-800 pl-4">
+                        <Clock className="w-4 h-4" />
+                        {new Date(workoutDetails.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
