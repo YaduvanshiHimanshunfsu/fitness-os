@@ -77,7 +77,7 @@ export default function Sidebar() {
         const { data: profile } = await supabase.from('profiles')
           .select('name, xp_total, avatar_url, role')
           .eq('id', user.id)
-          .single();
+          .single() as { data: any };
 
         if (cancelled) return;
 

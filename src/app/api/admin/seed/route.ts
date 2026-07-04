@@ -29,7 +29,7 @@ export async function GET() {
         day: day.day,
         name: day.day.charAt(0).toUpperCase() + day.day.slice(1),
         focus: day.focus
-      }, { onConflict: 'day' });
+      } as any, { onConflict: 'day' });
       if (error) throw error;
     }
 
@@ -48,7 +48,7 @@ export async function GET() {
         name: ex.name,
         muscle_group: ex.muscleGroup,
         image_url: ex.imageUrl
-      }, { onConflict: 'id' });
+      } as any, { onConflict: 'id' });
       
       if (error) {
         console.error('Error seeding exercise', ex.name, error);
@@ -69,7 +69,7 @@ export async function GET() {
         sets: ex.sets,
         reps: ex.reps,
         exercise_order: ex.exerciseOrder
-      });
+      } as any);
       if (error) throw error;
     }
 
