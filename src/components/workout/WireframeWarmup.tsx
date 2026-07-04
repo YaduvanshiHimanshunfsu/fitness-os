@@ -164,8 +164,7 @@ export function WireframeWarmup({ exercises, image, nextRoute }: { exercises?: a
               <img
                 src={activeImage}
                 alt="Full Body Warm-Up Routine"
-                className="w-full h-full object-cover max-h-[60vh] rounded-3xl opacity-80"
-                style={{ filter: 'grayscale(100%)' }}
+                className="w-full h-auto object-contain max-h-[75vh] rounded-3xl"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-white/60 to-transparent mix-blend-overlay pointer-events-none" />
               <div className="absolute bottom-8 left-8 bg-white/90 backdrop-blur-md px-6 py-4 rounded-2xl shadow-lg border border-white flex items-center gap-4">

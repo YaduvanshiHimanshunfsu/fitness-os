@@ -102,72 +102,75 @@ export default function ClientCooldownPage({ exercises, image }: { exercises?: a
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-xl bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1F1F1F] rounded-2xl p-6 md:p-8 flex flex-col items-center shadow-2xl relative"
+            className="w-full max-w-5xl bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1F1F1F] rounded-2xl flex flex-col md:flex-row overflow-hidden shadow-2xl relative"
           >
-            {/* Header info */}
-            <div className="flex flex-col items-center text-center mb-6">
-              <span className="text-[10px] font-mono font-black tracking-widest text-[#FF6B35] bg-[#2A160F] border border-[#FF6B35]/15 px-2.5 py-1 rounded-md uppercase">
-                Phase 5: Cool Down
-              </span>
-              <h2 className="text-2xl md:text-3xl font-sans font-black tracking-tight text-zinc-900 dark:text-white mt-3 uppercase">
-                {currentExercise.name}
-              </h2>
-              <span className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase mt-1">
-                Stretch {currentIndex + 1} of {activeExercises.length}
-              </span>
-            </div>
-
-            {/* Cool Down Image */}
-            <div className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-[#1F1F1F] bg-zinc-50 dark:bg-zinc-950 p-2 mb-6 flex justify-center shadow-lg">
+            {/* LEFT: Cool Down Image */}
+            <div className="w-full md:w-1/2 relative bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-[#1F1F1F]">
               <img 
                 src={activeImage} 
                 alt="Cool Down stretch demonstration" 
-                className="max-h-[260px] w-auto object-contain rounded-lg"
+                className="w-full h-auto max-h-[75vh] object-contain rounded-lg"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxMTExMTEiIC8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjNTU1IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SW1hZ2UgTm90IEZvdW5kPC90ZXh0Pjwvc3ZnPg==';
                 }}
               />
             </div>
 
-            {/* SVG Countdown Timer */}
-            <div className="relative w-28 h-28 flex items-center justify-center mb-6">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="44"
-                  className="stroke-zinc-900 fill-none"
-                  strokeWidth="5"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="44"
-                  className="stroke-[#FF6B35] fill-none"
-                  strokeWidth="5"
-                  strokeDasharray="276.4"
-                  strokeDashoffset={276.4 - (276.4 * stretchPercent) / 100}
-                  strokeLinecap="round"
-                  style={{ transition: 'stroke-dashoffset 1s linear' }}
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center justify-center">
-                <span className="font-mono text-3xl font-black text-zinc-900 dark:text-white tabular-nums">
-                  {timeLeft}
+            {/* RIGHT: Controls */}
+            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col items-center justify-center">
+              {/* Header info */}
+              <div className="flex flex-col items-center text-center mb-8">
+                <span className="text-[10px] font-mono font-black tracking-widest text-[#FF6B35] bg-[#2A160F] border border-[#FF6B35]/15 px-2.5 py-1 rounded-md uppercase">
+                  Phase 5: Cool Down
                 </span>
-                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-none">
-                  Sec Left
+                <h2 className="text-2xl md:text-3xl font-sans font-black tracking-tight text-zinc-900 dark:text-white mt-4 uppercase">
+                  {currentExercise.name}
+                </h2>
+                <span className="text-[10px] font-mono font-black tracking-widest text-zinc-500 uppercase mt-2">
+                  Stretch {currentIndex + 1} of {activeExercises.length}
                 </span>
               </div>
-            </div>
 
-            {/* Manual Skip or Progress button */}
-            <button
-              onClick={handleCompleteStretch}
-              className="w-full py-4 rounded-xl font-sans font-black tracking-widest text-xs uppercase bg-[#FF6B35] hover:bg-[#FF8C61] border-[#FF6B35] text-zinc-900 dark:text-white shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_30px_rgba(255,107,53,0.45)] transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              Skip / Next Stretch <ArrowRight className="w-4 h-4" />
-            </button>
+              {/* SVG Countdown Timer */}
+              <div className="relative w-32 h-32 flex items-center justify-center mb-8">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    className="stroke-zinc-200 dark:stroke-zinc-900 fill-none"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    className="stroke-[#FF6B35] fill-none"
+                    strokeWidth="5"
+                    strokeDasharray="276.4"
+                    strokeDashoffset={276.4 - (276.4 * stretchPercent) / 100}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 1s linear' }}
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center">
+                  <span className="font-mono text-4xl font-black text-zinc-900 dark:text-white tabular-nums">
+                    {timeLeft}
+                  </span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none mt-1">
+                    Sec Left
+                  </span>
+                </div>
+              </div>
+
+              {/* Manual Skip or Progress button */}
+              <button
+                onClick={handleCompleteStretch}
+                className="w-full max-w-xs py-4 rounded-xl font-sans font-black tracking-widest text-xs uppercase bg-[#FF6B35] hover:bg-[#FF8C61] border-[#FF6B35] text-zinc-900 dark:text-white shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_30px_rgba(255,107,53,0.45)] transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                Skip / Next Stretch <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </motion.div>
         ) : (
           <motion.div

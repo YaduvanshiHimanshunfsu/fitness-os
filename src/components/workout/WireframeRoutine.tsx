@@ -176,14 +176,13 @@ export function WireframeRoutine({
             className="w-full max-w-5xl bg-white/5 backdrop-blur-2xl rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/10 relative z-10"
           >
             {/* LEFT: Phone Frame Image - Fixed to Object Contain */}
-            <div className="w-full md:w-1/2 bg-zinc-50 dark:bg-[#0A0A0A]/50 flex items-center justify-center border-r border-white/10 relative overflow-hidden p-8">
+            <div className="w-full md:w-1/2 bg-white dark:bg-[#0A0A0A]/50 flex items-center justify-center border-r border-white/10 relative overflow-hidden p-4">
               <div className="absolute inset-0 bg-gradient-to-tr from-[#FF4500]/5 to-transparent pointer-events-none z-0" />
 
               <motion.img 
                 src={imageUrl} 
                 alt={title} 
-                // Removed massive hardcoded height, replaced with object-contain for infographics
-                className="w-full h-auto max-h-[65vh] object-contain mix-blend-luminosity opacity-80 rounded-lg shadow-2xl"
+                className="w-full h-auto max-h-[75vh] object-contain rounded-lg shadow-2xl"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiIC8+PC9zdmc+';
                 }}
