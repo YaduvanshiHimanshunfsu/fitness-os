@@ -17,7 +17,7 @@ export default async function MuscleFocusPage({ params }: { params: { category: 
     notFound();
   }
 
-  const settings = await getCachedSettings()
+  const settings = await getCachedSettings() || []
   const useDb = settings.find((s: any) => s.key === 'use_db_muscle_focus')?.value === 'true' || settings.find((s: any) => s.key === 'use_db_muscle_focus')?.value === true
 
   let drills = MUSCLE_FOCUS_TEMPLATES[categoryInfo.id] || [];

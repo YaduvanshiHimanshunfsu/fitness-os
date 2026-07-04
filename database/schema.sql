@@ -1059,20 +1059,30 @@ ALTER TABLE workout_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Users can read and update their own profile
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Streaks: Users can read and update their own streak
+DROP POLICY IF EXISTS "Users can view own streak" ON streaks;
+DROP POLICY IF EXISTS "Users can insert own streak" ON streaks;
+DROP POLICY IF EXISTS "Users can update own streak" ON streaks;
 CREATE POLICY "Users can view own streak" ON streaks FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own streak" ON streaks FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own streak" ON streaks FOR UPDATE USING (auth.uid() = user_id);
 
 -- Workout Sessions: Users can read, insert, update their own sessions
+DROP POLICY IF EXISTS "Users can view own sessions" ON workout_sessions;
+DROP POLICY IF EXISTS "Users can insert own sessions" ON workout_sessions;
+DROP POLICY IF EXISTS "Users can update own sessions" ON workout_sessions;
 CREATE POLICY "Users can view own sessions" ON workout_sessions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own sessions" ON workout_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own sessions" ON workout_sessions FOR UPDATE USING (auth.uid() = user_id);
 
 -- User Achievements: Users can view their own achievements
+DROP POLICY IF EXISTS "Users can view own achievements" ON user_achievements;
+DROP POLICY IF EXISTS "Users can insert own achievements" ON user_achievements;
 CREATE POLICY "Users can view own achievements" ON user_achievements FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own achievements" ON user_achievements FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -1172,13 +1182,19 @@ ALTER TABLE martial_arts_session_sets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE muscle_focus_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE muscle_focus_session_sets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage own martial arts sessions" ON martial_arts_sessions;
 CREATE POLICY "Users can manage own martial arts sessions" ON martial_arts_sessions 
   FOR ALL USING (auth.uid() = profile_id);
+
+DROP POLICY IF EXISTS "Users can manage own martial arts sets" ON martial_arts_session_sets;
 CREATE POLICY "Users can manage own martial arts sets" ON martial_arts_session_sets 
   FOR ALL USING (session_id IN (SELECT id FROM martial_arts_sessions WHERE profile_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Users can manage own muscle focus sessions" ON muscle_focus_sessions;
 CREATE POLICY "Users can manage own muscle focus sessions" ON muscle_focus_sessions 
   FOR ALL USING (auth.uid() = profile_id);
+
+DROP POLICY IF EXISTS "Users can manage own muscle focus sets" ON muscle_focus_session_sets;
 CREATE POLICY "Users can manage own muscle focus sets" ON muscle_focus_session_sets 
   FOR ALL USING (session_id IN (SELECT id FROM muscle_focus_sessions WHERE profile_id = auth.uid()));
 
