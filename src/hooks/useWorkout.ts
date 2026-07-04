@@ -91,7 +91,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
       isPaused:            false,
       pausedTimeRemaining: null,
 
-      startSession: (day, estimatedMinutes, exercises) =>
+      startSession: (day, estimatedMinutes, exercises, type) =>
         set({
           day,
           startTime:        new Date(),
@@ -108,6 +108,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           restTimerEnd:     null,
           isPaused:         false,
           pausedTimeRemaining: null,
+          workoutType:      type || 'daily',
         }),
 
       addSet: (s) =>
