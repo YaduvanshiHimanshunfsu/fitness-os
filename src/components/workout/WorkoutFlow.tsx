@@ -23,6 +23,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     setActiveExerciseIndex,
     setSessionPhase,
     restartSession,
+    workoutType,
   } = useWorkoutStore()
   
   const [currentIndex, setCurrentIndex] = useState(activeExerciseIndex)
@@ -138,8 +139,13 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const handleFinishExercise = () => {
     const isLastExercise = currentIndex === exercises.length - 1
     if (isLastExercise) {
-      setPhase('cooldown')
-      router.push('/workout/posture')
+      if (workoutType === 'martial_arts' || workoutType === 'muscle_focus') {
+        setPhase('complete')
+        router.push('/workout/summary')
+      } else {
+        setPhase('cooldown')
+        router.push('/workout/posture')
+      }
     } else {
       startRestTimer(30)
       setLocalPhase('rest_exercise')
@@ -147,7 +153,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   }
 
   const nextExerciseName = phase === 'rest_exercise'
-    ? (exercises[currentIndex + 1]?.name || 'Posture Routine')
+    ? (exercises[currentIndex + 1]?.name || ((workoutType === 'martial_arts' || workoutType === 'muscle_focus') ? 'Finish Workout' : 'Posture Routine'))
     : currentExercise.name
 
   // ─── Display timer (handles both running and paused) ──────────────
