@@ -23,7 +23,9 @@ export default function ClientAdminPage({
   initialSettings,
   initialLogs,
   initialTemplates,
-  initialMartialArts
+  initialMartialArts,
+  initialMuscleFocus,
+  initialAuxiliaryRoutines
 }: { 
   initialExercises: Exercise[],
   initialSettings: any[],

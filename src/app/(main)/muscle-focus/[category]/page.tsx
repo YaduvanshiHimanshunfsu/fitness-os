@@ -5,12 +5,13 @@ import { notFound } from 'next/navigation'
 import { getMuscleFocusTemplates } from '@/actions/muscleFocus'
 import { getCachedSettings } from '@/services/cache-service'
 
-export default async function MuscleFocusPage({ params }: { params: { category: string } }) {
+export default async function MuscleFocusPage({ params }: { params: Promise<{ category: string }> }) {
+  const { category } = await params;
   // Handle both 'chest-focus' and 'chest_focus' URLs by normalizing to underscores
-  const normalizedCategory = params.category.replace(/-/g, '_');
+  const normalizedCategory = category.replace(/-/g, '_');
   
   const categoryInfo = MUSCLE_FOCUS_CATEGORIES.find(
-    c => c.id === normalizedCategory || c.id === params.category
+    c => c.id === normalizedCategory || c.id === category
   );
   
   if (!categoryInfo) {

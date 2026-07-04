@@ -41,7 +41,7 @@ const NAV_ITEMS = [
       { name: 'Arms Focus', path: '/muscle-focus/arms_focus' },
       { name: 'Abs & Core', path: '/muscle-focus/abs_core' },
       { name: 'Legs', path: '/muscle-focus/legs' },
-      { name: 'Knock Knee', path: '/muscle-focus/knock_knee' },
+
       { name: 'Back & Shoulder', path: '/muscle-focus/back_shoulder' }
     ]
   },
