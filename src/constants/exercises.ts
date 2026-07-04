@@ -51,7 +51,7 @@ export const EXERCISES: Exercise[] = [
   { id: 30, name: 'Arnold Press', muscleGroup: 'shoulders', imageUrl: '/images/SATURDAY/Arnold Press.png', sets: 4, reps: '10', exerciseOrder: 4, day: 'saturday' },
   { id: 31, name: 'Tricep Dips', muscleGroup: 'arms', imageUrl: '/images/SATURDAY/Tricep Dip.png', sets: 3, reps: '12-15', exerciseOrder: 5, day: 'saturday' },
   { id: 32, name: 'Dumbbell Kickbacks', muscleGroup: 'arms', imageUrl: '/images/SATURDAY/Dumbbell Kickbacks.png', sets: 3, reps: '12-15', exerciseOrder: 6, day: 'saturday' },
-  { id: 33, name: 'Hammer Curl', muscleGroup: 'arms', imageUrl: '/images/SATURDAY/Hammer Curl.png', sets: 3, reps: '12', exerciseOrder: 7, day: 'saturday' },
+  { id: 33, name: 'Hammer Curl', muscleGroup: 'arms', imageUrl: '/images/MONDAY/Hammer Curl.png', sets: 3, reps: '12', exerciseOrder: 7, day: 'saturday' },
   { id: 34, name: 'Reverse Wrist Curl', muscleGroup: 'forearms', imageUrl: '/images/SATURDAY/Reverse Wrist Curl.png', sets: 4, reps: '20', exerciseOrder: 8, day: 'saturday' },
   { id: 35, name: 'Farmer Hold', muscleGroup: 'forearms', imageUrl: '/images/SATURDAY/Farmer Hold.png', sets: 3, reps: '30-60 sec', exerciseOrder: 9, day: 'saturday' },
 
@@ -61,7 +61,7 @@ export const EXERCISES: Exercise[] = [
   { id: 38, name: 'Step-Ups', muscleGroup: 'legs', imageUrl: '/images/SUNDAY/Step-Up.png', sets: 3, reps: '10', exerciseOrder: 3, day: 'sunday' },
   { id: 39, name: 'Backward Lunges', muscleGroup: 'legs', imageUrl: '/images/SUNDAY/Backward Lunge.png', sets: 3, reps: '10', exerciseOrder: 4, day: 'sunday' },
   { id: 40, name: 'Push-Ups', muscleGroup: 'chest', imageUrl: '/images/SUNDAY/Push-Up.png', sets: 3, reps: '10-15', exerciseOrder: 5, day: 'sunday' },
-  { id: 41, name: 'Hammer Curl', muscleGroup: 'arms', imageUrl: '/images/SUNDAY/Hammer Curl.png', sets: 3, reps: '12', exerciseOrder: 6, day: 'sunday' },
+  { id: 41, name: 'Hammer Curl', muscleGroup: 'arms', imageUrl: '/images/MONDAY/Hammer Curl.png', sets: 3, reps: '12', exerciseOrder: 6, day: 'sunday' },
   { id: 42, name: 'Plank', muscleGroup: 'abs', imageUrl: '/images/SUNDAY/Plank.png', sets: 3, reps: '45 sec', exerciseOrder: 7, day: 'sunday' },
   { id: 43, name: 'Burpees', muscleGroup: 'fullbody', imageUrl: '/images/SUNDAY/Burpee.png', sets: 2, reps: '8', exerciseOrder: 8, day: 'sunday' },
   { id: 44, name: 'Farmer Hold', muscleGroup: 'forearms', imageUrl: '/images/SUNDAY/Farmer Hold.png', sets: 3, reps: '30-60 sec', exerciseOrder: 9, day: 'sunday' }
