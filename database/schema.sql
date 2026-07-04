@@ -1098,7 +1098,7 @@ DECLARE
   v_ach RECORD;
 BEGIN
   -- Count completed workouts for this user
-  SELECT count(*) INTO v_workout_count FROM workout_sessions WHERE user_id = NEW.user_id AND is_completed = true;
+  SELECT count(*) INTO v_workout_count FROM workout_sessions WHERE user_id = NEW.user_id AND completion_score = 100;
   
   -- Check 'total_workouts' condition type
   FOR v_ach IN SELECT id, condition_value FROM achievements WHERE condition_type = 'total_workouts' LOOP
@@ -1116,7 +1116,7 @@ DROP TRIGGER IF EXISTS trigger_check_workout_achievements ON workout_sessions;
 CREATE TRIGGER trigger_check_workout_achievements
   AFTER INSERT OR UPDATE ON workout_sessions
   FOR EACH ROW
-  WHEN (NEW.is_completed = true)
+  WHEN (NEW.completion_score = 100)
   EXECUTE FUNCTION check_workout_achievements();
 
 -- Enable RLS and public read for auxiliary routines
