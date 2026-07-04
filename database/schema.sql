@@ -768,3 +768,20 @@ create policy "muscle_focus_template_exercises_public_read" on muscle_focus_temp
 alter table martial_arts_exercises add column if not exists default_sets text;
 alter table martial_arts_exercises add column if not exists default_reps text;
 alter table martial_arts_exercises add column if not exists default_rest_time text;
+
+-- ==============================================================================
+-- SECTION 12: UNIFIED WORKOUT TRACKING (Martial Arts & Muscle Focus)
+-- Allow storing supplementary workouts in the core workout_exercises_v5 table
+-- ==============================================================================
+
+-- 1. Make the existing exercise_id optional
+ALTER TABLE workout_exercises_v5 ALTER COLUMN exercise_id DROP NOT NULL;
+
+-- 2. Add foreign keys for the new exercise types
+ALTER TABLE workout_exercises_v5 ADD COLUMN IF NOT EXISTS martial_arts_exercise_id integer references martial_arts_exercises(id) on delete cascade;
+ALTER TABLE workout_exercises_v5 ADD COLUMN IF NOT EXISTS muscle_focus_exercise_id integer references muscle_focus_exercises(id) on delete cascade;
+
+
+-- 3. Add denormalized exercise_name to support hardcoded constants without DB records
+ALTER TABLE workout_exercises_v5 ADD COLUMN IF NOT EXISTS exercise_name text;
+

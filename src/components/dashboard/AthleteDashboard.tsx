@@ -11,6 +11,7 @@ import { WorkoutHeatmap } from '@/components/heatmap/WorkoutHeatmap';
 import type { HeatmapDay } from '@/services/analytics-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getDailyInsight } from '@/actions/ai';
+import { MUAY_THAI_PHASE_1 } from '@/constants/martialArts';
 
 export interface AthleteDashboardProps {
   userName:      string;
@@ -379,6 +380,49 @@ export default function AthleteDashboard({
               ))}
             </div>
           </motion.div>
+
+          {/* Martial Arts Training (Conditional) */}
+          {mounted && ['tuesday', 'thursday', 'saturday', 'sunday'].includes(todayName) && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35, duration: 0.4, ease: 'easeOut' }}
+              className="bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-xl"
+            >
+              <h3 className="text-sm font-black text-zinc-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-widest">
+                <span className="text-red-500"><Flame className="w-4 h-4" /></span>
+                Martial Arts
+              </h3>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-semibold mb-4">
+                Today is a scheduled martial arts training day.
+              </p>
+              <button
+                onClick={() => {
+                  const maTemplate = MUAY_THAI_PHASE_1.find(t => t.day === todayName);
+                  if (maTemplate) {
+                    const mappedExercises = maTemplate.drills.map((d, index) => ({
+                      id: typeof d.id === 'string' ? undefined : d.id, // Handle DB vs hardcoded
+                      name: d.name,
+                      muscleGroup: 'Martial Arts',
+                      imageUrl: d.image_url || '/placeholder.png',
+                      sets: d.sets,
+                      reps: String(d.reps),
+                      exerciseOrder: index,
+                      day: todayName
+                    }));
+                    // Estimate minutes (naive 1 min per set)
+                    const estMins = mappedExercises.reduce((acc, ex) => acc + (ex.sets || 1), 0) + 5;
+                    startSession(todayName, estMins, mappedExercises as any, 'martial_arts');
+                    router.push('/workout/warmup');
+                  }
+                }}
+                className="w-full px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <Play className="w-3 h-3" fill="currentColor" />
+                Start Training
+              </button>
+            </motion.div>
+          )}
         </div>
       </main>
 

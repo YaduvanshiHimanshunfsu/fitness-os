@@ -3,15 +3,21 @@
 import React from 'react';
 import { Target } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { useWorkoutStore } from '@/hooks/useWorkout';
+import { Play } from 'lucide-react';
 
 export default function ClientMuscleFocusPage({ category, drills }: { category: any, drills: any[] }) {
+  const router = useRouter();
+  const { startSession } = useWorkoutStore();
 
   return (
     <div className="flex flex-col min-h-screen p-6 md:p-10 pb-32">
       <div className="max-w-3xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#2A160F] border border-[#FF6B35]/20 rounded-md mb-4">
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#2A160F] border border-[#FF6B35]/20 rounded-md mb-4">
             <Target className="w-4 h-4 text-[#FF6B35]" />
             <span className="text-xs font-mono font-bold tracking-widest text-[#FF6B35] uppercase">
               Muscle Focus Training
@@ -23,6 +29,32 @@ export default function ClientMuscleFocusPage({ category, drills }: { category: 
           <p className="text-zinc-600 dark:text-zinc-400 mt-2 font-medium">
             Specialized exercises targeting {category.title.toLowerCase()}.
           </p>
+          </div>
+          
+          {drills.length > 0 && (
+            <button
+              onClick={() => {
+                const mappedExercises = drills.map((d, index) => ({
+                  id: typeof d.id === 'string' ? undefined : d.id, // Support DB or hardcoded
+                  name: d.name,
+                  muscleGroup: category.title,
+                  imageUrl: d.image_url || '/placeholder.png',
+                  sets: d.sets,
+                  reps: String(d.reps),
+                  exerciseOrder: index,
+                  day: 'muscle_focus'
+                }));
+                // Estimate minutes (naive 1 min per set)
+                const estMins = mappedExercises.reduce((acc, ex) => acc + (ex.sets || 1), 0) + 5;
+                startSession(category.title, estMins, mappedExercises as any, 'muscle_focus');
+                router.push('/workout/warmup');
+              }}
+              className="px-6 py-3 bg-[#FF6B35] hover:bg-[#FF8050] text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+            >
+              <Play className="w-4 h-4" fill="currentColor" />
+              Start Training
+            </button>
+          )}
         </div>
 
         {/* Drills List */}

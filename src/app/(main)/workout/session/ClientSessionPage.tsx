@@ -18,7 +18,9 @@ export default function ClientSessionPage({ templates }: { templates: any[] }) {
     completedSets,
     activeExerciseIndex,
     restartSession,
-    pauseRestTimer
+    pauseRestTimer,
+    workoutType,
+    todayExercises: storeExercises
   } = useWorkoutStore()
   
   useEffect(() => {
@@ -32,19 +34,24 @@ export default function ClientSessionPage({ templates }: { templates: any[] }) {
   }, []);
   const currentDay = day || getTodayDay()
   
-  const todayTemplate = templates.find(t => t.day === currentDay)
-  const dbExercises = todayTemplate?.workout_template_exercises?.sort((a: any, b: any) => a.exercise_order - b.exercise_order) || []
-  
-  const todayExercises = dbExercises.map((te: any) => ({
-    id: te.exercises.id,
-    name: te.exercises.name,
-    muscleGroup: te.exercises.muscle_group,
-    imageUrl: te.exercises.image_url || '/placeholder.png',
-    sets: te.sets,
-    reps: te.reps,
-    exerciseOrder: te.exercise_order,
-    day: currentDay
-  }))
+  let todayExercises = storeExercises;
+
+  // Only override with the database template if it's a daily workout
+  if (!workoutType || workoutType === 'daily') {
+    const todayTemplate = templates.find(t => t.day === currentDay)
+    const dbExercises = todayTemplate?.workout_template_exercises?.sort((a: any, b: any) => a.exercise_order - b.exercise_order) || []
+    
+    todayExercises = dbExercises.map((te: any) => ({
+      id: te.exercises.id,
+      name: te.exercises.name,
+      muscleGroup: te.exercises.muscle_group,
+      imageUrl: te.exercises.image_url || '/placeholder.png',
+      sets: te.sets,
+      reps: te.reps,
+      exerciseOrder: te.exercise_order,
+      day: currentDay
+    }))
+  }
 
   const hasSavedProgress = isSessionActive && (completedSets.length > 0 || activeExerciseIndex > 0)
   const [showWorkout, setShowWorkout] = useState(!hasSavedProgress)

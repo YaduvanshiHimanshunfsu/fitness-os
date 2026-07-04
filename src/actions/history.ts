@@ -59,7 +59,10 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
     .select(`
       id, name, start_time, end_time, xp_earned, sets_skipped, exercises_skipped, estimated_calories,
       workout_exercises_v5 (
-        id, exercise_id, sets_skipped, exercises(name, muscle_group),
+        id, exercise_id, martial_arts_exercise_id, muscle_focus_exercise_id, exercise_name, sets_skipped,
+        exercises(name, muscle_group),
+        martial_arts_exercises(name),
+        muscle_focus_exercises(name),
         workout_sets_v5 (id, actual_reps, weight_kg, completed)
       )
     `)
@@ -96,8 +99,16 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
 
   const exercisesList = (w.workout_exercises_v5 || []).map((we: any) => {
     const sets = we.workout_sets_v5 || []
+    
+    // Resolve name from the priority: denormalized > daily > martial > muscle
+    let resolvedName = we.exercise_name 
+      || we.exercises?.name 
+      || we.martial_arts_exercises?.name 
+      || we.muscle_focus_exercises?.name 
+      || 'Unknown Exercise';
+
     return {
-      name: we.exercises?.name || 'Unknown Exercise',
+      name: resolvedName,
       completedSets: sets.filter((s: any) => s.completed).length,
       totalSets: sets.length
     }

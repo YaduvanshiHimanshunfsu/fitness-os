@@ -147,7 +147,7 @@ export function WireframeSummary({
   const router = useRouter();
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const { completedSets, reset } = useWorkoutStore();
+  const { completedSets, workoutType, reset } = useWorkoutStore();
   const { addNotification }      = useNotifications();
 
   // ── AI Coach Note Fetching ─────────────────────────────────────────────
@@ -198,6 +198,7 @@ export function WireframeSummary({
         day,
         startTime:       rawStartTime,
         endTime:         rawEndTime,
+        workoutType:     workoutType,
         completedSets:   completedSets,
         completionScore: completionPercent,
       });

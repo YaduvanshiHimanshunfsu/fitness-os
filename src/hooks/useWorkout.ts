@@ -36,6 +36,7 @@ interface WorkoutStore {
   estimatedMinutes:   number
   todayExercises:     Exercise[]
   isSessionActive:    boolean
+  workoutType:        'daily' | 'martial_arts' | 'muscle_focus'
   
   // Rest Timer
   restTimerEnd:       number | null
@@ -46,7 +47,7 @@ interface WorkoutStore {
   pausedTimeRemaining:  number | null   // ms remaining when paused
 
   // Actions
-  startSession:       (day: string, estimatedMinutes: number, exercises: Exercise[]) => void
+  startSession:       (day: string, estimatedMinutes: number, exercises: Exercise[], type?: 'daily' | 'martial_arts' | 'muscle_focus') => void
   addSet:             (set: CompletedSet) => void
   addSkipped:         (item: SkippedItem) => void
   undoLastSet:        () => CompletedSet | null
@@ -82,6 +83,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
       estimatedMinutes:   0,
       todayExercises:     [],
       isSessionActive:    false,
+      workoutType:        'daily',
       
       restTimerEnd:       null,
       defaultRestSeconds: 60,

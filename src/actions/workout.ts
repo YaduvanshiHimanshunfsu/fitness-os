@@ -10,7 +10,8 @@ export async function saveWorkoutSession(payload: {
   day:             string
   startTime:       Date
   endTime:         Date
-  completedSets:   { exerciseId: number; setNumber: number; actualReps: number; completed: boolean; weight_kg?: number; unit?: string }[]
+  workoutType?:    'daily' | 'martial_arts' | 'muscle_focus'
+  completedSets:   { exerciseId?: number | string; exerciseName: string; setNumber: number; actualReps: number; completed: boolean; weight_kg?: number; unit?: string }[]
   completionScore: number
 }) {
   const supabase = await createClient()
@@ -28,11 +29,12 @@ export async function saveWorkoutSession(payload: {
   const actualCompletionScore = totalSets > 0 ? Math.round((completedSetsCount / totalSets) * 100) : 0
   const xpEarned = calculateXP(actualCompletionScore)
 
-  // Group sets by exercise
-  const exerciseMap = new Map<number, typeof payload.completedSets>()
+  // Group sets by exercise name instead of just ID to handle hardcoded exercises without IDs
+  const exerciseMap = new Map<string, typeof payload.completedSets>()
   for (const s of payload.completedSets) {
-    if (!exerciseMap.has(s.exerciseId)) exerciseMap.set(s.exerciseId, [])
-    exerciseMap.get(s.exerciseId)!.push(s)
+    const key = s.exerciseId ? s.exerciseId.toString() : s.exerciseName;
+    if (!exerciseMap.has(key)) exerciseMap.set(key, [])
+    exerciseMap.get(key)!.push(s)
   }
 
   let exercisesSkipped = 0
@@ -49,9 +51,11 @@ export async function saveWorkoutSession(payload: {
       const weight = s.unit === 'lbs' ? s.weight_kg * 0.453592 : s.weight_kg
       totalVolumeKg += weight * s.actualReps
       
-      // Check PR
-      const isNewRecord = await checkAndUpdateRecords(user.id, s.exerciseId.toString(), s.actualReps, weight, null);
-      if (isNewRecord) newRecordsHit = true;
+      // Check PR (only if exerciseId is a valid number, skip for hardcoded constants)
+      if (s.exerciseId && typeof s.exerciseId === 'number') {
+        const isNewRecord = await checkAndUpdateRecords(user.id, s.exerciseId.toString(), s.actualReps, weight, null);
+        if (isNewRecord) newRecordsHit = true;
+      }
     }
   }
   const estimatedCalories = Math.round(totalVolumeKg * 0.00205)
@@ -77,20 +81,37 @@ export async function saveWorkoutSession(payload: {
 
   // 3. Insert exercises and sets
   let orderIndex = 0
-  for (const [exerciseId, sets] of exerciseMap.entries()) {
+  for (const [exerciseKey, sets] of exerciseMap.entries()) {
     const exerciseSetsSkipped = sets.filter(s => !s.completed).length
 
+    // First set provides the details
+    const firstSet = sets[0];
+    const isNumberId = typeof firstSet.exerciseId === 'number';
+
+    const insertPayload: any = {
+      workout_id:   workout.id,
+      order_index:  orderIndex++,
+      sets_skipped: exerciseSetsSkipped,
+      exercise_name: firstSet.exerciseName
+    }
+
+    if (isNumberId) {
+      if (payload.workoutType === 'martial_arts') {
+        insertPayload.martial_arts_exercise_id = firstSet.exerciseId;
+      } else if (payload.workoutType === 'muscle_focus') {
+        insertPayload.muscle_focus_exercise_id = firstSet.exerciseId;
+      } else {
+        insertPayload.exercise_id = firstSet.exerciseId;
+      }
+    }
+
     const { data: we, error: weError } = await supabase.from('workout_exercises_v5')
-      .insert({ workout_id:   workout.id,
-        exercise_id:  exerciseId,
-        order_index:  orderIndex++,
-        sets_skipped: exerciseSetsSkipped
-      })
+      .insert(insertPayload)
       .select()
       .single()
 
     if (weError || !we) {
-      console.error('Failed to insert workout_exercise:', weError, exerciseId);
+      console.error('Failed to insert workout_exercise:', weError, exerciseKey);
       continue;
     }
 

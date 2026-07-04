@@ -238,6 +238,9 @@ export async function getMuscleVolumeData(
     .from('workouts_v5')
     .select(`
       workout_exercises_v5(
+        exercise_name,
+        martial_arts_exercise_id,
+        muscle_focus_exercise_id,
         exercises(muscle_group),
         workout_sets_v5(id, completed)
       )
@@ -248,7 +251,17 @@ export async function getMuscleVolumeData(
   const volumeMap: Record<string, number> = {}
   for (const w of workouts ?? []) {
     for (const we of w.workout_exercises_v5 || []) {
-      const group = we.exercises?.muscle_group ?? 'unknown'
+      let group = we.exercises?.muscle_group;
+      if (!group) {
+        if (we.martial_arts_exercise_id || (we.exercise_name && we.exercise_name.includes('Muay Thai'))) {
+          group = 'Martial Arts';
+        } else if (we.muscle_focus_exercise_id || we.exercise_name) {
+          group = 'Muscle Focus / Special';
+        } else {
+          group = 'unknown';
+        }
+      }
+      
       const completedSets = (we.workout_sets_v5 || []).filter((s: any) => s.completed).length
       volumeMap[group] = (volumeMap[group] ?? 0) + completedSets
     }
