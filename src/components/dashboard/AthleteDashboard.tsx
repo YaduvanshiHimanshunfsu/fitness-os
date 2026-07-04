@@ -432,7 +432,7 @@ export default function AthleteDashboard({
                     // Estimate minutes (naive 1 min per set)
                     const estMins = mappedExercises.reduce((acc: number, ex: any) => acc + (ex.sets || 1), 0) + 5;
                     startSession(todayName, estMins, mappedExercises as any, 'martial_arts');
-                    router.push('/workout/warmup');
+                    router.push('/workout/session');
                   }
                 }}
                 className="w-full px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors flex items-center justify-center gap-2"

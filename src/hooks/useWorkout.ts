@@ -91,7 +91,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
       isPaused:            false,
       pausedTimeRemaining: null,
 
-      startSession: (day, estimatedMinutes, exercises, type) =>
+      startSession: (day, estimatedMinutes, exercises, type) => {
+        const isSpecial = type === 'martial_arts' || type === 'muscle_focus';
         set({
           day,
           startTime:        new Date(),
@@ -104,12 +105,13 @@ export const useWorkoutStore = create<WorkoutStore>()(
           estimatedMinutes,
           todayExercises:   exercises,
           isSessionActive:  true,
-          currentPhase:     'posture',
+          currentPhase:     isSpecial ? 'exercise' : 'posture',
           restTimerEnd:     null,
           isPaused:         false,
           pausedTimeRemaining: null,
           workoutType:      type || 'daily',
-        }),
+        });
+      },
 
       addSet: (s) =>
         set((state) => ({ completedSets: [...state.completedSets, s] })),

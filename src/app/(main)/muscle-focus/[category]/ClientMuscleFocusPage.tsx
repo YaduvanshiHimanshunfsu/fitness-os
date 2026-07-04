@@ -56,7 +56,7 @@ export default function ClientMuscleFocusPage({ category, drills }: { category: 
                 // Estimate minutes (naive 1 min per set)
                 const estMins = mappedExercises.reduce((acc, ex) => acc + (ex.sets || 1), 0) + 5;
                 startSession(category.title, estMins, mappedExercises as any, 'muscle_focus');
-                router.push('/workout/warmup');
+                router.push('/workout/session');
               }}
               className="px-6 py-3 bg-[#FF6B35] hover:bg-[#FF8050] text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2 flex-shrink-0"
             >
