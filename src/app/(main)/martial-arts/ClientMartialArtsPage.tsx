@@ -34,7 +34,20 @@ export default function ClientMartialArtsPage({ templates }: { templates: any[] 
         <div className="space-y-4">
           {templates.map((template) => {
             const isExpanded = expandedDay === template.day;
-            const drills = template.drills || [];
+            let drills = template.drills || [];
+            if (template.martial_arts_template_exercises) {
+              drills = template.martial_arts_template_exercises
+                .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
+                .map((d: any) => ({
+                  id: d.martial_arts_exercises?.id,
+                  name: d.martial_arts_exercises?.name,
+                  instruction: d.martial_arts_exercises?.instruction,
+                  image_url: d.martial_arts_exercises?.image_url,
+                  sets: d.sets,
+                  reps: d.reps,
+                  comment: d.martial_arts_exercises?.comment || ''
+                }));
+            }
 
             return (
               <div 

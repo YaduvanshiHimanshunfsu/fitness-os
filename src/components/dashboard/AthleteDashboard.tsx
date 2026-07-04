@@ -402,18 +402,33 @@ export default function AthleteDashboard({
                 onClick={() => {
                   const maTemplate = martialArtsTemplates.find(t => t.day === todayName);
                   if (maTemplate) {
-                    const mappedExercises = maTemplate.martial_arts_template_exercises
-                      .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
-                      .map((d: any, index: number) => ({
-                        id: d.martial_arts_exercises.id,
-                        name: d.martial_arts_exercises.name,
+                    let mappedExercises: any[] = [];
+                    if (maTemplate.martial_arts_template_exercises) {
+                      mappedExercises = maTemplate.martial_arts_template_exercises
+                        .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
+                        .map((d: any, index: number) => ({
+                          id: d.martial_arts_exercises.id,
+                          name: d.martial_arts_exercises.name,
+                          muscleGroup: 'Martial Arts',
+                          imageUrl: d.martial_arts_exercises.image_url || '/placeholder.png',
+                          sets: d.sets,
+                          reps: String(d.reps),
+                          exerciseOrder: index,
+                          day: todayName
+                        }));
+                    } else if (maTemplate.drills) {
+                      mappedExercises = maTemplate.drills.map((d: any, index: number) => ({
+                        id: d.id,
+                        name: d.name,
                         muscleGroup: 'Martial Arts',
-                        imageUrl: d.martial_arts_exercises.image_url || '/placeholder.png',
+                        imageUrl: d.image_url || '/placeholder.png',
                         sets: d.sets,
                         reps: String(d.reps),
                         exerciseOrder: index,
                         day: todayName
                       }));
+                    }
+                    
                     // Estimate minutes (naive 1 min per set)
                     const estMins = mappedExercises.reduce((acc: number, ex: any) => acc + (ex.sets || 1), 0) + 5;
                     startSession(todayName, estMins, mappedExercises as any, 'martial_arts');
