@@ -763,3 +763,8 @@ create policy "muscle_focus_public_read" on muscle_focus_templates for select us
 create policy "muscle_focus_exercises_public_read" on muscle_focus_exercises for select using (true);
 create policy "muscle_focus_template_exercises_public_read" on muscle_focus_template_exercises for select using (true);
 
+
+-- 5. Extra Martial Arts Columns
+alter table martial_arts_exercises add column if not exists default_sets text;
+alter table martial_arts_exercises add column if not exists default_reps text;
+alter table martial_arts_exercises add column if not exists default_rest_time text;

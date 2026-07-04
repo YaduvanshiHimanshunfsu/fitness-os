@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import ClientAdminPage from './ClientAdminPage'
 import { getCachedExercises, getCachedSettings } from '@/services/cache-service'
 import { getTemplates } from '@/actions/templates'
-
+import { getMartialArtsExercises } from '@/actions/martialArts'
 export default async function AdminPage() {
   const supabase = await createClient()
 
@@ -24,6 +24,7 @@ export default async function AdminPage() {
   const exercises = await getCachedExercises()
   const settings = await getCachedSettings()
   const initialTemplates = await getTemplates()
+  const initialMartialArts = await getMartialArtsExercises()
 
   const { data: logs } = await supabase.from('admin_logs')
     .select('*, profiles(name, email)')
@@ -46,6 +47,7 @@ export default async function AdminPage() {
         initialSettings={settings ?? []} 
         initialLogs={logs ?? []}
         initialTemplates={initialTemplates ?? []}
+        initialMartialArts={initialMartialArts ?? []}
       />
     </div>
   )
