@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Exercise } from '@/types/exercise';
-import { ArrowRight, Flame, Clock, Undo2 } from 'lucide-react';
+import { ArrowRight, Flame, Clock, Undo2, Play, Pause } from 'lucide-react';
 import { StepperInput } from '@/components/ui/StepperInput';
 import { useWorkoutStore } from '@/hooks/useWorkout';
 
@@ -42,6 +42,21 @@ export function WireframeExerciseCard({
   // ─── Live Duration Timer ───────────────────────────────────────────
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
+  // ─── Timed Exercise (Countdown) State ──────────────────────────────
+  const [activeTimerIdx, setActiveTimerIdx] = useState<number | null>(null);
+  const [timerTimeLeft, setTimerTimeLeft] = useState<number>(0);
+
+  useEffect(() => {
+    if (activeTimerIdx === null) return;
+    if (timerTimeLeft <= 0) {
+      if (typeof window !== 'undefined' && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      setActiveTimerIdx(null);
+      return;
+    }
+    const id = setInterval(() => setTimerTimeLeft(p => p - 1), 1000);
+    return () => clearInterval(id);
+  }, [activeTimerIdx, timerTimeLeft]);
+
   useEffect(() => {
     if (!startTime) return;
     const start = new Date(startTime).getTime();
@@ -71,6 +86,8 @@ export function WireframeExerciseCard({
   const progressPercent = Math.round((currentIndex / Math.max(1, totalExercises)) * 100);
   const isMinSetsMet = completedCount >= Math.min(2, exercise.sets);
   const isAllSetsMet = completedCount === exercise.sets;
+  
+  const isTimed = typeof exercise.reps === 'string' && (exercise.reps.toLowerCase().includes('sec') || exercise.reps.toLowerCase().includes('min'));
   
   const handleSetComplete = (idx: number, reps: number, weight: number, unit: 'kg'|'lbs') => {
     if (typeof window !== 'undefined' && navigator.vibrate) {
@@ -180,18 +197,72 @@ export function WireframeExerciseCard({
 
                   {(!isCompleted && active) ? (
                     <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
-                      <div className="flex-1">
-                        <StepperInput 
-                          label="Reps" 
-                          value={currentReps[idx]} 
-                          onChange={(val) => {
-                            const n = [...currentReps];
-                            n[idx] = val;
-                            setCurrentReps(n);
-                          }} 
-                          min={0} max={100} step={1} 
-                        />
-                      </div>
+                      {isTimed ? (
+                        <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-2 flex items-center gap-4">
+                          <button
+                            onClick={() => {
+                              if (activeTimerIdx === idx) {
+                                setActiveTimerIdx(null);
+                              } else {
+                                if (activeTimerIdx === null && timerTimeLeft === 0) {
+                                  setTimerTimeLeft(currentReps[idx]);
+                                } else if (activeTimerIdx !== idx) {
+                                  setTimerTimeLeft(currentReps[idx]);
+                                }
+                                setActiveTimerIdx(idx);
+                              }
+                            }}
+                            className={`w-12 h-12 rounded-lg flex items-center justify-center text-white transition-colors ${
+                              activeTimerIdx === idx ? 'bg-zinc-900 dark:bg-white dark:text-zinc-900' : 'bg-[#FF4500] hover:bg-[#FF5A1F]'
+                            }`}
+                          >
+                            {activeTimerIdx === idx ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                          </button>
+                          <div className="flex-1 flex flex-col items-center">
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Seconds Left</span>
+                            <span className="text-2xl font-black text-zinc-900 dark:text-white tabular-nums">
+                              {activeTimerIdx === idx || (activeTimerIdx === null && timerTimeLeft > 0) ? timerTimeLeft : currentReps[idx]}s
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <button 
+                              onClick={() => {
+                                const n = [...currentReps];
+                                n[idx] += 5;
+                                setCurrentReps(n);
+                                if (activeTimerIdx === idx || (activeTimerIdx === null && timerTimeLeft > 0)) {
+                                  setTimerTimeLeft(p => p + 5);
+                                }
+                              }}
+                              className="w-10 h-6 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded flex items-center justify-center text-[10px] font-bold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
+                            >+5s</button>
+                            <button 
+                              onClick={() => {
+                                const n = [...currentReps];
+                                n[idx] = Math.max(0, n[idx] - 5);
+                                setCurrentReps(n);
+                                if (activeTimerIdx === idx || (activeTimerIdx === null && timerTimeLeft > 0)) {
+                                  setTimerTimeLeft(p => Math.max(0, p - 5));
+                                }
+                              }}
+                              className="w-10 h-6 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded flex items-center justify-center text-[10px] font-bold hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
+                            >-5s</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex-1">
+                          <StepperInput 
+                            label="Reps" 
+                            value={currentReps[idx]} 
+                            onChange={(val) => {
+                              const n = [...currentReps];
+                              n[idx] = val;
+                              setCurrentReps(n);
+                            }} 
+                            min={0} max={100} step={1} 
+                          />
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleSetComplete(idx, currentReps[idx], 0, 'kg')}
@@ -204,7 +275,7 @@ export function WireframeExerciseCard({
                     <div className="flex-1 flex items-center justify-between pl-4">
                       {isCompleted ? (
                         <div className="flex items-center gap-4">
-                          <span className="text-zinc-900 dark:text-white font-bold">{currentReps[idx]} <span className="text-[10px] text-zinc-500 uppercase">Reps</span></span>
+                          <span className="text-zinc-900 dark:text-white font-bold">{currentReps[idx]} <span className="text-[10px] text-zinc-500 uppercase">{isTimed ? 'Seconds' : 'Reps'}</span></span>
                           {/* Undo Button */}
                           {onUndoSet && idx === completedSets.lastIndexOf(true) && (
                             <button
