@@ -9,7 +9,8 @@ interface UserAchievement {
   unlocked_at: string
 }
 
-export function AchievementGrid({ userAchievements }: { userAchievements: UserAchievement[] }) {
+export function AchievementGrid({ userAchievements, achievements }: { userAchievements: UserAchievement[], achievements?: any[] }) {
+  const activeAchievements = achievements && achievements.length > 0 ? achievements : ACHIEVEMENTS;
   const unlockedMap = new Map(userAchievements.map(ua => [ua.achievement_id, ua.unlocked_at]))
 
   return (
@@ -19,7 +20,7 @@ export function AchievementGrid({ userAchievements }: { userAchievements: UserAc
       animate="animate"
       className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"
     >
-      {ACHIEVEMENTS.map(achievement => (
+      {activeAchievements.map(achievement => (
         <AchievementCard 
           key={achievement.id} 
           achievement={achievement} 

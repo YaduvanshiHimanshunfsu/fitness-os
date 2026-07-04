@@ -200,7 +200,6 @@ export function WireframeSummary({
         endTime:         rawEndTime,
         workoutType:     workoutType,
         completedSets:   completedSets,
-        completionScore: completionPercent,
       });
 
       setSaveState('saved');

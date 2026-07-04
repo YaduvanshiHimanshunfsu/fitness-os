@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
-export async function saveGlobalSettings(settings: { geminiApiKey?: string, userRegistrationLimit?: number }) {
+export async function saveGlobalSettings(settings: { geminiApiKey?: string, userRegistrationLimit?: number, useDbMartialArts?: boolean, useDbMuscleFocus?: boolean }) {
   const supabase = await createClient()
   
   // Verify user is admin
@@ -33,6 +33,23 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
     const { error } = await supabase.from('app_settings').upsert({
       key: 'user_registration_limit',
       value: JSON.stringify(settings.userRegistrationLimit)
+    }, { onConflict: 'key' })
+    if (error) throw error
+  }
+
+  // Update DB Toggles
+  if (settings.useDbMartialArts !== undefined) {
+    const { error } = await supabase.from('app_settings').upsert({
+      key: 'use_db_martial_arts',
+      value: JSON.stringify(settings.useDbMartialArts)
+    }, { onConflict: 'key' })
+    if (error) throw error
+  }
+
+  if (settings.useDbMuscleFocus !== undefined) {
+    const { error } = await supabase.from('app_settings').upsert({
+      key: 'use_db_muscle_focus',
+      value: JSON.stringify(settings.useDbMuscleFocus)
     }, { onConflict: 'key' })
     if (error) throw error
   }

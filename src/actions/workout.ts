@@ -12,7 +12,6 @@ export async function saveWorkoutSession(payload: {
   endTime:         Date
   workoutType?:    'daily' | 'martial_arts' | 'muscle_focus'
   completedSets:   { exerciseId?: number | string; exerciseName: string; setNumber: number; actualReps: number; completed: boolean; weight_kg?: number; unit?: string }[]
-  completionScore: number
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -1,8 +1,20 @@
 import ClientMartialArtsPage from './ClientMartialArtsPage'
 import { MUAY_THAI_PHASE_1 } from '@/constants/martialArts'
+import { getMartialArtsTemplates } from '@/actions/martialArts'
+import { getCachedSettings } from '@/services/cache-service'
 
 export default async function MartialArtsPage() {
-  // We can hook this up to the Supabase database later.
-  // For now, we use the constants as the user requested to keep the hardcoded option open.
-  return <ClientMartialArtsPage templates={MUAY_THAI_PHASE_1} />
+  const settings = await getCachedSettings()
+  const useDb = settings.find((s: any) => s.key === 'use_db_martial_arts')?.value === 'true' || settings.find((s: any) => s.key === 'use_db_martial_arts')?.value === true
+
+  let templatesToUse = MUAY_THAI_PHASE_1
+
+  if (useDb) {
+    const dbTemplates = await getMartialArtsTemplates()
+    if (dbTemplates && dbTemplates.length > 0) {
+      templatesToUse = dbTemplates
+    }
+  }
+
+  return <ClientMartialArtsPage templates={templatesToUse} />
 }

@@ -6,28 +6,31 @@ import { useRouter } from 'next/navigation';
 import { Activity, X, Pause, Play, Plus } from 'lucide-react';
 import { WARMUP_IMAGE, WARMUP_EXERCISES } from '@/constants/warmup';
 
-export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: string }) {
+export function WireframeWarmup({ exercises, image, nextRoute }: { exercises?: any[]; image?: string; nextRoute: string }) {
   const router = useRouter();
+
+  const activeExercises = exercises && exercises.length > 0 ? exercises : WARMUP_EXERCISES;
+  const activeImage = image || WARMUP_IMAGE;
 
   // Phase state
   const [phase,        setPhase]        = useState<'warmup' | 'rest'>('warmup');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft,     setTimeLeft]     = useState(WARMUP_EXERCISES[0].durationSeconds);
-  const [totalTime,    setTotalTime]    = useState(WARMUP_EXERCISES[0].durationSeconds);
+  const [timeLeft,     setTimeLeft]     = useState(activeExercises[0].durationSeconds || activeExercises[0].duration_seconds);
+  const [totalTime,    setTotalTime]    = useState(activeExercises[0].durationSeconds || activeExercises[0].duration_seconds);
   const [restTimeLeft, setRestTimeLeft] = useState(20);
   const [isPaused,     setIsPaused]     = useState(false);
 
   const totalRestTime   = 20;
-  const currentExercise = WARMUP_EXERCISES[currentIndex];
+  const currentExercise = activeExercises[currentIndex];
 
   // When current exercise changes, reset the timer
   useEffect(() => {
     if (phase === 'warmup') {
-      const dur = WARMUP_EXERCISES[currentIndex].durationSeconds;
+      const dur = activeExercises[currentIndex].durationSeconds || activeExercises[currentIndex].duration_seconds;
       setTimeLeft(dur);
       setTotalTime(dur);
     }
-  }, [currentIndex, phase]);
+  }, [currentIndex, phase, activeExercises]);
 
   // Warmup countdown — respects isPaused
   useEffect(() => {
@@ -62,7 +65,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
   // Transition warmup → next exercise OR rest
   useEffect(() => {
     if (phase === 'warmup' && timeLeft === 0) {
-      if (currentIndex < WARMUP_EXERCISES.length - 1) {
+      if (currentIndex < activeExercises.length - 1) {
         setCurrentIndex(prev => prev + 1);
       } else {
         setIsPaused(false);     // always resume for rest phase
@@ -104,7 +107,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
             {phase === 'warmup' ? 'WARMUP ROUTINE' : 'TRANSITION REST'}
           </span>
           <div className="flex gap-1.5 mt-2">
-            {WARMUP_EXERCISES.map((_, idx) => (
+            {activeExercises.map((_, idx) => (
               <div 
                 key={idx} 
                 className={`h-1 rounded-full transition-all ${phase === 'warmup' && currentIndex >= idx ? 'w-6 bg-[#FF4500]' : phase === 'rest' ? 'w-6 bg-[#FF4500]' : 'w-4 bg-zinc-300'}`} 
@@ -159,7 +162,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
             {/* Image */}
             <div className="w-full md:w-1/2 relative bg-zinc-100 flex items-center justify-center p-4">
               <img
-                src={WARMUP_IMAGE}
+                src={activeImage}
                 alt="Full Body Warm-Up Routine"
                 className="w-full h-full object-cover max-h-[60vh] rounded-3xl opacity-80"
                 style={{ filter: 'grayscale(100%)' }}
@@ -180,7 +183,7 @@ export function WireframeWarmup({ nextRoute }: { exercises?: any[]; nextRoute: s
             <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col items-center justify-center bg-white">
               <div className="text-center mb-10">
                 <h1 className="text-4xl font-black text-zinc-900 tracking-tight">{currentExercise.name}</h1>
-                <p className="text-sm font-bold text-[#FF4500] mt-2">Warmup • Set {currentIndex + 1} of {WARMUP_EXERCISES.length}</p>
+                <p className="text-sm font-bold text-[#FF4500] mt-2">Warmup • Set {currentIndex + 1} of {activeExercises.length}</p>
               </div>
 
               {/* Timer Circle */}

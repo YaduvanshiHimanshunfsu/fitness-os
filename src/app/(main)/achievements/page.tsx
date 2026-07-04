@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/analytics/PageHeader'
 import { getUserAchievements, getLevelInfo } from '@/services/achievement-service'
+import { getAchievements } from '@/actions/achievements'
 import { AchievementGrid } from '@/components/achievements/AchievementGrid'
 import { LevelProgress } from '@/components/achievements/LevelProgress'
 import { ACHIEVEMENTS } from '@/constants/achievements'
@@ -13,10 +14,13 @@ export default async function AchievementsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [userAchievements, levelInfo] = await Promise.all([
+  const [userAchievements, levelInfo, dbAchievements] = await Promise.all([
     getUserAchievements(user.id),
-    getLevelInfo(user.id)
+    getLevelInfo(user.id),
+    getAchievements()
   ])
+
+  const activeAchievements = dbAchievements.length > 0 ? dbAchievements : ACHIEVEMENTS;
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-8 pb-24">
@@ -33,11 +37,11 @@ export default async function AchievementsPage() {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-sm font-bold tracking-widest uppercase text-zinc-500">Badge Collection</h3>
         <span className="text-xs font-bold bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700">
-          {userAchievements.length} / {ACHIEVEMENTS.length}
+          {userAchievements.length} / {activeAchievements.length}
         </span>
       </div>
 
-      <AchievementGrid userAchievements={userAchievements} />
+      <AchievementGrid userAchievements={userAchievements} achievements={activeAchievements} />
     </div>
   )
 }

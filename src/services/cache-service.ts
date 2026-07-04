@@ -14,7 +14,7 @@ const getStaticClient = () => {
 export const getCachedExercises = unstable_cache(
   async () => {
     const supabase = getStaticClient()
-    const { data, error } = await supabase.from('exercises').select('*').order('id')
+    const { data, error } = await supabase.from('exercises').select('*').eq('is_deleted', false).order('id')
     if (error) throw error
     return data
   },

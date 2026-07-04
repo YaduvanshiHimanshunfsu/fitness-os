@@ -18,6 +18,7 @@ export interface AthleteDashboardProps {
   currentStreak: number;
   levelName:     string;
   heatmap:       HeatmapDay[];
+  martialArtsTemplates?: any[];
 }
 
 /** Slot-machine style count-up for numeric stats */
@@ -43,6 +44,7 @@ export default function AthleteDashboard({
   currentStreak,
   levelName,
   heatmap,
+  martialArtsTemplates = [],
 }: AthleteDashboardProps) {
   const router = useRouter();
   const { startSession } = useWorkoutStore();
@@ -382,7 +384,7 @@ export default function AthleteDashboard({
           </motion.div>
 
           {/* Martial Arts Training (Conditional) */}
-          {mounted && ['tuesday', 'thursday', 'saturday', 'sunday'].includes(todayName) && (
+          {mounted && martialArtsTemplates.some(t => t.day === todayName) && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -398,20 +400,22 @@ export default function AthleteDashboard({
               </p>
               <button
                 onClick={() => {
-                  const maTemplate = MUAY_THAI_PHASE_1.find(t => t.day === todayName);
+                  const maTemplate = martialArtsTemplates.find(t => t.day === todayName);
                   if (maTemplate) {
-                    const mappedExercises = maTemplate.drills.map((d, index) => ({
-                      id: typeof d.id === 'string' ? undefined : d.id, // Handle DB vs hardcoded
-                      name: d.name,
-                      muscleGroup: 'Martial Arts',
-                      imageUrl: d.image_url || '/placeholder.png',
-                      sets: d.sets,
-                      reps: String(d.reps),
-                      exerciseOrder: index,
-                      day: todayName
-                    }));
+                    const mappedExercises = maTemplate.martial_arts_template_exercises
+                      .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
+                      .map((d: any, index: number) => ({
+                        id: d.martial_arts_exercises.id,
+                        name: d.martial_arts_exercises.name,
+                        muscleGroup: 'Martial Arts',
+                        imageUrl: d.martial_arts_exercises.image_url || '/placeholder.png',
+                        sets: d.sets,
+                        reps: String(d.reps),
+                        exerciseOrder: index,
+                        day: todayName
+                      }));
                     // Estimate minutes (naive 1 min per set)
-                    const estMins = mappedExercises.reduce((acc, ex) => acc + (ex.sets || 1), 0) + 5;
+                    const estMins = mappedExercises.reduce((acc: number, ex: any) => acc + (ex.sets || 1), 0) + 5;
                     startSession(todayName, estMins, mappedExercises as any, 'martial_arts');
                     router.push('/workout/warmup');
                   }

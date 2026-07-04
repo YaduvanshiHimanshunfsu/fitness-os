@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import AthleteDashboard from '@/components/dashboard/AthleteDashboard';
 import { getLevelFromXP } from '@/utils/level-calculator';
 import { getHeatmapData } from '@/services/analytics-service';
+import { getMartialArtsTemplates } from '@/actions/martialArts';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,11 +15,12 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Fetch Profile, Streak, and Heatmap in parallel
-  const [{ data: profile }, { data: streak }, heatmap] = await Promise.all([
+  // Fetch Profile, Streak, Heatmap, and Templates in parallel
+  const [{ data: profile }, { data: streak }, heatmap, martialArtsTemplates] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('streaks').select('current_streak, best_streak, last_workout_date').eq('user_id', user.id).single(),
     getHeatmapData(user.id, 90),
+    getMartialArtsTemplates(),
   ]);
 
   const { current: currentLevel } = getLevelFromXP(profile?.xp_total || 0);
@@ -29,6 +31,7 @@ export default async function DashboardPage() {
       currentStreak={streak?.current_streak || 0}
       levelName={currentLevel.name}
       heatmap={heatmap}
+      martialArtsTemplates={martialArtsTemplates}
     />
   );
 }

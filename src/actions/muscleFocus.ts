@@ -19,19 +19,16 @@ async function verifyAdmin() {
   return { supabase, user }
 }
 
-export async function addMartialArtsExercise(data: {
+export async function addMuscleFocusExercise(data: {
   name: string
   instruction?: string
   comment?: string
   image_url?: string
-  default_sets?: string
-  default_reps?: string
-  default_rest_time?: string
 }) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('martial_arts_exercises').insert({
+    const { error } = await (supabase as any).from('muscle_focus_exercises').insert({
       ...data,
       created_at: new Date().toISOString()
     })
@@ -40,32 +37,28 @@ export async function addMartialArtsExercise(data: {
 
     await (supabase as any).from('admin_logs').insert({
       admin_id: user.id,
-      action: 'add_martial_arts_exercise',
+      action: 'add_muscle_focus_exercise',
       details: JSON.stringify({ name: data.name })
     })
 
     revalidatePath('/admin')
-    revalidatePath('/martial-arts')
     return { success: true }
   } catch (error: any) {
-    console.error('Error adding martial arts exercise:', error)
+    console.error('Error adding muscle focus exercise:', error)
     return { success: false, error: error.message }
   }
 }
 
-export async function updateMartialArtsExercise(id: number, data: {
+export async function updateMuscleFocusExercise(id: number, data: {
   name: string
   instruction?: string
   comment?: string
   image_url?: string
-  default_sets?: string
-  default_reps?: string
-  default_rest_time?: string
 }) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('martial_arts_exercises')
+    const { error } = await (supabase as any).from('muscle_focus_exercises')
       .update(data)
       .eq('id', id)
 
@@ -73,24 +66,23 @@ export async function updateMartialArtsExercise(id: number, data: {
 
     await (supabase as any).from('admin_logs').insert({
       admin_id: user.id,
-      action: 'update_martial_arts_exercise',
+      action: 'update_muscle_focus_exercise',
       details: JSON.stringify({ id, name: data.name })
     })
 
     revalidatePath('/admin')
-    revalidatePath('/martial-arts')
     return { success: true }
   } catch (error: any) {
-    console.error('Error updating martial arts exercise:', error)
+    console.error('Error updating muscle focus exercise:', error)
     return { success: false, error: error.message }
   }
 }
 
-export async function deleteMartialArtsExercise(id: number) {
+export async function deleteMuscleFocusExercise(id: number) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('martial_arts_exercises')
+    const { error } = await (supabase as any).from('muscle_focus_exercises')
       .update({ is_deleted: true })
       .eq('id', id)
 
@@ -98,23 +90,40 @@ export async function deleteMartialArtsExercise(id: number) {
 
     await (supabase as any).from('admin_logs').insert({
       admin_id: user.id,
-      action: 'delete_martial_arts_exercise',
+      action: 'delete_muscle_focus_exercise',
       details: JSON.stringify({ id })
     })
 
     revalidatePath('/admin')
-    revalidatePath('/martial-arts')
     return { success: true }
   } catch (error: any) {
-    console.error('Error deleting martial arts exercise:', error)
+    console.error('Error deleting muscle focus exercise:', error)
     return { success: false, error: error.message }
   }
 }
-
-export async function getMartialArtsExercises() {
+export async function getMuscleFocusTemplates() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('martial_arts_exercises')
+    const { data, error } = await (supabase as any).from('muscle_focus_templates')
+      .select(`
+        id, category, title, description,
+        muscle_focus_template_exercises (
+          id, sets, reps, exercise_order,
+          muscle_focus_exercises ( id, name, instruction, image_url )
+        )
+      `)
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching muscle focus templates:', error)
+    return []
+  }
+}
+
+export async function getMuscleFocusExercises() {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await (supabase as any).from('muscle_focus_exercises')
       .select('*')
       .eq('is_deleted', false)
       .order('id', { ascending: true })
@@ -122,25 +131,7 @@ export async function getMartialArtsExercises() {
     if (error) throw error
     return data || []
   } catch (error) {
-    console.error('Error fetching martial arts exercises:', error)
-    return []
-  }
-}
-export async function getMartialArtsTemplates() {
-  try {
-    const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('martial_arts_templates')
-      .select(`
-        id, day, title, description,
-        martial_arts_template_exercises (
-          id, sets, reps, exercise_order,
-          martial_arts_exercises ( id, name, instruction, image_url )
-        )
-      `)
-    if (error) throw error
-    return data || []
-  } catch (error) {
-    console.error('Error fetching martial arts templates:', error)
+    console.error('Error fetching muscle focus exercises:', error)
     return []
   }
 }

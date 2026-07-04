@@ -92,7 +92,7 @@ export async function deleteExercise(id: number) {
     const { supabase, user } = await verifyAdmin()
 
     const { error } = await supabase.from('exercises')
-      .delete()
+      .update({ is_deleted: true })
       .eq('id', id)
 
     if (error) throw error
