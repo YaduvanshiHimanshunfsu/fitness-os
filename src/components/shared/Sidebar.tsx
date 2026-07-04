@@ -20,7 +20,11 @@ import {
   Menu,
   Bot,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  Swords,
+  Target,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { logout } from '@/actions/auth';
 import { useUIStore } from '@/hooks/useUI';
@@ -30,6 +34,17 @@ import { getLevelFromXP } from '@/utils/level-calculator';
 const NAV_ITEMS = [
   { name: 'Dashboard',    path: '/dashboard',    icon: LayoutDashboard },
   { name: 'Schedule',     path: '/schedule',     icon: Dumbbell        },
+  { name: 'Martial Arts', path: '/martial-arts', icon: Swords          },
+  { name: 'Muscle Focus', path: '/muscle-focus', icon: Target,
+    subItems: [
+      { name: 'Chest Focus', path: '/muscle-focus/chest_focus' },
+      { name: 'Arms Focus', path: '/muscle-focus/arms_focus' },
+      { name: 'Abs & Core', path: '/muscle-focus/abs_core' },
+      { name: 'Legs', path: '/muscle-focus/legs' },
+      { name: 'Knock Knee', path: '/muscle-focus/knock_knee' },
+      { name: 'Back & Shoulder', path: '/muscle-focus/back_shoulder' }
+    ]
+  },
   { name: 'AI Coach',     path: '/coach',        icon: Bot             },
   { name: 'Community',    path: '/community',    icon: Users           },
   { name: 'Analytics',    path: '/analytics',    icon: BarChart3       },
@@ -123,6 +138,70 @@ export default function Sidebar() {
         {[...NAV_ITEMS, ...(isAdmin ? [{ name: 'Command Center', path: '/admin', icon: ShieldCheck }] : [])].map((item) => {
           const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
           const Icon = item.icon;
+          
+          if (item.subItems) {
+            return (
+              <div key={item.path} className="flex flex-col space-y-1">
+                <Link
+                  href={item.path}
+                  title={isSidebarCollapsed ? item.name : undefined}
+                  className={`relative flex items-center justify-between gap-3 py-3 rounded-lg text-sm font-medium transition-all group ${
+                    isSidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                  } ${
+                    isActive 
+                      ? 'text-zinc-900 dark:text-white' 
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-white dark:bg-zinc-900/50'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="sidebar-active"
+                      className="absolute inset-0 bg-gradient-to-r from-zinc-900 to-zinc-900/40 border-l-2 border-[#FF6B35] rounded-lg"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 z-10 transition-colors ${
+                      isActive ? 'text-[#FF6B35]' : 'text-zinc-500 group-hover:text-[#FF6B35]'
+                    }`} />
+                    {!isSidebarCollapsed && (
+                      <span className="z-10 relative group-hover:translate-x-1 transition-transform duration-200 truncate">
+                        {item.name}
+                      </span>
+                    )}
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <div className="z-10 relative text-zinc-400 group-hover:text-[#FF6B35] transition-colors">
+                      {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+                  )}
+                </Link>
+                
+                {/* Dropdown Items (only show when active and sidebar not collapsed) */}
+                {isActive && !isSidebarCollapsed && (
+                  <div className="pl-11 pr-2 py-1 space-y-1">
+                    {item.subItems.map(subItem => {
+                      const isSubActive = pathname === subItem.path;
+                      return (
+                        <Link 
+                          key={subItem.path} 
+                          href={subItem.path}
+                          className={`block py-2 px-3 text-xs font-medium rounded-md transition-colors ${
+                            isSubActive 
+                              ? 'bg-zinc-200 dark:bg-zinc-800 text-[#FF6B35]' 
+                              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
+                          }`}
+                        >
+                          {subItem.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.path}

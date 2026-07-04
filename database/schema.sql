@@ -10,6 +10,10 @@
 -- SECTION 1: TABLES
 -- ==============================================================================
 
+-- ==========================================
+-- MAIN WORKOUT TABLES
+-- ==========================================
+
 -- Profiles (1-to-1 with auth.users)
 create table if not exists profiles (
   id          uuid        primary key references auth.users(id) on delete cascade,
@@ -94,6 +98,64 @@ create table if not exists user_achievements (
   achievement_id integer     not null references achievements(id) on delete cascade,
   unlocked_at    timestamptz not null default now(),
   unique (user_id, achievement_id)
+);
+
+-- ==========================================
+-- MARTIAL ARTS TRAINING TABLES
+-- ==========================================
+
+create table if not exists martial_arts_exercises (
+  id              serial      primary key,
+  name            text        not null,
+  instruction     text,
+  comment         text,
+  image_url       text,
+  created_at      timestamptz not null default now()
+);
+
+create table if not exists martial_arts_templates (
+  id          serial primary key,
+  day         text   not null unique, -- 'tuesday', 'saturday', etc.
+  title       text   not null,
+  description text
+);
+
+create table if not exists martial_arts_template_exercises (
+  id             serial  primary key,
+  template_id    integer not null references martial_arts_templates(id) on delete cascade,
+  exercise_id    integer not null references martial_arts_exercises(id) on delete cascade,
+  sets           integer not null,
+  reps           text    not null, -- e.g. '3 min', '8 each leg'
+  exercise_order integer not null
+);
+
+-- ==========================================
+-- MUSCLE FOCUS TRAINING TABLES
+-- ==========================================
+
+create table if not exists muscle_focus_exercises (
+  id              serial      primary key,
+  name            text        not null,
+  instruction     text,
+  comment         text,
+  image_url       text,
+  created_at      timestamptz not null default now()
+);
+
+create table if not exists muscle_focus_templates (
+  id          serial primary key,
+  category    text   not null unique, -- 'chest_focus', 'arms_focus', etc.
+  title       text   not null,
+  description text
+);
+
+create table if not exists muscle_focus_template_exercises (
+  id             serial  primary key,
+  template_id    integer not null references muscle_focus_templates(id) on delete cascade,
+  exercise_id    integer not null references muscle_focus_exercises(id) on delete cascade,
+  sets           integer not null,
+  reps           text    not null,
+  exercise_order integer not null
 );
 
 -- Personal records per user per exercise
