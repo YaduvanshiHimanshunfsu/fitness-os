@@ -16,7 +16,7 @@ export async function login(formData: FormData) {
   })
 
   if (!result.success) {
-    return { error: result.error.issues[0].message }
+    return { error: result.error.issues[0]?.message || 'Validation failed' }
   }
   const { email, password } = result.data
 
@@ -41,7 +41,7 @@ export async function signup(formData: FormData) {
   })
 
   if (!result.success) {
-    return { error: result.error.issues[0].message }
+    return { error: result.error.issues[0]?.message || 'Validation failed' }
   }
   const { email, password } = result.data
 
@@ -72,12 +72,12 @@ export async function signup(formData: FormData) {
 
   // Insert profile immediately if possible
   if (data.user) {
-    const name = email.split('@')[0]
-    const { error: profileError } = await supabase.from('profiles').upsert([{
+    const name = email.split('@')[0] || 'User'
+    const { error: profileError } = await supabase.from('profiles').upsert({
       id: data.user.id,
       email: email,
       name: name.charAt(0).toUpperCase() + name.slice(1)
-    }], { onConflict: 'id' })
+    } as any, { onConflict: 'id' })
     
     if (profileError) {
       // We must rollback or inform the user since profile creation failed

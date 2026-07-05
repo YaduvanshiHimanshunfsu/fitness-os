@@ -28,7 +28,7 @@ export default async function MuscleFocusPage({ params }: { params: Promise<{ ca
     const dbTemplate = templates.find((t: any) => t.category === categoryInfo.id);
     
     if (dbTemplate) {
-      drills = dbTemplate.muscle_focus_template_exercises
+      drills = (dbTemplate.muscle_focus_template_exercises as unknown as any[])
         .sort((a: any, b: any) => a.exercise_order - b.exercise_order)
         .map((d: any) => ({
           id: d.muscle_focus_exercises.id,
@@ -37,7 +37,7 @@ export default async function MuscleFocusPage({ params }: { params: Promise<{ ca
           image_url: d.muscle_focus_exercises.image_url,
           sets: d.sets,
           reps: d.reps,
-        }));
+        })) as any;
     }
   }
 

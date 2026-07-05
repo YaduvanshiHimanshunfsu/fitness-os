@@ -44,6 +44,7 @@ export async function getPersonalRecords(userId: string): Promise<PersonalRecord
     max_weight: record.max_weight,
     max_reps: record.max_reps,
     longest_hold_seconds: record.longest_hold_seconds,
+    estimated_1rm: (record.max_weight && record.max_reps) ? calculate1RM(record.max_weight, record.max_reps) : null,
     achieved_at: record.achieved_at,
     exercise_name: (record.exercises as any)?.name ?? 'Unknown',
     muscle_group: (record.exercises as any)?.muscle_group ?? 'unknown'

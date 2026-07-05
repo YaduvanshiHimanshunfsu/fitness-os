@@ -33,13 +33,13 @@ export async function getLevelInfo(userId: string) {
 
   const xp = profile?.xp_total ?? 0
   
-  let currentLevel = LEVELS[0]
-  let nextLevel = LEVELS[1]
+  let currentLevel = LEVELS[0]!
+  let nextLevel = LEVELS[1]!
 
   for (let i = 0; i < LEVELS.length; i++) {
-    if (xp >= LEVELS[i].xpRequired) {
-      currentLevel = LEVELS[i]
-      nextLevel = LEVELS[i + 1] ?? LEVELS[i] // If max level, next = current
+    if (xp >= LEVELS[i]!.xpRequired) {
+      currentLevel = LEVELS[i]!
+      nextLevel = LEVELS[i + 1] ?? LEVELS[i]! // If max level, next = current
     } else {
       break
     }
@@ -65,13 +65,13 @@ export async function checkAndUnlockAchievements(userId: string) {
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', userId)
 
-  const { data: workoutsWithSets } = await supabase.from('workouts_v5')
+  const { data: workoutsWithSets } = await (supabase.from('workouts_v5') as any)
     .select('workout_exercises_v5(workout_sets_v5(completed))')
     .eq('profile_id', userId)
 
   let totalSetsCompleted = 0
-  for (const w of workoutsWithSets ?? []) {
-    for (const we of w.workout_exercises_v5 || []) {
+  for (const w of (workoutsWithSets as any[]) ?? []) {
+    for (const we of (w.workout_exercises_v5 as any[]) || []) {
       totalSetsCompleted += (we.workout_sets_v5 || []).filter((s: any) => s.completed).length
     }
   }

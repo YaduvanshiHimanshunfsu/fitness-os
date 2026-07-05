@@ -101,9 +101,9 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
       const exerciseSetsSkipped = sets.filter(s => !s.completed).length
 
       // First set provides the details
-      const firstSet = sets[0];
+      const firstSet = sets[0]!;
       const isNumberId = typeof firstSet.exerciseId === 'number';
-      const isHardcoded = isNumberId && firstSet.exerciseId >= 1000;
+      const isHardcoded = isNumberId && (firstSet.exerciseId as number) >= 1000;
 
       const insertPayload: any = {
         workout_id:   workout.id,

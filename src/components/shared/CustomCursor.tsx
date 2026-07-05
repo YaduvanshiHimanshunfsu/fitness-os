@@ -97,10 +97,10 @@ export default function CustomCursor() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       for (let i = 0; i < particles.current.length; i++) {
-        particles.current[i].update();
-        particles.current[i].draw(ctx);
+        particles.current[i]!.update();
+        particles.current[i]!.draw(ctx);
         
-        if (particles.current[i].life <= 0) {
+        if (particles.current[i]!.life <= 0) {
           particles.current.splice(i, 1);
           i--;
         }

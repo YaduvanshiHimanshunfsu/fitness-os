@@ -90,7 +90,7 @@ export default function Sidebar() {
 
         setDisplayName(name);
         setAvatarLetter(name.charAt(0).toUpperCase());
-        setLevelLabel(`${current.name} · Lv ${current.level}`);
+        setLevelLabel(`${current?.name || 'Beginner'} · Lv ${current?.level || 1}`);
         if (profile?.avatar_url) {
           setAvatarUrl(profile.avatar_url);
         }

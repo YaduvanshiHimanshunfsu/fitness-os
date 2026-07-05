@@ -12,7 +12,7 @@ export default async function MartialArtsPage() {
   if (useDb) {
     const dbTemplates = await getMartialArtsTemplates()
     if (dbTemplates && dbTemplates.length > 0) {
-      templatesToUse = dbTemplates
+      templatesToUse = dbTemplates as any
     }
   }
 

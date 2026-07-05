@@ -45,9 +45,9 @@ function extractStatsFromWorkouts(workouts: any[]) {
   const muscleMap: Record<string, number> = {}
 
   for (const w of workouts) {
-    for (const we of w.workout_exercises_v5 || []) {
+    for (const we of (w.workout_exercises_v5 as any[]) || []) {
       const group = we.exercises?.muscle_group ?? 'unknown'
-      for (const s of we.workout_sets_v5 || []) {
+      for (const s of (we.workout_sets_v5 as any[]) || []) {
         if (s.completed) {
           totalSets++
           totalReps += s.actual_reps ?? 0
@@ -77,7 +77,7 @@ export async function getWeeklyReport(userId: string): Promise<WeeklyReport> {
   sunday.setHours(23, 59, 59, 999)
 
   // Query from v5 tables with nested joins
-  const { data: workouts } = await supabase.from('workouts_v5')
+  const { data: workouts } = await (supabase as any).from('workouts_v5')
     .select(`
       id, name, start_time, end_time,
       workout_exercises_v5(
@@ -100,7 +100,7 @@ export async function getWeeklyReport(userId: string): Promise<WeeklyReport> {
     const dayName = new Date(w.start_time)
       .toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     let setsInWorkout = 0
-    for (const we of w.workout_exercises_v5 || []) {
+    for (const we of (w.workout_exercises_v5 as any[]) || []) {
       setsInWorkout += (we.workout_sets_v5 || []).filter((s: any) => s.completed).length
     }
     setsByDay[dayName] = (setsByDay[dayName] ?? 0) + setsInWorkout
@@ -144,7 +144,7 @@ export async function getMonthlyReport(userId: string): Promise<MonthlyReport> {
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastOfMonth  = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
 
-  const { data: workouts } = await supabase.from('workouts_v5')
+  const { data: workouts } = await (supabase as any).from('workouts_v5')
     .select(`
       id, start_time,
       workout_exercises_v5(
@@ -199,7 +199,7 @@ export async function getYearlyReport(userId: string): Promise<YearlyReport> {
 
   const year = new Date().getFullYear()
 
-  const { data: workouts } = await supabase.from('workouts_v5')
+  const { data: workouts } = await (supabase as any).from('workouts_v5')
     .select(`
       id, start_time, end_time,
       workout_exercises_v5(
@@ -254,6 +254,6 @@ export async function getYearlyReport(userId: string): Promise<YearlyReport> {
     bestMonth,
     longestStreak:    streakRow?.best_streak ?? 0,
     topMuscleGroup:   topMuscleGroup.charAt(0).toUpperCase() + topMuscleGroup.slice(1),
-    levelReached:     level.name,
+    levelReached:     level?.name ?? 'Athlete',
   }
 }

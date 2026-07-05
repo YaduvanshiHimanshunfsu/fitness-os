@@ -18,6 +18,7 @@ With Version 6.0, the app has received a **massive** upgrade including a dedicat
 - **Admin Audit Logs**: Complete tracking of system changes, ensuring a secure audit trail for app settings and exercise modifications.
 - **Extreme Performance Caching**: Utilizing Next.js `unstable_cache` with custom invalidation tags to serve heavy relational data instantly.
 - **Premium Glassmorphic UI**: Completely overhauled visual language featuring deep dark modes, ambient glows, dynamic haptics, and 60fps GPU-accelerated micro-animations.
+- **Strict TypeScript Integrity & Edge Routing**: Eliminated implicit 'any' data extraction and enforced non-null assertions across high-volume analytical joins. Resolved Next.js dynamic routing edge cases around server cookies.
 
 ## 🏗️ Architecture & Tech Stack
 

@@ -42,9 +42,9 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
 
   if (parts.length === 3) {
     // Explicit YYYY-MM-DD parse to avoid timezone ambiguity
-    year = parseInt(parts[0], 10)
-    month = parseInt(parts[1], 10) - 1 // JS months are 0-indexed
-    day = parseInt(parts[2], 10)
+    year = parseInt(parts[0]!, 10)
+    month = parseInt(parts[1]!, 10) - 1 // JS months are 0-indexed
+    day = parseInt(parts[2]!, 10)
   } else {
     const parsed = new Date(dateStr)
     year = parsed.getFullYear()
@@ -79,14 +79,14 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
   if (!workouts || workouts.length === 0) return null
 
   // Process the first workout of the day (assuming 1 per day for summary simplicity)
-  const w = workouts[0]
+  const w = workouts[0] as any
   
   let totalSets = 0
   let completedSets = 0
   let totalVolumeKg = 0
 
-  for (const we of w.workout_exercises_v5 || []) {
-    for (const ws of we.workout_sets_v5 || []) {
+  for (const we of (w.workout_exercises_v5 as any[]) || []) {
+    for (const ws of (we.workout_sets_v5 as any[]) || []) {
       totalSets++
       if (ws.completed) {
         completedSets++

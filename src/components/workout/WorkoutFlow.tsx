@@ -30,8 +30,8 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
   const [completedSets, setCompletedSets] = useState<Record<number, boolean[]>>({})
   const [phase, setLocalPhase] = useState<'exercise' | 'rest' | 'rest_exercise'>(sessionPhase)
 
-  const currentExercise = exercises[currentIndex]
-  const currentCompleted = completedSets[currentExercise.id] || Array(currentExercise.sets).fill(false)
+  const currentExercise = exercises[currentIndex]!
+  const currentCompleted = currentExercise ? (completedSets[currentExercise.id] || Array(currentExercise.sets).fill(false)) : []
 
   useEffect(() => {
     setActiveExerciseIndex(currentIndex)
@@ -140,7 +140,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
     const isLastExercise = currentIndex === exercises.length - 1
     if (isLastExercise) {
       if (workoutType === 'martial_arts' || workoutType === 'muscle_focus') {
-        setPhase('complete')
+        setPhase('summary')
         router.push('/workout/summary')
       } else {
         setPhase('cooldown')

@@ -28,7 +28,7 @@ export default function ClientCooldownPage({ exercises, image }: { exercises?: a
     if (phase === 'exercise') {
       if (timeLeft <= 0) return;
       timer = setInterval(() => {
-        setTimeLeft((prev) => {
+        setTimeLeft((prev: number) => {
           if (prev <= 1) {
             handleCompleteStretch();
             return 0;

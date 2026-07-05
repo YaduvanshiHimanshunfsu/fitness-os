@@ -16,6 +16,7 @@ interface WorkoutDetails {
   completedSets: number
   volumeKg: number
   startTime?: string
+  exercises?: any[]
 }
 
 export function Calendar() {

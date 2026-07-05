@@ -29,7 +29,7 @@ export function BodyMetricsClient({ initialMetrics }: { initialMetrics: BodyMetr
   const currentBMI = React.useMemo(() => {
     if (!heightCm || metrics.length === 0) return null;
     const h = parseFloat(heightCm) / 100;
-    const w = metrics[metrics.length - 1].weight_kg;
+    const w = metrics[metrics.length - 1]!.weight_kg;
     if (h > 0 && w > 0) return (w / (h * h)).toFixed(1);
     return null;
   }, [heightCm, metrics]);

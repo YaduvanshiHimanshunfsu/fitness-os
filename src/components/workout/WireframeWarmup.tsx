@@ -39,7 +39,7 @@ export function WireframeWarmup({ exercises, image, nextRoute }: { exercises?: a
     if (timeLeft <= 0) return;
 
     const id = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev: number) => {
         if (prev <= 1) { clearInterval(id); return 0; }
         return prev - 1;
       });
@@ -85,8 +85,8 @@ export function WireframeWarmup({ exercises, image, nextRoute }: { exercises?: a
   const restPercent   = (restTimeLeft / totalRestTime) * 100;
 
   const handleAdd10Sec = () => {
-    setTimeLeft(prev => prev + 10);
-    setTotalTime(prev => prev + 10);
+    setTimeLeft((prev: number) => prev + 10);
+    setTotalTime((prev: number) => prev + 10);
   };
 
   return (
@@ -208,7 +208,7 @@ export function WireframeWarmup({ exercises, image, nextRoute }: { exercises?: a
               <div className="w-full max-w-sm flex items-center justify-between mb-4 px-2">
                 <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Next Up</span>
                 <span className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest">
-                  {currentIndex < WARMUP_EXERCISES.length - 1 ? WARMUP_EXERCISES[currentIndex + 1].name : 'Rest Transition'}
+                  {currentIndex < WARMUP_EXERCISES.length - 1 ? WARMUP_EXERCISES[currentIndex + 1]?.name : 'Finish'}
                 </span>
               </div>
 

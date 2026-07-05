@@ -29,7 +29,7 @@ export function WireframeExerciseCard({
   const { startTime, completedSets: allCompletedSets } = useWorkoutStore();
 
   const [currentReps, setCurrentReps] = useState<number[]>(() => {
-    const defaultReps = parseInt(typeof exercise.reps === 'string' ? exercise.reps.split('-')[0] : String(exercise.reps || '10')) || 10;
+    const defaultReps = parseInt(typeof exercise.reps === 'string' ? exercise.reps.split('-')[0]! : String(exercise.reps || '10')) || 10;
     const existingSets = allCompletedSets.filter(s => s.exerciseId === exercise.id);
     
     return Array(exercise.sets).fill(defaultReps).map((def, idx) => {
@@ -205,9 +205,9 @@ export function WireframeExerciseCard({
                                 setActiveTimerIdx(null);
                               } else {
                                 if (activeTimerIdx === null && timerTimeLeft === 0) {
-                                  setTimerTimeLeft(currentReps[idx]);
+                                  setTimerTimeLeft(currentReps[idx]!);
                                 } else if (activeTimerIdx !== idx) {
-                                  setTimerTimeLeft(currentReps[idx]);
+                                  setTimerTimeLeft(currentReps[idx]!);
                                 }
                                 setActiveTimerIdx(idx);
                               }
@@ -228,7 +228,7 @@ export function WireframeExerciseCard({
                             <button 
                               onClick={() => {
                                 const n = [...currentReps];
-                                n[idx] += 5;
+                                n[idx] = (n[idx] || 0) + 5;
                                 setCurrentReps(n);
                                 if (activeTimerIdx === idx || (activeTimerIdx === null && timerTimeLeft > 0)) {
                                   setTimerTimeLeft(p => p + 5);
@@ -239,7 +239,7 @@ export function WireframeExerciseCard({
                             <button 
                               onClick={() => {
                                 const n = [...currentReps];
-                                n[idx] = Math.max(0, n[idx] - 5);
+                                n[idx] = Math.max(0, (n[idx] || 0) - 5);
                                 setCurrentReps(n);
                                 if (activeTimerIdx === idx || (activeTimerIdx === null && timerTimeLeft > 0)) {
                                   setTimerTimeLeft(p => Math.max(0, p - 5));
@@ -253,7 +253,7 @@ export function WireframeExerciseCard({
                         <div className="flex-1">
                           <StepperInput 
                             label="Reps" 
-                            value={currentReps[idx]} 
+                            value={currentReps[idx]!} 
                             onChange={(val) => {
                               const n = [...currentReps];
                               n[idx] = val;
@@ -265,7 +265,7 @@ export function WireframeExerciseCard({
                       )}
                       <button
                         type="button"
-                        onClick={() => handleSetComplete(idx, currentReps[idx], 0, 'kg')}
+                        onClick={() => handleSetComplete(idx, currentReps[idx]!, 0, 'kg')}
                         className="h-[60px] mt-auto sm:w-16 flex items-center justify-center bg-[#FF4500] hover:bg-[#FF5A1F] text-white rounded-xl shadow-[0_0_15px_rgba(255,69,0,0.4)] transition-all active:scale-95"
                       >
                         ✓
@@ -275,7 +275,7 @@ export function WireframeExerciseCard({
                     <div className="flex-1 flex items-center justify-between pl-4">
                       {isCompleted ? (
                         <div className="flex items-center gap-4">
-                          <span className="text-zinc-900 dark:text-white font-bold">{currentReps[idx]} <span className="text-[10px] text-zinc-500 uppercase">{isTimed ? 'Seconds' : 'Reps'}</span></span>
+                          <span className="text-zinc-900 dark:text-white font-bold">{currentReps[idx]!} <span className="text-[10px] text-zinc-500 uppercase">{isTimed ? 'Seconds' : 'Reps'}</span></span>
                           {/* Undo Button */}
                           {onUndoSet && idx === completedSets.lastIndexOf(true) && (
                             <button

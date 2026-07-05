@@ -755,9 +755,8 @@ on conflict (name) do nothing;
 -- ==============================================================================
 -- MISSING INDEXES FOR PERFORMANCE
 -- ==============================================================================
-create index if not exists idx_workout_templates_user_id on workout_templates(user_id);
 create index if not exists idx_workout_template_exercises_template_id on workout_template_exercises(template_id);
-create index if not exists idx_workouts_v5_user_id on workouts_v5(user_id);
+create index if not exists idx_workouts_v5_profile_id on workouts_v5(profile_id);
 create index if not exists idx_workout_exercises_v5_workout_id on workout_exercises_v5(workout_id);
 create index if not exists idx_workout_sets_v5_workout_exercise_id on workout_sets_v5(workout_exercise_id);
 create index if not exists idx_user_achievements_user_id on user_achievements(user_id);
@@ -765,7 +764,7 @@ create index if not exists idx_user_achievements_user_id on user_achievements(us
 -- SCHEMA RESTRAINTS & ROLE AUDITING
 -- ==============================================================================
 -- Enforce allowed achievement condition types
-ALTER TABLE achievements ADD CONSTRAINT chk_achievements_condition_type CHECK (condition_type IN ('total_workouts', 'total_sets', 'streak', 'level', 'specific_exercise'));
+ALTER TABLE achievements ADD CONSTRAINT chk_achievements_condition_type CHECK (condition_type IN ('total_workouts', 'total_sets', 'streak', 'level', 'specific_exercise', 'perfect_week'));
 
 -- Log role changes in profiles
 CREATE OR REPLACE FUNCTION audit_role_change() RETURNS TRIGGER AS $$

@@ -29,7 +29,7 @@ export function CommandPalette() {
     const fetchExercises = async () => {
       const supabase = createClient();
       const { data } = await supabase.from('exercises').select('*');
-      if (data) setExercises(data);
+      if (data) setExercises(data as any[]);
     };
     fetchExercises();
   }, []);
@@ -144,7 +144,7 @@ export function CommandPalette() {
                             <span>{exercise.name}</span>
                           </div>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 capitalize">
-                            {exercise.muscle_group}
+                            {(exercise as any).muscle_group}
                           </span>
                         </Command.Item>
                       ))}

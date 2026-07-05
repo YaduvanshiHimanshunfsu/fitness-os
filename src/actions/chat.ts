@@ -25,7 +25,7 @@ export async function sendChatMessage(history: { role: string; content: string }
         .limit(3)
         
       if (recentWorkouts && recentWorkouts.length > 0) {
-        contextStr = `Here is the user's recent workout history:\n` + recentWorkouts.map(w => {
+        contextStr = `Here is the user's recent workout history:\n` + (recentWorkouts as any[]).map(w => {
           let wStr = `- ${w.name} on ${new Date(w.start_time).toLocaleDateString()}: Skipped ${w.exercises_skipped} exercises and ${w.sets_skipped} sets. `
           const exList = (w.workout_exercises_v5 || []).map((we: any) => {
             const exName = we.exercises?.name || 'Unknown Exercise'

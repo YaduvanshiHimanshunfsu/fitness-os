@@ -68,6 +68,6 @@ export async function saveGlobalSettings(rawSettings: z.infer<typeof SettingsSch
   })
 
   revalidatePath('/admin')
-    revalidateTag('settings')
+    revalidateTag('settings', 'default')
   return { success: true }
 }

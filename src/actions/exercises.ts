@@ -45,8 +45,7 @@ export async function addExercise(data: {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
-    revalidateTag('exercises')
-    revalidateTag('exercises')
+    revalidateTag('exercises', 'default')
     return { success: true }
   } catch (error: any) {
     console.error('Error adding exercise:', error)
@@ -79,7 +78,7 @@ export async function updateExercise(id: number, data: {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
-    revalidateTag('exercises')
+    revalidateTag('exercises', 'default')
     return { success: true }
   } catch (error: any) {
     console.error('Error updating exercise:', error)
@@ -105,7 +104,7 @@ export async function deleteExercise(id: number) {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
-    revalidateTag('exercises')
+    revalidateTag('exercises', 'default')
     return { success: true }
   } catch (error: any) {
     console.error('Error deleting exercise:', error)

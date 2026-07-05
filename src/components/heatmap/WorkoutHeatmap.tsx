@@ -24,7 +24,7 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
     const d = new Date(firstDate)
     d.setDate(d.getDate() - (startDay - i))
     currentWeek.push({
-      date: d.toISOString().split('T')[0],
+      date: d.toISOString().split('T')[0]!,
       completed: false,
       isRestDay: false,
       sets: 0
@@ -42,10 +42,10 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
   // Handle last week
   if (currentWeek.length > 0) {
     while (currentWeek.length < 7) {
-      const lastDay = new Date(currentWeek[currentWeek.length - 1].date)
+      const lastDay = new Date(currentWeek[currentWeek.length - 1]!.date)
       lastDay.setDate(lastDay.getDate() + 1)
       currentWeek.push({
-        date: lastDay.toISOString().split('T')[0],
+        date: lastDay.toISOString().split('T')[0]!,
         completed: false,
         isRestDay: false,
         sets: 0
@@ -54,7 +54,7 @@ export function WorkoutHeatmap({ data }: { data: HeatmapDay[] }) {
     weeks.push(currentWeek)
   }
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = new Date().toISOString().split('T')[0]!
 
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 overflow-hidden">

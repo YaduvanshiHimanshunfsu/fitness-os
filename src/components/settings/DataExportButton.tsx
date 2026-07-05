@@ -24,7 +24,7 @@ export function DataExportButton() {
             sets:workout_sets_v5(*)
           )
         `)
-        .eq('user_id', user.id);
+        .eq('profile_id', user.id);
 
       // Create JSON blob
       const exportData = {

@@ -105,7 +105,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           estimatedMinutes,
           todayExercises:   exercises,
           isSessionActive:  true,
-          currentPhase:     isSpecial ? 'exercise' : 'posture',
+          currentPhase:     isSpecial ? 'session' : 'posture',
           restTimerEnd:     null,
           isPaused:         false,
           pausedTimeRemaining: null,
@@ -125,7 +125,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
       undoLastSet: () => {
         const state = get()
         if (state.completedSets.length === 0) return null
-        const lastSet = state.completedSets[state.completedSets.length - 1]
+        const lastSet = state.completedSets[state.completedSets.length - 1] || null
         set({ completedSets: state.completedSets.slice(0, -1) })
         return lastSet
       },

@@ -31,7 +31,7 @@ export default async function DashboardPage() {
 
   let templatesToUse = MUAY_THAI_PHASE_1;
   if (useDb && martialArtsTemplates && martialArtsTemplates.length > 0) {
-    templatesToUse = martialArtsTemplates;
+    templatesToUse = martialArtsTemplates as any;
   }
 
   const { current: currentLevel } = getLevelFromXP(profile?.xp_total || 0);
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
     <AthleteDashboard 
       userName={profile?.name || 'Athlete'}
       currentStreak={streak?.current_streak || 0}
-      levelName={currentLevel.name}
+      levelName={currentLevel?.name || 'White Belt'}
       heatmap={heatmap}
       martialArtsTemplates={templatesToUse}
     />

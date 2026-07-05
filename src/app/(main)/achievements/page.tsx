@@ -28,8 +28,8 @@ export default async function AchievementsPage() {
 
       <LevelProgress 
         xp={levelInfo.xp}
-        currentLevel={levelInfo.currentLevel}
-        nextLevel={levelInfo.nextLevel}
+        currentLevel={levelInfo.currentLevel!}
+        nextLevel={levelInfo.nextLevel!}
         progressPercent={levelInfo.progressPercent}
         xpNeeded={levelInfo.xpNeeded}
       />

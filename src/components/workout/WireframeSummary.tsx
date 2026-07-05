@@ -667,11 +667,11 @@ export function WireframeSummary({
                   });
                 } catch (err) {
                   navigator.clipboard.writeText(url);
-                  addNotification({ type: 'success', title: 'Link copied to clipboard!' });
+                  addNotification({ type: 'success', title: 'Link copied to clipboard!', message: '' });
                 }
               } else {
                 navigator.clipboard.writeText(url);
-                addNotification({ type: 'success', title: 'Link copied to clipboard!' });
+                addNotification({ type: 'success', title: 'Link copied to clipboard!', message: '' });
               }
             }}
             whileHover={{ scale: 1.02 }}
