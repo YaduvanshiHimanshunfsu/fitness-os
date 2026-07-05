@@ -2,14 +2,23 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { z } from 'zod'
+
+const AuthSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(6, 'Password must be at least 6 characters')
+})
 
 export async function login(formData: FormData) {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  const result = AuthSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password')
+  })
 
-  if (!email || !password) {
-    return { error: 'Email and password are required' }
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
   }
+  const { email, password } = result.data
 
   const supabase = await createClient()
 
@@ -26,12 +35,15 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  const result = AuthSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password')
+  })
 
-  if (!email || !password) {
-    return { error: 'Email and password are required' }
+  if (!result.success) {
+    return { error: result.error.issues[0].message }
   }
+  const { email, password } = result.data
 
   const supabase = await createClient()
 
@@ -61,11 +73,11 @@ export async function signup(formData: FormData) {
   // Insert profile immediately if possible
   if (data.user) {
     const name = email.split('@')[0]
-    const { error: profileError } = await supabase.from('profiles').upsert({
+    const { error: profileError } = await supabase.from('profiles').upsert([{
       id: data.user.id,
       email: email,
       name: name.charAt(0).toUpperCase() + name.slice(1)
-    }, { onConflict: 'id' })
+    }], { onConflict: 'id' })
     
     if (profileError) {
       // We must rollback or inform the user since profile creation failed

@@ -28,14 +28,14 @@ export async function addMuscleFocusExercise(data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('muscle_focus_exercises').insert({
+    const { error } = await supabase.from('muscle_focus_exercises').insert({
       ...data,
       created_at: new Date().toISOString()
     })
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'add_muscle_focus_exercise',
       details: JSON.stringify({ name: data.name })
@@ -58,13 +58,13 @@ export async function updateMuscleFocusExercise(id: number, data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('muscle_focus_exercises')
+    const { error } = await supabase.from('muscle_focus_exercises')
       .update(data)
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'update_muscle_focus_exercise',
       details: JSON.stringify({ id, name: data.name })
@@ -82,13 +82,13 @@ export async function deleteMuscleFocusExercise(id: number) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('muscle_focus_exercises')
+    const { error } = await supabase.from('muscle_focus_exercises')
       .update({ is_deleted: true })
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'delete_muscle_focus_exercise',
       details: JSON.stringify({ id })
@@ -104,7 +104,7 @@ export async function deleteMuscleFocusExercise(id: number) {
 export async function getMuscleFocusTemplates() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('muscle_focus_templates')
+    const { data, error } = await supabase.from('muscle_focus_templates')
       .select(`
         id, category, title, description,
         muscle_focus_template_exercises (
@@ -123,7 +123,7 @@ export async function getMuscleFocusTemplates() {
 export async function getMuscleFocusExercises() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('muscle_focus_exercises')
+    const { data, error } = await supabase.from('muscle_focus_exercises')
       .select('*')
       .eq('is_deleted', false)
       .order('id', { ascending: true })

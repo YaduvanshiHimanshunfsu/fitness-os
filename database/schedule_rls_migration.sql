@@ -17,7 +17,7 @@ create policy "templates_admin_all" on workout_templates for all using (
   exists (
     select 1 from profiles
     where profiles.id = auth.uid()
-    and (profiles.role = 'admin' or profiles.email = 'himanshu.btmtcs4242906@nfsu.ac.in')
+    and profiles.role = 'admin'
   )
 );
 
@@ -25,6 +25,6 @@ create policy "template_exercises_admin_all" on workout_template_exercises for a
   exists (
     select 1 from profiles
     where profiles.id = auth.uid()
-    and (profiles.role = 'admin' or profiles.email = 'himanshu.btmtcs4242906@nfsu.ac.in')
+    and profiles.role = 'admin'
   )
 );

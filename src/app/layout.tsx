@@ -3,6 +3,7 @@ import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CustomCursor from "@/components/shared/CustomCursor";
 import MagicCursor from "@/components/shared/MagicCursor";
+import { Analytics } from "@vercel/analytics/react"
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
           <CustomCursor />
           <MagicCursor />
           {children}
+          <Analytics />
         </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{

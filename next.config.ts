@@ -31,14 +31,11 @@ const securityHeaders = [
   },
   {
     key: 'Content-Security-Policy',
-    value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *.googleusercontent.com *.githubusercontent.com *.supabase.co; connect-src 'self' *.supabase.co wss://*.supabase.co https://*.supabase.co https://generativelanguage.googleapis.com;"
+    value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: *.googleusercontent.com *.githubusercontent.com *.supabase.co; connect-src 'self' *.supabase.co wss://*.supabase.co https://*.supabase.co https://generativelanguage.googleapis.com;"
   }
 ];
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   async headers() {
     return [
       {

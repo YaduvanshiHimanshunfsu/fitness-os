@@ -18,35 +18,12 @@ const MODELS_IN_ORDER = [
 
 export class AIService {
   private static async getGeminiKey(): Promise<string | null> {
-    // 1. Check environment variable first (fastest, no DB call)
+    // 1. Check environment variable first (secure, no DB call)
     if (process.env.GEMINI_API_KEY) {
       return process.env.GEMINI_API_KEY
     }
-
-    // 2. Fallback: check app_settings table in Supabase
-    try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      const { data } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'gemini_api_key')
-        .single()
-      
-      if (data?.value) {
-        // Handle both raw string and JSON-stringified values
-        try {
-          return JSON.parse(data.value as string) as string
-        } catch {
-          return data.value as string
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to fetch Gemini key from app_settings:', e)
-    }
-
+    
+    console.warn('GEMINI_API_KEY environment variable is not set.')
     return null
   }
 

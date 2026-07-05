@@ -5,14 +5,26 @@ import { calculateNewStreak } from '@/utils/streak-calculator'
 import { ACHIEVEMENTS } from '@/constants/achievements'
 
 import { checkAndUpdateRecords } from '@/services/record-service'
+import { z } from 'zod'
 
-export async function saveWorkoutSession(payload: {
-  day:             string
-  startTime:       Date
-  endTime:         Date
-  workoutType?:    'daily' | 'martial_arts' | 'muscle_focus'
-  completedSets:   { exerciseId?: number | string; exerciseName: string; setNumber: number; actualReps: number; completed: boolean; weight_kg?: number; unit?: string }[]
-}) {
+const WorkoutPayloadSchema = z.object({
+  day: z.string(),
+  startTime: z.date(),
+  endTime: z.date(),
+  workoutType: z.enum(['daily', 'martial_arts', 'muscle_focus']).optional(),
+  completedSets: z.array(z.object({
+    exerciseId: z.union([z.number(), z.string()]).optional(),
+    exerciseName: z.string(),
+    setNumber: z.number(),
+    actualReps: z.number(),
+    completed: z.boolean(),
+    weight_kg: z.number().optional(),
+    unit: z.string().optional()
+  }))
+})
+
+export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPayloadSchema>) {
+  const payload = WorkoutPayloadSchema.parse(rawPayload)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
@@ -146,7 +158,9 @@ export async function saveWorkoutSession(payload: {
   const lastWorkoutDate = streakRow?.last_workout_date ? new Date(streakRow.last_workout_date) : null
   const currentStreak = streakRow?.current_streak ?? 0
   const bestStreak = streakRow?.best_streak ?? 0
-  const newStreak = calculateNewStreak(lastWorkoutDate, currentStreak)
+  
+  // Use payload.startTime for the local date instead of server UTC new Date()
+  const newStreak = calculateNewStreak(lastWorkoutDate, currentStreak, payload.startTime)
   const newBestStreak = Math.max(bestStreak, newStreak)
 
   const { error: streakError } = await supabase.from('streaks')
@@ -163,7 +177,7 @@ export async function saveWorkoutSession(payload: {
   }
 
   // 5. XP update
-  const { error: xpError } = await (supabase as any).rpc('increment_xp', { amount: xpEarned })
+  const { error: xpError } = await supabase.rpc('increment_xp', { amount: xpEarned })
   if (xpError) {
     throw new Error(xpError.message || 'Failed to update XP')
   }

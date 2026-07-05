@@ -2,8 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { z } from 'zod'
 
-export async function saveGlobalSettings(settings: { geminiApiKey?: string, userRegistrationLimit?: number, useDbMartialArts?: boolean, useDbMuscleFocus?: boolean }) {
+const SettingsSchema = z.object({
+  geminiApiKey: z.string().optional(),
+  userRegistrationLimit: z.number().int().nonnegative().optional(),
+  useDbMartialArts: z.boolean().optional(),
+  useDbMuscleFocus: z.boolean().optional(),
+})
+
+export async function saveGlobalSettings(rawSettings: z.infer<typeof SettingsSchema>) {
+  const settings = SettingsSchema.parse(rawSettings)
   const supabase = await createClient()
   
   // Verify user is admin
@@ -15,18 +24,11 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'admin' && profile?.email !== 'himanshu.btmtcs4242906@nfsu.ac.in') {
+  if (profile?.role !== 'admin') {
     throw new Error('Forbidden')
   }
 
-  // Update Gemini API Key
-  if (settings.geminiApiKey !== undefined) {
-    const { error } = await supabase.from('app_settings').upsert({
-      key: 'gemini_api_key',
-      value: JSON.stringify(settings.geminiApiKey)
-    }, { onConflict: 'key' })
-    if (error) throw error
-  }
+  // We no longer save Gemini API Key to the database. Use Vercel Environment Variables.
 
   // Update Registration Limit
   if (settings.userRegistrationLimit !== undefined) {
@@ -54,11 +56,15 @@ export async function saveGlobalSettings(settings: { geminiApiKey?: string, user
     if (error) throw error
   }
 
+  // Sanitize settings before logging
+  const safeSettings = { ...settings }
+  delete safeSettings.geminiApiKey
+
   // Log action
   await supabase.from('admin_logs').insert({
     admin_id: user.id,
     action: 'updated_settings',
-    details: JSON.stringify(settings)
+    details: JSON.stringify(safeSettings)
   })
 
   revalidatePath('/admin')

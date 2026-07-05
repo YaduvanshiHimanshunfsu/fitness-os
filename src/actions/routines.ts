@@ -31,13 +31,13 @@ export async function addRoutineExercise(data: {
     const { supabase, user } = await verifyAdmin()
 
     // 1. Get or create the routine for this category
-    let { data: routine } = await (supabase as any).from('auxiliary_routines')
+    let { data: routine } = await supabase.from('auxiliary_routines')
       .select('id')
       .eq('category', data.routine_category)
       .single()
 
     if (!routine) {
-      const { data: newRoutine, error: createError } = await (supabase as any).from('auxiliary_routines')
+      const { data: newRoutine, error: createError } = await supabase.from('auxiliary_routines')
         .insert({ category: data.routine_category })
         .select('id')
         .single()
@@ -47,7 +47,7 @@ export async function addRoutineExercise(data: {
     }
 
     // 2. Insert the exercise
-    const { error } = await (supabase as any).from('auxiliary_routine_exercises').insert({
+    const { error } = await supabase.from('auxiliary_routine_exercises').insert({
       routine_id: routine.id,
       name: data.name,
       duration_seconds: data.duration_seconds,
@@ -59,7 +59,7 @@ export async function addRoutineExercise(data: {
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'add_routine_exercise',
       details: JSON.stringify({ category: data.routine_category, name: data.name })
@@ -84,13 +84,13 @@ export async function updateRoutineExercise(id: number, data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('auxiliary_routine_exercises')
+    const { error } = await supabase.from('auxiliary_routine_exercises')
       .update(data)
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'update_routine_exercise',
       details: JSON.stringify({ id, name: data.name })
@@ -108,13 +108,13 @@ export async function deleteRoutineExercise(id: number) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('auxiliary_routine_exercises')
+    const { error } = await supabase.from('auxiliary_routine_exercises')
       .update({ is_deleted: true })
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'delete_routine_exercise',
       details: JSON.stringify({ id })
@@ -133,14 +133,14 @@ export async function getRoutineExercises(category: string) {
     const supabase = await createClient()
     
     // Get the routine
-    const { data: routine, error: routineError } = await (supabase as any).from('auxiliary_routines')
+    const { data: routine, error: routineError } = await supabase.from('auxiliary_routines')
       .select('id, image_url')
       .eq('category', category)
       .single()
 
     if (routineError || !routine) return null
 
-    const { data, error } = await (supabase as any).from('auxiliary_routine_exercises')
+    const { data, error } = await supabase.from('auxiliary_routine_exercises')
       .select('*')
       .eq('routine_id', routine.id)
       .eq('is_deleted', false)
@@ -157,7 +157,7 @@ export async function getRoutineExercises(category: string) {
 export async function getAllAuxiliaryRoutines() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('auxiliary_routines')
+    const { data, error } = await supabase.from('auxiliary_routines')
       .select(`
         id, category, image_url,
         auxiliary_routine_exercises (

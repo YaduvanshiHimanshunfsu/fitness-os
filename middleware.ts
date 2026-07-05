@@ -23,11 +23,16 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (
-    !user && 
-    !request.nextUrl.pathname.startsWith('/login') && 
-    !request.nextUrl.pathname.startsWith('/auth/callback')
-  ) {
+  // Define public routes that don't require authentication
+  const isPublicRoute = 
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname.startsWith('/login') || 
+    request.nextUrl.pathname.startsWith('/signup') || 
+    request.nextUrl.pathname.startsWith('/auth/callback') ||
+    request.nextUrl.pathname.startsWith('/public') ||
+    request.nextUrl.pathname.startsWith('/api/');
+
+  if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

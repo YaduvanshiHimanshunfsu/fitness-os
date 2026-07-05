@@ -15,7 +15,7 @@ export async function triggerAchievementCheck() {
 export async function getAchievements() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('achievements')
+    const { data, error } = await supabase.from('achievements')
       .select('*')
       .order('id', { ascending: true })
 
@@ -30,7 +30,7 @@ export async function getAchievements() {
 export async function getUserAchievements(userId: string) {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('user_achievements')
+    const { data, error } = await supabase.from('user_achievements')
       .select('achievement_id, unlocked_at')
       .eq('user_id', userId)
 

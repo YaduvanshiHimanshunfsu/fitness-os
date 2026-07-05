@@ -31,14 +31,14 @@ export async function addMartialArtsExercise(data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('martial_arts_exercises').insert({
+    const { error } = await supabase.from('martial_arts_exercises').insert({
       ...data,
       created_at: new Date().toISOString()
     })
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'add_martial_arts_exercise',
       details: JSON.stringify({ name: data.name })
@@ -65,13 +65,13 @@ export async function updateMartialArtsExercise(id: number, data: {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('martial_arts_exercises')
+    const { error } = await supabase.from('martial_arts_exercises')
       .update(data)
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'update_martial_arts_exercise',
       details: JSON.stringify({ id, name: data.name })
@@ -90,13 +90,13 @@ export async function deleteMartialArtsExercise(id: number) {
   try {
     const { supabase, user } = await verifyAdmin()
 
-    const { error } = await (supabase as any).from('martial_arts_exercises')
+    const { error } = await supabase.from('martial_arts_exercises')
       .update({ is_deleted: true })
       .eq('id', id)
 
     if (error) throw error
 
-    await (supabase as any).from('admin_logs').insert({
+    await supabase.from('admin_logs').insert({
       admin_id: user.id,
       action: 'delete_martial_arts_exercise',
       details: JSON.stringify({ id })
@@ -114,7 +114,7 @@ export async function deleteMartialArtsExercise(id: number) {
 export async function getMartialArtsExercises() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('martial_arts_exercises')
+    const { data, error } = await supabase.from('martial_arts_exercises')
       .select('*')
       .eq('is_deleted', false)
       .order('id', { ascending: true })
@@ -129,7 +129,7 @@ export async function getMartialArtsExercises() {
 export async function getMartialArtsTemplates() {
   try {
     const supabase = await createClient()
-    const { data, error } = await (supabase as any).from('martial_arts_templates')
+    const { data, error } = await supabase.from('martial_arts_templates')
       .select(`
         id, day, title, description,
         martial_arts_template_exercises (

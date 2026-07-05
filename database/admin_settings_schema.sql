@@ -1,8 +1,9 @@
 -- Create the app_settings table
 create table if not exists app_settings (
-  key text primary key,
-  value jsonb not null,
-  updated_at timestamptz not null default now()
+  id          serial      primary key,
+  key         text        not null unique,
+  value       jsonb       not null,
+  updated_at  timestamptz not null default now()
 );
 
 -- Enable RLS for app_settings
@@ -18,17 +19,17 @@ create policy "Admins can insert/update app_settings"
     exists (
       select 1 from profiles
       where profiles.id = auth.uid()
-      and (profiles.role = 'admin' or profiles.email = 'himanshu.btmtcs4242906@nfsu.ac.in')
+      and profiles.role = 'admin'
     )
   );
 
 -- Create the admin_logs table
 create table if not exists admin_logs (
-  id uuid primary key default gen_random_uuid(),
-  admin_id uuid not null references auth.users(id) on delete cascade,
-  action text not null,
-  details jsonb,
-  created_at timestamptz not null default now()
+  id          serial      primary key,
+  admin_id    uuid        not null references profiles(id) on delete cascade,
+  action      text        not null,
+  details     jsonb,
+  created_at  timestamptz not null default now()
 );
 
 -- Enable RLS for admin_logs
@@ -40,6 +41,6 @@ create policy "Admins can manage admin_logs"
     exists (
       select 1 from profiles
       where profiles.id = auth.uid()
-      and (profiles.role = 'admin' or profiles.email = 'himanshu.btmtcs4242906@nfsu.ac.in')
+      and profiles.role = 'admin'
     )
   );

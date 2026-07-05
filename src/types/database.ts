@@ -128,6 +128,8 @@ export interface Database {
           exercise_id: number
           order_index: number
         }
+        Insert: any
+        Update: any
       }
       workout_sets_v5: {
         Row: {
@@ -137,7 +139,23 @@ export interface Database {
           reps: number
           completed: boolean
         }
+        Insert: any
+        Update: any
       }
+      achievements: { Row: any; Insert: any; Update: any }
+      user_achievements: { Row: any; Insert: any; Update: any }
+      martial_arts_exercises: { Row: any; Insert: any; Update: any }
+      martial_arts_templates: { Row: any; Insert: any; Update: any }
+      martial_arts_template_exercises: { Row: any; Insert: any; Update: any }
+      muscle_focus_exercises: { Row: any; Insert: any; Update: any }
+      muscle_focus_templates: { Row: any; Insert: any; Update: any }
+      muscle_focus_template_exercises: { Row: any; Insert: any; Update: any }
+      auxiliary_routines: { Row: any; Insert: any; Update: any }
+      auxiliary_routine_exercises: { Row: any; Insert: any; Update: any }
+      personal_records: { Row: any; Insert: any; Update: any }
+      streaks: { Row: any; Insert: any; Update: any }
+      body_metrics: { Row: any; Insert: any; Update: any }
+      secrets: { Row: any; Insert: any; Update: any }
     }
     Views: {
       [_ in never]: never

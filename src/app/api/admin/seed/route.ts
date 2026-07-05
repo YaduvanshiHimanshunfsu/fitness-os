@@ -13,12 +13,18 @@ const DAYS_OF_WEEK = [
 ];
 
 export async function POST() {
-  return GET();
-}
-
-export async function GET() {
-  // Use authenticated client so RLS allows admin insertions
   const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Check admin role
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profile || profile.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden: Admins only' }, { status: 403 });
+  }
 
   try {
     // Force re-seed (upsert) to fix half-seeded states where templates exist but exercises don't.
