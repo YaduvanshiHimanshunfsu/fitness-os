@@ -16,6 +16,7 @@ create table if not exists secrets (
 alter table secrets enable row level security;
 
 -- ONLY Admins can insert/update/select secrets
+drop policy if exists "Admins can manage secrets" on secrets;
 create policy "Admins can manage secrets"
   on secrets for all using (
     exists (

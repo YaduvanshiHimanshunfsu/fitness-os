@@ -10,10 +10,12 @@ create table if not exists app_settings (
 alter table app_settings enable row level security;
 
 -- Public read access to settings
+drop policy if exists "Public can read app_settings" on app_settings;
 create policy "Public can read app_settings"
   on app_settings for select using (true);
 
 -- Admin write access to settings
+drop policy if exists "Admins can insert/update app_settings" on app_settings;
 create policy "Admins can insert/update app_settings"
   on app_settings for all using (
     exists (
@@ -36,6 +38,7 @@ create table if not exists admin_logs (
 alter table admin_logs enable row level security;
 
 -- Admin read/write access to logs
+drop policy if exists "Admins can manage admin_logs" on admin_logs;
 create policy "Admins can manage admin_logs"
   on admin_logs for all using (
     exists (
