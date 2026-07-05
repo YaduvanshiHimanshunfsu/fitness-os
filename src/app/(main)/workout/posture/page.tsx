@@ -2,6 +2,7 @@ import { POSTURE_EXERCISES, POSTURE_IMAGE } from '@/constants/posture-routine';
 import { WireframeRoutine } from '@/components/workout/WireframeRoutine';
 import { getRoutineExercises } from '@/actions/routines';
 
+export const dynamic = 'force-dynamic';
 export default async function PosturePage() {
   const dbRoutine = await getRoutineExercises('posture');
 

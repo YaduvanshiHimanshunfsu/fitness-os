@@ -101,7 +101,7 @@ export async function getWorkoutDetailsForDate(dateStr: string) {
     const sets = we.workout_sets_v5 || []
     
     // Resolve name from the priority: denormalized > daily > martial > muscle
-    let resolvedName = we.exercise_name 
+    const resolvedName = we.exercise_name 
       || we.exercises?.name 
       || we.martial_arts_exercises?.name 
       || we.muscle_focus_exercises?.name 

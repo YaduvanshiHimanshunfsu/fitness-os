@@ -162,7 +162,7 @@ export default function SummaryPage() {
   useEffect(() => {
     if (!mounted) return;         // no-op on the first (pre-hydration) pass
     finishSession(completionPercent);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [mounted]);                  // intentionally only depends on mounted
 
   // ─────────────────────────────────────────────────────────────────────────

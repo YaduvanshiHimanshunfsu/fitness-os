@@ -1,6 +1,7 @@
 import { WireframeWarmup } from '@/components/workout/WireframeWarmup';
 import { getRoutineExercises } from '@/actions/routines';
 
+export const dynamic = 'force-dynamic';
 export default async function WarmupPage() {
   const dbRoutine = await getRoutineExercises('warmup');
 

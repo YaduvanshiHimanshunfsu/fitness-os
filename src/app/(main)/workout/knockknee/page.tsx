@@ -2,6 +2,7 @@ import { KNOCKKNEE_EXERCISES, KNOCKKNEE_IMAGE } from '@/constants/knockknee-rout
 import { WireframeRoutine } from '@/components/workout/WireframeRoutine';
 import { getRoutineExercises } from '@/actions/routines';
 
+export const dynamic = 'force-dynamic';
 export default async function KnockKneePage() {
   const dbRoutine = await getRoutineExercises('knockknee');
 
