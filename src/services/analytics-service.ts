@@ -63,8 +63,7 @@ export async function getHeatmapData(userId: string, days = 365): Promise<Heatma
   const dateSetsMap: Record<string, number> = {}
   
   for (const s of sessions ?? []) {
-    const d = new Date(s.start_time)
-    const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]!
+    const localDate = s.start_time.split('T')[0]!
     
     let setCount = 0
     for (const we of (s.workout_exercises_v5 as any[]) || []) {
@@ -158,8 +157,7 @@ export async function getMonthlyChartData(userId: string): Promise<MonthlyChartD
   // Group by date
   const map: Record<string, { sets: number; workouts: number }> = {}
   for (const s of sessions ?? []) {
-    const d = new Date(s.start_time)
-    const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]!
+    const localDate = s.start_time.split('T')[0]!
     
     if (!map[localDate]) map[localDate] = { sets: 0, workouts: 0 }
     

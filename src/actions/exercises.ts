@@ -3,21 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
-async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: profile } = await supabase.from('profiles')
-    .select('role, email')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin' && profile?.email !== 'himanshu.btmtcs4242906@nfsu.ac.in') {
-    throw new Error('Forbidden: Admin access required')
-  }
-  return { supabase, user }
-}
+import { verifyAdmin } from '@/lib/admin'
 
 export async function addExercise(data: {
   name: string
@@ -45,7 +31,7 @@ export async function addExercise(data: {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
-    revalidateTag('exercises', 'default')
+    revalidateTag('exercises', 'max')
     return { success: true }
   } catch (error: any) {
     console.error('Error adding exercise:', error)
@@ -78,7 +64,7 @@ export async function updateExercise(id: number, data: {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
-    revalidateTag('exercises', 'default')
+    revalidateTag('exercises', 'max')
     return { success: true }
   } catch (error: any) {
     console.error('Error updating exercise:', error)
@@ -104,7 +90,7 @@ export async function deleteExercise(id: number) {
 
     revalidatePath('/admin')
     revalidatePath('/dashboard')
-    revalidateTag('exercises', 'default')
+    revalidateTag('exercises', 'max')
     return { success: true }
   } catch (error: any) {
     console.error('Error deleting exercise:', error)

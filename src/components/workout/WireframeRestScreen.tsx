@@ -19,10 +19,10 @@ export function WireframeRestScreen({
   const { isPaused, pauseRestTimer, resumeRestTimer, addRestTime } = useWorkoutStore();
 
   // Determine if it's set rest (15s) or exercise rest (30s)
-  const totalRest = timeLeft > 15 ? 30 : 15;
-  const percent = isPaused
-    ? (timeLeft / totalRest) * 100
-    : (timeLeft / totalRest) * 100;
+  const [baseTotal] = React.useState(timeLeft > 15 ? 30 : 15);
+  const totalRest = Math.max(baseTotal, timeLeft);
+  
+  const percent = (timeLeft / totalRest) * 100;
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center items-center py-6">

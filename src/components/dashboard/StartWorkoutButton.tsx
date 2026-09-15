@@ -12,7 +12,7 @@ export function StartWorkoutButton() {
       <div className="absolute inset-0 rounded-xl border border-zinc-500 pointer-events-none animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
       
       <button
-        onClick={() => router.push(rest ? '/dashboard' : '/workout/posture')}
+        onClick={() => router.push(rest ? '/dashboard' : '/workout/warmup')}
         className={`w-full py-5 rounded-xl border font-bold tracking-widest uppercase text-sm transition-all duration-300 active:scale-95
           ${rest 
             ? 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 cursor-not-allowed' 

@@ -105,7 +105,15 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
       const isNumberId = typeof firstSet.exerciseId === 'number';
       const isHardcoded = isNumberId && (firstSet.exerciseId as number) >= 1000;
 
-      const insertPayload: any = {
+      const insertPayload: {
+        workout_id: string;
+        order_index: number;
+        sets_skipped: number;
+        exercise_name: string;
+        martial_arts_exercise_id?: number;
+        muscle_focus_exercise_id?: number;
+        exercise_id?: number;
+      } = {
         workout_id:   workout.id,
         order_index:  orderIndex++,
         sets_skipped: exerciseSetsSkipped,
@@ -115,11 +123,11 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
       // Only map foreign keys for real DB exercises (id < 1000) to prevent foreign key errors!
       if (isNumberId && !isHardcoded) {
         if (payload.workoutType === 'martial_arts') {
-          insertPayload.martial_arts_exercise_id = firstSet.exerciseId;
+          insertPayload.martial_arts_exercise_id = firstSet.exerciseId as number;
         } else if (payload.workoutType === 'muscle_focus') {
-          insertPayload.muscle_focus_exercise_id = firstSet.exerciseId;
+          insertPayload.muscle_focus_exercise_id = firstSet.exerciseId as number;
         } else {
-          insertPayload.exercise_id = firstSet.exerciseId;
+          insertPayload.exercise_id = firstSet.exerciseId as number;
         }
       }
 
@@ -168,7 +176,7 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
       user_id:            user.id,
       current_streak:     newStreak,
       best_streak:        newBestStreak,
-      last_workout_date:  new Date().toISOString().split('T')[0],
+      last_workout_date:  payload.startTime.toISOString().split('T')[0],
       updated_at:         new Date().toISOString(),
     }, { onConflict: 'user_id' })
 
@@ -188,6 +196,25 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
     await checkAndUnlockAchievements(user.id)
   } catch (e) {
     console.error('Achievement check error:', e)
+  }
+
+  // 7. Post to community activity feed (best-effort)
+  try {
+    const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single()
+    await (supabase as any).from('activity_feed').insert({
+      user_id:     user.id,
+      user_name:   profile?.name || 'Athlete',
+      action_type: 'workout_completed',
+      data: {
+        workout_name:     workoutName,
+        xp_earned:        xpEarned,
+        duration_minutes: durationMinutes,
+        sets_completed:   completedSetsCount,
+        new_record:       newRecordsHit,
+      }
+    })
+  } catch (e) {
+    console.error('Activity feed insert error:', e)
   }
 
   // Return info for summary dashboard

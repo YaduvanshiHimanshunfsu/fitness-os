@@ -26,13 +26,14 @@ export function CommandPalette() {
   }, []);
 
   useEffect(() => {
+    if (!open || exercises.length > 0) return;
     const fetchExercises = async () => {
       const supabase = createClient();
       const { data } = await supabase.from('exercises').select('*');
       if (data) setExercises(data as any[]);
     };
     fetchExercises();
-  }, []);
+  }, [open, exercises.length]);
 
   const runCommand = (command: () => void) => {
     setOpen(false);

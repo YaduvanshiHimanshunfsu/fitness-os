@@ -282,7 +282,7 @@ export function WireframeExerciseCard({
                               onClick={() => onUndoSet(exercise.id, idx)}
                               className="flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-[#FF4500] hover:border-[#FF4500]/50 transition-colors text-[10px] font-bold uppercase tracking-widest"
                             >
-                              <Undo2 className="w-3 h-3" /> Redo
+                              <Undo2 className="w-3 h-3" /> Undo
                             </button>
                           )}
                         </div>

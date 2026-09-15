@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { verifyAdmin } from '@/lib/admin'
 import { z } from 'zod'
 
 const SettingsSchema = z.object({
@@ -13,20 +14,7 @@ const SettingsSchema = z.object({
 
 export async function saveGlobalSettings(rawSettings: z.infer<typeof SettingsSchema>) {
   const settings = SettingsSchema.parse(rawSettings)
-  const supabase = await createClient()
-  
-  // Verify user is admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: profile } = await supabase.from('profiles')
-    .select('role, email')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    throw new Error('Forbidden')
-  }
+  const { supabase, user } = await verifyAdmin()
 
   // We no longer save Gemini API Key to the database. Use Vercel Environment Variables.
 
@@ -68,6 +56,6 @@ export async function saveGlobalSettings(rawSettings: z.infer<typeof SettingsSch
   })
 
   revalidatePath('/admin')
-    revalidateTag('settings', 'default')
+  revalidateTag('settings', 'max')
   return { success: true }
 }

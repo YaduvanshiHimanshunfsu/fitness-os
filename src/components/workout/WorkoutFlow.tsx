@@ -144,7 +144,7 @@ export function WorkoutFlow({ exercises }: { exercises: Exercise[] }) {
         router.push('/workout/summary')
       } else {
         setPhase('cooldown')
-        router.push('/workout/posture')
+        router.push('/workout/cooldown')
       }
     } else {
       startRestTimer(30)

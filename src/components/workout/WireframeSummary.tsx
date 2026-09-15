@@ -259,7 +259,8 @@ export function WireframeSummary({
   const timeProgress = Math.min(100, (duration / (estimatedMinutes || 1)) * 100);
 
   // ── XP Earned ────────────────────────────────────────────────────────────
-  // Base XP = 50. Bonus based on completion percent and time efficiency
+  // NOTE: This is a speculative calculation for the UI before saving.
+  // The ultimate source of truth is calculateXP() in the server action, which is saved to the DB.
   const baseXP = 50;
   const completionXP = Math.round((completionPercent / 100) * 100);
   const efficiencyXP = fasterBy ? fasterBy * 2 : 0;

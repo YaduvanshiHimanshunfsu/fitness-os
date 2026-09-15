@@ -208,7 +208,7 @@ export function WireframeWarmup({ exercises, image, nextRoute }: { exercises?: a
               <div className="w-full max-w-sm flex items-center justify-between mb-4 px-2">
                 <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">Next Up</span>
                 <span className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest">
-                  {currentIndex < WARMUP_EXERCISES.length - 1 ? WARMUP_EXERCISES[currentIndex + 1]?.name : 'Finish'}
+                  {currentIndex < activeExercises.length - 1 ? activeExercises[currentIndex + 1]?.name : 'Finish'}
                 </span>
               </div>
 

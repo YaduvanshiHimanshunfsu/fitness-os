@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
@@ -47,8 +48,12 @@ export async function signup(formData: FormData) {
 
   const supabase = await createClient()
 
-  // Verify we haven't hit the 5 user limit
-  const { count } = await supabase
+  // Verify we haven't hit the 5 user limit using service role to bypass RLS
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const { count } = await adminClient
     .from('profiles')
     .select('*', { count: 'exact', head: true })
 
@@ -87,6 +92,7 @@ export async function signup(formData: FormData) {
 
   // NOTE: If email confirmations are enabled in Supabase, this redirect won't have an active session yet.
   // The user needs to disable email confirmations, or check their email.
+  // NOTE: redirect() internally throws an error that Next.js catches. It must be called outside try/catch.
   redirect('/dashboard')
 }
 

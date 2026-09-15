@@ -16,14 +16,12 @@ export default function WorkoutLayout({ children }: { children: React.ReactNode 
     }
   }, [pathname, router])
 
-  const totalSteps = 7
+  const totalSteps = 5
   let step = 1 // /workout (template page)
   if (pathname.includes('/warmup'))    step = 2
   else if (pathname.includes('/session'))   step = 3
-  else if (pathname.includes('/posture'))   step = 4
-  else if (pathname.includes('/knockknee')) step = 5
-  else if (pathname.includes('/cooldown'))  step = 6
-  else if (pathname.includes('/summary'))   step = 7
+  else if (pathname.includes('/cooldown'))  step = 4
+  else if (pathname.includes('/summary'))   step = 5
 
   const progressPercent = (step / totalSteps) * 100
 

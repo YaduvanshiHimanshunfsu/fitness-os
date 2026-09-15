@@ -1,4 +1,177 @@
-# FITNESS OS 🏋️‍♂️ v6.0
+<div align="center">
+
+# 🏋️ FITNESS OS
+
+### *Your Personal High-Performance Workout Operating System*
+
+[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/)
+
+> **A premium, full-stack athlete tracking platform — engineered for performance, built with passion.**
+> *Personal project by Himanshu Yadav — mastering advanced web architecture, real-time data, and elite UI/UX.*
+
+---
+
+</div>
+
+## 🌟 What is FITNESS OS?
+
+FITNESS OS is not just another workout tracker. It's a **comprehensive, hardware-accelerated dashboard** that offers a seamless, premium experience for serious athletes. Built on Next.js 16 and Supabase PostgreSQL, it manages complex relational data, live streak computations, AI-powered coaching, and sophisticated global state across a fully animated workout flow.
+
+**V7.0** brings the most complete overhaul yet — a fully restructured 6-day program (Mon/Tue/Wed/Fri/Sat/Sun), simplified 3-phase workout flow, and a new resistance-tube-first exercise library built for home athletes.
+
+---
+
+## 🚀 What's New in V7.0
+
+| Feature | Description |
+|---|---|
+| 🏠 **New Exercise Library** | Completely redesigned 6-day split using resistance tubes, bricks & bodyweight |
+| 📋 **3-Phase Workout Flow** | Simplified to: **Pre-Workout → Main Session → Post-Workout** |
+| 🦵 **Knee Rehab Integration** | Knee correction exercises (Clamshells, Side Leg Raises, Wall Sit) built into every cooldown |
+| 💾 **Legacy Archive** | Old exercise data preserved in `exercises-legacy.ts` — images retained |
+| ⚡ **CSP Dev Fix** | `unsafe-eval` added in dev mode for React/Turbopack compatibility |
+| 🧠 **Memory Optimization** | Node.js heap increased to 4GB to prevent OOM crashes during compilation |
+
+---
+
+## 🗓️ The 6-Day Program (V7.0)
+
+| Day | Focus | Key Exercises |
+|---|---|---|
+| **Monday** | Chest + Triceps | Chest Press, Push-up Progression, Chest Fly, Triceps Pushdown |
+| **Tuesday** | Back + Biceps + Forearms | Lat Pulldown, Bent-Over Row, Biceps Curl, Farmer Hold |
+| **Wednesday** | Legs + Athletic Strength | Tube Squat, Bulgarian Split Squat, RDL, Step-Ups |
+| **Thursday** | 🛌 Rest Day | Recovery |
+| **Friday** | Shoulders + Chest + Triceps | Shoulder Press, Lateral Raise, Arnold Press, Rear-Delt Fly |
+| **Saturday** | Back + Chest + Arms | Lat Pulldown, Face Pull, Chest Fly, Overhead Triceps Extension |
+| **Sunday** | Full Body Athletic | Pulldown, Chest Press, RDL, Step-Ups, Lateral Raise, Farmer Hold |
+
+---
+
+## 🔄 The Workout Flow
+
+```
+Dashboard → Pre-Workout (Warmup) → Main Session → Post-Workout (Cooldown + Knee) → Summary
+    1              2                     3                    4                        5
+```
+
+1. **Dashboard** — Live stats, streak tracking, day-of workout loaded
+2. **Pre-Workout** — Guided warmup with timer
+3. **Main Session** — Set-by-set logging with rest timers, pause/resume, skip
+4. **Post-Workout** — Cooldown stretches + 3 integrated knee correction exercises
+5. **Summary** — AI-generated analysis, XP earned, completion score, session save
+
+---
+
+## 🏗️ Tech Stack
+
+### Frontend
+| Tech | Purpose |
+|---|---|
+| **Next.js 16** (App Router + Turbopack) | Core framework, SSR, file-based routing |
+| **React 19** | UI layer with concurrent features |
+| **Framer Motion** | GPU-accelerated 60fps animations |
+| **Zustand** | Global workout state (no context re-renders) |
+| **TailwindCSS 4** | Utility-first styling |
+| **Lucide React** | Crisp, scalable icon set |
+
+### Backend
+| Tech | Purpose |
+|---|---|
+| **Supabase PostgreSQL** | Primary database with 14 composite indexes |
+| **Supabase Auth** | Session management, RLS-protected data |
+| **Supabase Storage** | Exercise media (images) |
+| **Next.js Server Actions** | Type-safe DB mutations |
+| **Database Triggers** | Auto-compute completion scores & XP on set insert |
+
+### AI
+| Tech | Purpose |
+|---|---|
+| **Google Gemini** | AI Coach, post-workout summaries, Q&A |
+
+---
+
+## ✨ Core Features
+
+- 🤖 **AI Fitness Coach** — Powered by Gemini. Analyzes workouts, answers diet/health questions with safety guardrails
+- 🛡️ **Admin Command Center** — `/admin` portal with drag-and-drop exercise management & image uploads
+- 📊 **Live Analytics** — Streak tracking, XP system, workout heatmap, completion scores
+- 🎯 **Gamification** — Achievements, level system, milestone notifications
+- 🌓 **Dark / Light Mode** — System-aware theme with premium dark glassmorphic UI
+- 📱 **PWA Ready** — Installable on mobile devices
+- 🔐 **Row-Level Security** — Users only ever see their own data
+- ⚡ **Edge Caching** — `unstable_cache` with tag-based invalidation for instant load times
+
+---
+
+## 🧠 Engineering Highlights
+
+- **Strict TypeScript** — Zero `any` casts; all Supabase queries typed via generated `Database` interface
+- **Idempotent SQL Schema** — Safe column migrations (`ADD COLUMN IF NOT EXISTS`), deadlock-free
+- **React Hooks Compliance** — All `useMemo`/`useEffect` above conditional returns — no render loops
+- **GPU Rendering** — Animations use `will-change: transform` + Z-axis transforms; no black-screen flicker
+- **CSP-aware Dev Mode** — `unsafe-eval` scoped to development only; production stays strict
+
+---
+
+## 📁 Project Structure
+
+```
+fitness-os/
+├── src/
+│   ├── app/               # Next.js App Router pages
+│   │   ├── (main)/        # Authenticated routes
+│   │   │   ├── dashboard/ # Main dashboard
+│   │   │   ├── workout/   # Pre → Session → Cooldown → Summary
+│   │   │   ├── coach/     # AI Coach
+│   │   │   └── analytics/ # Performance analytics
+│   │   └── admin/         # Admin command center
+│   ├── components/        # Reusable UI components
+│   ├── constants/         # Exercise library (exercises.ts, cooldown.ts)
+│   ├── hooks/             # Zustand store (useWorkout.ts)
+│   └── actions/           # Next.js Server Actions
+├── public/
+│   └── images/            # Exercise images (MONDAY/ TUESDAY/ ... SUNDAY/)
+└── workout/               # Source exercise images by day
+```
+
+---
+
+## 🚀 Getting Started
+
+```bash
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Set up environment variables
+cp .env.example .env.local
+# Fill in your Supabase URL, anon key, and Gemini API key
+
+# Run development server (with memory optimization)
+$env:NODE_OPTIONS="--max-old-space-size=4096"; npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 👨‍💻 Developer
+
+<div align="center">
+
+**Built by Himanshu Yadav**
+
+[![Email](https://img.shields.io/badge/Email-himanshu.btmtcs4242906%40nfsu.ac.in-red?style=flat-square&logo=gmail)](mailto:himanshu.btmtcs4242906@nfsu.ac.in)
+[![GitHub](https://img.shields.io/badge/GitHub-YaduvanshiHimanshunfsu-black?style=flat-square&logo=github)](https://github.com/YaduvanshiHimanshunfsu)
+
+*Built with passion, sweat, and thousands of lines of code.*
+*Every commit is a rep. Keep going.* 💪
+
+</div>
 
 > **A premium, high-performance web application designed for elite athlete tracking.**
 > *This is a personal, self-learned project built by Himanshu Yadav to master advanced web architecture, complex state management, and modern UI/UX design.*

@@ -14,10 +14,19 @@ import { getDailyInsight } from '@/actions/ai';
 import { MUAY_THAI_PHASE_1 } from '@/constants/martialArts';
 
 export interface AthleteDashboardProps {
-  userName:      string;
-  currentStreak: number;
-  levelName:     string;
-  heatmap:       HeatmapDay[];
+  userName:           string;
+  currentStreak:      number;
+  bestStreak:         number;
+  totalWorkouts:      number;
+  levelName:          string;
+  levelColor:         string;
+  totalXP:            number;
+  xpForNextLevel:     number;
+  xpProgressPercent:  number;
+  xpToNext:           number;
+  recoveryScore:      number;
+  recoveryLabel:      string;
+  heatmap:            HeatmapDay[];
   martialArtsTemplates?: any[];
 }
 
@@ -42,7 +51,16 @@ function RollingCounter({ value, suffix = '' }: { value: number; suffix?: string
 export default function AthleteDashboard({
   userName,
   currentStreak,
+  bestStreak,
+  totalWorkouts,
   levelName,
+  levelColor,
+  totalXP,
+  xpForNextLevel,
+  xpProgressPercent,
+  xpToNext,
+  recoveryScore,
+  recoveryLabel,
   heatmap,
   martialArtsTemplates = [],
 }: AthleteDashboardProps) {
@@ -332,7 +350,7 @@ export default function AthleteDashboard({
           >
             <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">XP Level Progress</div>
             <div className="flex justify-between items-end mb-4">
-              <div className="text-2xl font-black text-zinc-900 dark:text-white">{levelName}</div>
+              <div className="text-2xl font-black text-zinc-900 dark:text-white" style={{ color: levelColor }}>{levelName}</div>
               <div className="text-[11px] font-bold text-[#FF4500] uppercase tracking-widest flex items-center gap-1">
                 <Zap className="w-3 h-3" /> Active
               </div>
@@ -340,12 +358,15 @@ export default function AthleteDashboard({
             <div className="w-full h-3 bg-white dark:bg-zinc-900 rounded-full overflow-hidden border border-white/10">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: '65%' }}
+                animate={{ width: `${xpProgressPercent}%` }}
                 transition={{ duration: 1.5, ease: 'easeOut', delay: 0.4 }}
                 className="h-full bg-gradient-to-r from-[#FF4500] to-[#FF8C61] rounded-full"
               />
             </div>
-            <div className="text-right text-[10px] font-black text-zinc-500 mt-2 tracking-widest">3,450 / 5,000 XP</div>
+            <div className="flex justify-between text-[10px] font-black text-zinc-500 mt-2 tracking-widest">
+              <span>{totalXP.toLocaleString()} XP</span>
+              <span>{xpToNext > 0 ? `${xpToNext.toLocaleString()} to next` : 'MAX LEVEL'}</span>
+            </div>
           </motion.div>
 
           {/* Quick Stats */}
@@ -361,9 +382,9 @@ export default function AthleteDashboard({
             </h3>
             <div className="space-y-4">
               {[
-                { label: 'Workouts',    value: '4 sessions',              color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/20', trend: 'up', trendVal: '12%' },
-                { label: 'Volume',      value: `14,200 kg`,               color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', trend: 'up', trendVal: '5%' },
-                { label: 'Best Streak', value: `${currentStreak} Days`,   color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', trend: 'down', trendVal: '2 days' },
+                { label: 'Workouts',    value: `${totalWorkouts} sessions`, color: 'text-teal-400',  bg: 'bg-teal-500/10',  border: 'border-teal-500/20',  trend: 'up',   trendVal: '' },
+                { label: 'Best Streak', value: `${bestStreak} Days`,        color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', trend: 'up',   trendVal: '' },
+                { label: 'Current XP',  value: `${totalXP.toLocaleString()} XP`, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', trend: 'up', trendVal: '' },
               ].map((stat, i) => (
                 <div key={i} className={`flex items-center justify-between p-4 rounded-xl border ${stat.bg} ${stat.border} transition-colors`}>
                   <div>
@@ -374,10 +395,12 @@ export default function AthleteDashboard({
                       {mounted ? stat.value : <Skeleton className="h-6 w-20" />}
                     </span>
                   </div>
-                  <div className={`flex flex-col items-end ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-                    {stat.trend === 'up' ? <TrendingUp className="w-4 h-4 mb-1" /> : <TrendingDown className="w-4 h-4 mb-1" />}
-                    <span className="text-[10px] font-bold uppercase tracking-wider">{stat.trendVal}</span>
-                  </div>
+                  {stat.trendVal && (
+                    <div className={`flex flex-col items-end ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                      {stat.trend === 'up' ? <TrendingUp className="w-4 h-4 mb-1" /> : <TrendingDown className="w-4 h-4 mb-1" />}
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{stat.trendVal}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -474,19 +497,34 @@ export default function AthleteDashboard({
           
           <div className="mt-6">
             <div className="flex items-end gap-2 mb-2">
-              <span className="text-5xl font-black text-zinc-900 dark:text-white">85%</span>
-              <span className="text-sm font-bold text-[#10B981] mb-1">PRIMED</span>
+              <span className="text-5xl font-black text-zinc-900 dark:text-white">{recoveryScore}%</span>
+              <span className={`text-sm font-bold mb-1 ${
+                recoveryScore >= 80 ? 'text-[#10B981]' :
+                recoveryScore >= 60 ? 'text-sky-400' :
+                recoveryScore >= 40 ? 'text-amber-400' : 'text-red-400'
+              }`}>{recoveryLabel}</span>
             </div>
             <div className="w-full h-3 bg-white dark:bg-zinc-900 rounded-full overflow-hidden border border-white/10">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: '85%' }}
+                animate={{ width: `${recoveryScore}%` }}
                 transition={{ duration: 1.5, ease: 'easeOut', delay: 0.5 }}
-                className="h-full bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-full"
+                className={`h-full rounded-full ${
+                  recoveryScore >= 80 ? 'bg-gradient-to-r from-[#10B981] to-[#34D399]' :
+                  recoveryScore >= 60 ? 'bg-gradient-to-r from-sky-400 to-blue-500' :
+                  recoveryScore >= 40 ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
+                  'bg-gradient-to-r from-red-500 to-rose-400'
+                }`}
               />
             </div>
             <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mt-4 leading-relaxed">
-              Your central nervous system is recovered. Ideal day to push intensity or go for PRs.
+              {recoveryScore >= 80
+                ? 'Your CNS is fully recovered. Ideal day to push intensity or go for PRs.'
+                : recoveryScore >= 60
+                ? 'Good recovery. Stick to your planned session.'
+                : recoveryScore >= 40
+                ? 'Moderate fatigue. Consider reducing volume or weight today.'
+                : 'High fatigue detected. Prioritize rest or active recovery.'}
             </p>
           </div>
         </motion.div>
