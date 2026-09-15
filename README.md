@@ -13,6 +13,8 @@
 > **A premium, full-stack athlete tracking platform — engineered for performance, built with passion.**
 > *Personal project by Himanshu Yadav — mastering advanced web architecture, real-time data, and elite UI/UX.*
 
+**🌐 Live Demo:** [https://fitness-os-woad.vercel.app](https://fitness-os-woad.vercel.app)
+
 ---
 
 </div>
