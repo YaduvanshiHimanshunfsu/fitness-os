@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { AIService } from '@/services/ai-service'
 import { createClient } from '@/lib/supabase/server'
@@ -47,12 +47,16 @@ export async function sendChatMessage(history: { role: string; content: string }
       }
 
       // Personal Records for progressive overload suggestions
-      const { data: records } = await (supabase as any)
-        .from('records')
+      // `records` table may not be in generated types yet — cast via from() only
+      const { data: records, error: recordsError } = await (supabase.from as (table: string) => ReturnType<typeof supabase.from>)('records')
         .select('exercise_id, exercises(name), max_reps, max_weight_kg, unit')
         .eq('user_id', user.id)
         .order('max_weight_kg', { ascending: false })
         .limit(20)
+
+      if (recordsError) {
+        console.warn('Failed to fetch PRs (non-fatal):', recordsError.message)
+      }
 
       if (records && records.length > 0) {
         contextStr += `\n\nUSER'S PERSONAL RECORDS (PRs):\n`

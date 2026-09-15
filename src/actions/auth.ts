@@ -82,7 +82,7 @@ export async function signup(formData: FormData) {
       id: data.user.id,
       email: email,
       name: name.charAt(0).toUpperCase() + name.slice(1)
-    } as any, { onConflict: 'id' })
+    }, { onConflict: 'id' })
     
     if (profileError) {
       // We must rollback or inform the user since profile creation failed

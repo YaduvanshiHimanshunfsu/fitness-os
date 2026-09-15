@@ -158,11 +158,16 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
   }
 
   // 4. Update streak — read from `streaks` table, calculate, and write back
-  const { data: streakRow } = await supabase.from('streaks')
+  // Use array query (no .single()) so missing rows for new users return [] not an error
+  const { data: streakRows, error: streakSelectError } = await supabase.from('streaks')
     .select('current_streak, best_streak, last_workout_date')
     .eq('user_id', user.id)
-    .single()
 
+  if (streakSelectError) {
+    console.error('Streak select error (non-fatal):', streakSelectError)
+  }
+
+  const streakRow = streakRows?.[0] ?? null
   const lastWorkoutDate = streakRow?.last_workout_date ? new Date(streakRow.last_workout_date) : null
   const currentStreak = streakRow?.current_streak ?? 0
   const bestStreak = streakRow?.best_streak ?? 0
@@ -201,7 +206,8 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
   // 7. Post to community activity feed (best-effort)
   try {
     const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single()
-    await (supabase as any).from('activity_feed').insert({
+    // activity_feed may not be in generated types yet — cast via from() only
+    const { error: feedError } = await (supabase.from as (table: string) => ReturnType<typeof supabase.from>)('activity_feed').insert({
       user_id:     user.id,
       user_name:   profile?.name || 'Athlete',
       action_type: 'workout_completed',
@@ -213,6 +219,9 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
         new_record:       newRecordsHit,
       }
     })
+    if (feedError) {
+      console.warn('Activity feed insert failed (non-fatal):', feedError.message)
+    }
   } catch (e) {
     console.error('Activity feed insert error:', e)
   }
