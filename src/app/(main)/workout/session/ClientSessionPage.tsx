@@ -6,8 +6,9 @@ import { WorkoutFlow } from '@/components/workout/WorkoutFlow'
 import { useWorkoutStore } from '@/hooks/useWorkout'
 import { getTodayDay } from '@/utils/date-utils'
 import { motion } from 'framer-motion'
+import { EXERCISES } from '@/constants/exercises'
 
-export default function ClientSessionPage({ templates }: { templates: any[] }) {
+export default function ClientSessionPage() {
   const router = useRouter()
   // Ensure we get today's exercises. In a real app, this should be selected based on the user's dashboard interaction.
   // We use useWorkoutStore day or fallback to today.
@@ -36,21 +37,23 @@ export default function ClientSessionPage({ templates }: { templates: any[] }) {
   
   let todayExercises = storeExercises;
 
-  // Only override with the database template if it's a daily workout
+  // For daily workouts, read directly from the source of truth (EXERCISES constant)
   if (!workoutType || workoutType === 'daily') {
-    const todayTemplate = templates.find(t => t.day === currentDay)
-    const dbExercises = todayTemplate?.workout_template_exercises?.sort((a: any, b: any) => a.exercise_order - b.exercise_order) || []
-    
-    todayExercises = dbExercises.map((te: any) => ({
-      id: te.exercises.id,
-      name: te.exercises.name,
-      muscleGroup: te.exercises.muscle_group,
-      imageUrl: te.exercises.image_url || '/placeholder.png',
-      sets: te.sets,
-      reps: te.reps,
-      exerciseOrder: te.exercise_order,
-      day: currentDay
-    }))
+    const dayExercisesList = EXERCISES.filter(e => e.day === currentDay.toLowerCase())
+    if (dayExercisesList.length > 0) {
+      todayExercises = dayExercisesList.map((ex, idx) => ({
+        id: ex.id || (1000 + idx), // Ensure there is an ID for tracking sets
+        name: ex.name,
+        muscleGroup: ex.muscleGroup,
+        imageUrl: ex.imageUrl || '/placeholder.png',
+        sets: ex.sets,
+        reps: ex.reps,
+        exerciseOrder: ex.exerciseOrder,
+        day: currentDay
+      }))
+    } else {
+      todayExercises = []
+    }
   }
 
   const hasSavedProgress = isSessionActive && (completedSets.length > 0 || activeExerciseIndex > 0)

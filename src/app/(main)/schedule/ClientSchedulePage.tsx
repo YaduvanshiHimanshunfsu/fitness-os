@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EXERCISES } from '@/constants/exercises';
 
 const DAYS_OF_WEEK = [
   { day: 'monday',    focus: 'Chest + Triceps' },
@@ -43,9 +44,8 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
         {/* Days List */}
         <div className="space-y-4">
           {DAYS_OF_WEEK.map((schedule) => {
-            const template = templates.find(t => t.day === schedule.day)
             const isExpanded = expandedDay === schedule.day;
-            const dayExercises = template?.workout_template_exercises?.sort((a: any, b: any) => a.exercise_order - b.exercise_order) || [];
+            const dayExercises = EXERCISES.filter(e => e.day === schedule.day).sort((a, b) => a.exerciseOrder - b.exerciseOrder);
             const isRestDay = dayExercises.length === 0;
 
             return (
@@ -93,12 +93,11 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
                             </p>
                           </div>
                         ) : (
-                          dayExercises.map((te: any, idx: number) => {
-                            const ex = te.exercises;
+                          dayExercises.map((ex: any, idx: number) => {
                             return (
-                            <div key={te.id} className="flex items-center gap-4 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-[#1F1F1F] p-3 rounded-lg">
+                            <div key={ex.id} className="flex items-center gap-4 bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-[#1F1F1F] p-3 rounded-lg">
                               <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-950 rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden flex-shrink-0 p-1 flex items-center justify-center">
-                                <img src={ex.image_url || '/placeholder.png'} alt={ex.name} className="max-w-full max-h-full object-contain mix-blend-screen" />
+                                <img src={ex.imageUrl || '/placeholder.png'} alt={ex.name} className="max-w-full max-h-full object-contain mix-blend-screen" />
                               </div>
                               <div className="flex-1">
                                 <h3 className="font-bold text-zinc-900 dark:text-zinc-200 uppercase tracking-wide text-sm">
@@ -106,13 +105,13 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
                                 </h3>
                                 <div className="flex items-center gap-3 mt-1">
                                   <span className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase bg-zinc-50 dark:bg-zinc-950 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800">
-                                    Target: {ex.muscle_group}
+                                    Target: {ex.muscleGroup}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="block font-black text-zinc-900 dark:text-white">{te.sets} SETS</span>
-                                <span className="block font-bold text-zinc-500 text-xs">{te.reps} REPS</span>
+                                <span className="block font-black text-zinc-900 dark:text-white">{ex.sets} SETS</span>
+                                <span className="block font-bold text-zinc-500 text-xs">{ex.reps} REPS</span>
                               </div>
                             </div>
                           )})

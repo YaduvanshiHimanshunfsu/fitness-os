@@ -34,6 +34,7 @@ create table if not exists exercises (
   image_url       text,
   instructions    text,
   common_mistakes text,
+  is_deleted      boolean     not null default false,
   created_at      timestamptz not null default now()
 );
 
@@ -105,6 +106,7 @@ create table if not exists martial_arts_exercises (
   instruction     text,
   comment         text,
   image_url       text,
+  is_deleted      boolean     not null default false,
   created_at      timestamptz not null default now()
 );
 
@@ -134,6 +136,7 @@ create table if not exists muscle_focus_exercises (
   instruction     text,
   comment         text,
   image_url       text,
+  is_deleted      boolean     not null default false,
   created_at      timestamptz not null default now()
 );
 
@@ -212,11 +215,6 @@ alter table profiles add column if not exists updated_at  timestamptz not null d
 alter table profiles add column if not exists avatar_url  text;
 alter table profiles add column if not exists role        text        not null default 'user';
 
--- workout_sessions: add notes column if missing
-alter table workout_sessions add column if not exists notes text;
-
--- workout_sets: ensure actual_reps has correct default
-alter table workout_sets alter column actual_reps set default 0;
 
 -- personal_records: migrate to the current production shape used by the app
 alter table personal_records add column if not exists max_weight numeric not null default 0;
@@ -255,11 +253,14 @@ create table if not exists workouts_v5 (
 );
 
 create table if not exists workout_exercises_v5 (
-  id           uuid    primary key default gen_random_uuid(),
-  workout_id   uuid    not null references workouts_v5(id) on delete cascade,
-  exercise_id  integer not null references exercises(id) on delete cascade,
-  order_index  integer not null,
-  sets_skipped integer not null default 0
+  id                       uuid    primary key default gen_random_uuid(),
+  workout_id               uuid    not null references workouts_v5(id) on delete cascade,
+  exercise_id              integer references exercises(id) on delete cascade,
+  martial_arts_exercise_id integer references martial_arts_exercises(id) on delete cascade,
+  muscle_focus_exercise_id integer references muscle_focus_exercises(id) on delete cascade,
+  exercise_name            text,
+  order_index              integer not null,
+  sets_skipped             integer not null default 0
 );
 
 create table if not exists workout_sets_v5 (
@@ -270,6 +271,10 @@ create table if not exists workout_sets_v5 (
   unit                text    not null default 'kg',
   completed           boolean not null default false
 );
+
+alter table workout_exercises_v5 add column if not exists exercise_name text;
+alter table workout_exercises_v5 add column if not exists martial_arts_exercise_id integer references martial_arts_exercises(id) on delete cascade;
+alter table workout_exercises_v5 add column if not exists muscle_focus_exercise_id integer references muscle_focus_exercises(id) on delete cascade;
 
 -- Admin and System Tables
 create table if not exists app_settings (
@@ -309,23 +314,6 @@ create index if not exists idx_profiles_id
   on profiles(id);
 
 
-create index if not exists idx_workout_sessions_user_id
-  on workout_sessions(user_id);
-
-create index if not exists idx_workout_sessions_date
-  on workout_sessions(date desc);
-
-create index if not exists idx_workout_sessions_user_date
-  on workout_sessions(user_id, date desc);
-
-create index if not exists idx_workout_sets_session_id
-  on workout_sets(session_id);
-
-create index if not exists idx_workout_sets_exercise_id
-  on workout_sets(exercise_id);
-
-create index if not exists idx_workout_sets_completed
-  on workout_sets(session_id, completed) where completed = true;
 
 create index if not exists idx_streaks_user_id
   on streaks(user_id);
@@ -372,8 +360,6 @@ create index if not exists idx_workout_sets_v5_completed
 -- ==============================================================================
 
 alter table profiles           enable row level security;
-alter table workout_sessions   enable row level security;
-alter table workout_sets       enable row level security;
 alter table user_achievements  enable row level security;
 alter table personal_records   enable row level security;
 alter table streaks            enable row level security;
@@ -397,15 +383,33 @@ create policy "profiles_select_own" on profiles for select using (auth.uid() = i
 create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
 create policy "profiles_update_own" on profiles for update using (auth.uid() = id) with check (auth.uid() = id and role = (select role from profiles where id = auth.uid()));
 
--- workout_sessions
-drop policy if exists "sessions_all_own" on workout_sessions;
-create policy "sessions_all_own" on workout_sessions for all using (auth.uid() = user_id);
+-- RLS policies for workout_templates
+alter table workout_templates enable row level security;
+drop policy if exists "templates_public_read" on workout_templates;
+drop policy if exists "templates_admin_all" on workout_templates;
+create policy "templates_public_read" on workout_templates for select using (true);
+create policy "templates_admin_all" on workout_templates for all using ((select role from profiles where id = auth.uid()) = 'admin');
 
--- workout_sets (access via parent session)
-drop policy if exists "sets_all_own" on workout_sets;
-create policy "sets_all_own" on workout_sets for all using (
-  auth.uid() = (select user_id from workout_sessions where id = session_id limit 1)
-);
+-- RLS policies for workout_template_exercises
+alter table workout_template_exercises enable row level security;
+drop policy if exists "template_exercises_public_read" on workout_template_exercises;
+drop policy if exists "template_exercises_admin_all" on workout_template_exercises;
+create policy "template_exercises_public_read" on workout_template_exercises for select using (true);
+create policy "template_exercises_admin_all" on workout_template_exercises for all using ((select role from profiles where id = auth.uid()) = 'admin');
+
+-- RLS policies for auxiliary_routines
+alter table auxiliary_routines enable row level security;
+drop policy if exists "aux_routines_public_read" on auxiliary_routines;
+drop policy if exists "aux_routines_admin_all" on auxiliary_routines;
+create policy "aux_routines_public_read" on auxiliary_routines for select using (true);
+create policy "aux_routines_admin_all" on auxiliary_routines for all using ((select role from profiles where id = auth.uid()) = 'admin');
+
+-- RLS policies for auxiliary_routine_exercises
+alter table auxiliary_routine_exercises enable row level security;
+drop policy if exists "aux_exercises_public_read" on auxiliary_routine_exercises;
+drop policy if exists "aux_exercises_admin_all" on auxiliary_routine_exercises;
+create policy "aux_exercises_public_read" on auxiliary_routine_exercises for select using (true);
+create policy "aux_exercises_admin_all" on auxiliary_routine_exercises for all using ((select role from profiles where id = auth.uid()) = 'admin');
 
 -- user_achievements
 drop policy if exists "achievements_all_own" on user_achievements;
@@ -535,52 +539,11 @@ create trigger trg_streaks_updated_at
 
 
 -- ==============================================================================
--- SECTION 6: LIVE COMPLETION SCORE TRIGGER
--- Automatically recomputes workout_sessions.completion_score whenever
--- a set is inserted or updated — no manual calculation needed from the app.
+-- SECTION 6: OBSOLETE TRIGGERS REMOVAL
+-- Clean up old v4 triggers from the database
 -- ==============================================================================
-
-create or replace function recompute_completion_score()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_total_sets integer;
-  v_done_sets  integer;
-  v_score      integer;
-begin
-  select count(*)
-    into v_total_sets
-    from workout_sets
-   where session_id = new.session_id;
-
-  select count(*)
-    into v_done_sets
-    from workout_sets
-   where session_id = new.session_id
-     and completed  = true;
-
-  if v_total_sets > 0 then
-    v_score := round((v_done_sets::numeric / v_total_sets) * 100);
-  else
-    v_score := 0;
-  end if;
-
-  update workout_sessions
-     set completion_score = v_score
-   where id = new.session_id;
-
-  return new;
-end;
-$$;
-
 drop trigger if exists trg_recompute_score on workout_sets;
-create trigger trg_recompute_score
-  after insert or update of completed on workout_sets
-  for each row
-  execute function recompute_completion_score();
+drop function if exists recompute_completion_score();
 
 
 -- ==============================================================================
@@ -678,22 +641,26 @@ create or replace view workout_daily_summary
   with (security_invoker = true)
 as
 select
-  ws.user_id,
-  ws.date,
-  ws.day,
-  ws.duration_minutes,
-  ws.completion_score,
-  count(wset.id)                               as total_sets,
-  count(wset.id) filter (where wset.completed) as completed_sets,
-  coalesce(sum(wset.actual_reps), 0)           as total_reps
-from workout_sessions ws
-left join workout_sets wset on wset.session_id = ws.id
+  w.profile_id as user_id,
+  w.start_time::date as date,
+  to_char(w.start_time, 'day') as day,
+  extract(epoch from (w.end_time - w.start_time))/60 as duration_minutes,
+  -- Calculate completion score (completed sets / (completed + skipped + explicitly skipped))
+  case when (count(ws.id) + w.sets_skipped) > 0 
+       then round((count(ws.id) filter (where ws.completed = true)::numeric / (count(ws.id) + w.sets_skipped)) * 100)
+       else 0 end as completion_score,
+  count(ws.id) + w.sets_skipped as total_sets,
+  count(ws.id) filter (where ws.completed) as completed_sets,
+  coalesce(sum(ws.actual_reps), 0) as total_reps
+from workouts_v5 w
+left join workout_exercises_v5 we on we.workout_id = w.id
+left join workout_sets_v5 ws on ws.workout_exercise_id = we.id
 group by
-  ws.user_id,
-  ws.date,
-  ws.day,
-  ws.duration_minutes,
-  ws.completion_score;
+  w.id,
+  w.profile_id,
+  w.start_time,
+  w.end_time,
+  w.sets_skipped;
 
 grant select on workout_daily_summary to authenticated;
 
@@ -755,17 +722,13 @@ on conflict (name) do nothing;
 -- ==============================================================================
 -- MISSING INDEXES FOR PERFORMANCE
 -- ==============================================================================
-create index if not exists idx_workout_templates_user_id on workout_templates(user_id);
 create index if not exists idx_workout_template_exercises_template_id on workout_template_exercises(template_id);
-create index if not exists idx_workouts_v5_user_id on workouts_v5(user_id);
-create index if not exists idx_workout_exercises_v5_workout_id on workout_exercises_v5(workout_id);
-create index if not exists idx_workout_sets_v5_workout_exercise_id on workout_sets_v5(workout_exercise_id);
-create index if not exists idx_user_achievements_user_id on user_achievements(user_id);
 -- ==============================================================================
 -- SCHEMA RESTRAINTS & ROLE AUDITING
 -- ==============================================================================
 -- Enforce allowed achievement condition types
-ALTER TABLE achievements ADD CONSTRAINT chk_achievements_condition_type CHECK (condition_type IN ('total_workouts', 'total_sets', 'streak', 'level', 'specific_exercise'));
+ALTER TABLE achievements DROP CONSTRAINT IF EXISTS chk_achievements_condition_type;
+ALTER TABLE achievements ADD CONSTRAINT chk_achievements_condition_type CHECK (condition_type IN ('total_workouts', 'total_sets', 'streak', 'level', 'specific_exercise', 'perfect_week'));
 
 -- Log role changes in profiles
 CREATE OR REPLACE FUNCTION audit_role_change() RETURNS TRIGGER AS $$

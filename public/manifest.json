@@ -1,11 +1,14 @@
-{
+﻿{
   "name": "Fitness OS",
   "short_name": "FitnessOS",
   "description": "Personal Fitness Analytics & Training Platform",
-  "start_url": "/",
+  "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0A0A0A",
   "theme_color": "#FF4500",
+  "categories": ["health", "fitness", "sports"],
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -17,6 +20,19 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Start Workout",
+      "url": "/workout",
+      "description": "Jump straight into a workout"
+    },
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "View your stats"
     }
   ]
 }
