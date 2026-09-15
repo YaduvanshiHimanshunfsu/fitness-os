@@ -5,13 +5,13 @@ import { ChevronDown, Calendar, Dumbbell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const DAYS_OF_WEEK = [
-  { day: 'monday', focus: 'Chest, Arms, Forearms' },
-  { day: 'tuesday', focus: 'Back & Shoulders' },
-  { day: 'wednesday', focus: 'Abs & Core' },
-  { day: 'thursday', focus: 'Rest Day / Active Recovery' },
-  { day: 'friday', focus: 'Legs & Knee Stability' },
-  { day: 'saturday', focus: 'Chest & Arms Variation' },
-  { day: 'sunday', focus: 'Full Body & Athletic' },
+  { day: 'monday',    focus: 'Chest + Triceps' },
+  { day: 'tuesday',   focus: 'Back + Biceps + Forearms' },
+  { day: 'wednesday', focus: 'Legs + Athletic Strength' },
+  { day: 'thursday',  focus: 'Rest Day / Active Recovery' },
+  { day: 'friday',    focus: 'Shoulders + Chest + Triceps' },
+  { day: 'saturday',  focus: 'Back + Chest + Arms' },
+  { day: 'sunday',    focus: 'Full Body Athletic' },
 ];
 export default function ClientSchedulePage({ templates }: { templates: any[] }) {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);

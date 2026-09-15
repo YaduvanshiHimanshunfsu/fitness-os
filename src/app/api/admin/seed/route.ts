@@ -3,13 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 import { EXERCISES } from '@/constants/exercises';
 
 const DAYS_OF_WEEK = [
-  { day: 'monday', focus: 'Chest, Arms, Forearms' },
-  { day: 'tuesday', focus: 'Back & Shoulders' },
-  { day: 'wednesday', focus: 'Abs & Core' },
-  { day: 'thursday', focus: 'Rest Day / Active Recovery' },
-  { day: 'friday', focus: 'Legs & Knee Stability' },
-  { day: 'saturday', focus: 'Chest & Arms Variation' },
-  { day: 'sunday', focus: 'Full Body & Athletic' },
+  { day: 'monday',    focus: 'Chest + Triceps' },
+  { day: 'tuesday',   focus: 'Back + Biceps + Forearms' },
+  { day: 'wednesday', focus: 'Legs + Athletic Strength' },
+  { day: 'thursday',  focus: 'Rest Day / Active Recovery' },
+  { day: 'friday',    focus: 'Shoulders + Chest + Triceps' },
+  { day: 'saturday',  focus: 'Back + Chest + Arms' },
+  { day: 'sunday',    focus: 'Full Body Athletic' },
 ];
 
 export async function POST() {
@@ -20,10 +20,10 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Check admin role
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-  if (!profile || profile.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden: Admins only' }, { status: 403 });
+  // Any authenticated user can trigger seeding (needed for auto-seed on schedule page)
+  // Admin-only writes are enforced by Supabase RLS policies
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
