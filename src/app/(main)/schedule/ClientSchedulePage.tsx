@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, Calendar, Dumbbell } from 'lucide-react';
+import { ChevronDown, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const DAYS_OF_WEEK = [
@@ -13,46 +13,9 @@ const DAYS_OF_WEEK = [
   { day: 'saturday',  focus: 'Back + Chest + Arms' },
   { day: 'sunday',    focus: 'Full Body Athletic' },
 ];
-// V7.0 has exactly 56 exercises across 6 active days
-const V7_EXERCISE_COUNT = 56;
 
 export default function ClientSchedulePage({ templates }: { templates: any[] }) {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seedStatus, setSeedStatus] = useState<'idle' | 'seeding' | 'done' | 'error'>('idle');
-
-  const triggerSeed = React.useCallback(() => {
-    setIsSeeding(true);
-    setSeedStatus('seeding');
-    fetch('/api/admin/seed', { method: 'POST' })
-      .then((res) => {
-        if (res.ok) {
-          setSeedStatus('done');
-          setTimeout(() => window.location.reload(), 800);
-        } else {
-          console.error('Seed failed: Server returned', res.status);
-          setSeedStatus('error');
-          setIsSeeding(false);
-        }
-      })
-      .catch(err => {
-        console.error('Seed failed:', err);
-        setSeedStatus('error');
-        setIsSeeding(false);
-      });
-  }, []);
-
-  React.useEffect(() => {
-    // Count total exercises across all days in the DB
-    const totalDbExercises = templates.reduce(
-      (sum, t) => sum + (t.workout_template_exercises?.length || 0), 0
-    );
-    const needsReseed = totalDbExercises !== V7_EXERCISE_COUNT;
-
-    if (needsReseed && !isSeeding) {
-      triggerSeed();
-    }
-  }, [templates, isSeeding, triggerSeed]);
 
   const toggleDay = (day: string) => {
     setExpandedDay(expandedDay === day ? null : day);
@@ -66,7 +29,7 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#2A160F] border border-[#FF6B35]/20 rounded-md mb-4">
             <Calendar className="w-4 h-4 text-[#FF6B35]" />
             <span className="text-xs font-mono font-bold tracking-widest text-[#FF6B35] uppercase">
-              Weekly Routine
+              Weekly Routine — V7.0
             </span>
           </div>
           <h1 className="text-3xl md:text-4xl font-sans font-black tracking-tight text-zinc-900 dark:text-white uppercase">
@@ -75,34 +38,6 @@ export default function ClientSchedulePage({ templates }: { templates: any[] }) 
           <p className="text-zinc-600 dark:text-zinc-400 mt-2 font-medium">
             Review your full weekly workout schedule and muscle focus days.
           </p>
-          {/* Sync status banner */}
-          {seedStatus === 'seeding' && (
-            <div className="mt-4 flex items-center gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-              <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-amber-400 text-sm font-bold tracking-wide">Syncing V7.0 exercise data... Please wait.</span>
-            </div>
-          )}
-          {seedStatus === 'done' && (
-            <div className="mt-4 px-4 py-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <span className="text-green-400 text-sm font-bold tracking-wide">✓ Exercise library updated! Reloading...</span>
-            </div>
-          )}
-          {seedStatus === 'error' && (
-            <div className="mt-4 flex items-center justify-between px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <span className="text-red-400 text-sm font-bold tracking-wide">Sync failed. Click to retry.</span>
-              <button onClick={triggerSeed} className="text-xs font-bold uppercase tracking-widest bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">
-                Retry Sync
-              </button>
-            </div>
-          )}
-          {seedStatus === 'idle' && (
-            <button
-              onClick={triggerSeed}
-              className="mt-4 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#FF6B35] transition-colors"
-            >
-              ↻ Force Resync Exercise Library
-            </button>
-          )}
         </div>
 
         {/* Days List */}
