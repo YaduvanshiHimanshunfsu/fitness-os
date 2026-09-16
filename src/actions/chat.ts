@@ -46,12 +46,18 @@ export async function sendChatMessage(history: { role: string; content: string }
         }).join('\n\n')
       }
 
-      // Personal Records for progressive overload suggestions
-      // `records` table may not be in generated types yet — cast via from() only
-      const { data: records, error: recordsError } = await (supabase.from as (table: string) => ReturnType<typeof supabase.from>)('records')
-        .select('exercise_id, exercises(name), max_reps, max_weight_kg, unit')
+      // Personal Records — reads from personal_records (correct table + column names)
+      const { data: records, error: recordsError } = await supabase
+        .from('personal_records')
+        .select(`
+          exercise_id,
+          max_reps,
+          max_weight,
+          estimated_1rm,
+          exercises ( name, muscle_group )
+        `)
         .eq('user_id', user.id)
-        .order('max_weight_kg', { ascending: false })
+        .order('max_weight', { ascending: false })
         .limit(20)
 
       if (recordsError) {
@@ -61,11 +67,12 @@ export async function sendChatMessage(history: { role: string; content: string }
       if (records && records.length > 0) {
         contextStr += `\n\nUSER'S PERSONAL RECORDS (PRs):\n`
         contextStr += (records as any[]).map((r: any) => {
-          const name = r.exercises?.name || `Exercise #${r.exercise_id}`
-          const weight = r.max_weight_kg ? `${r.max_weight_kg}${r.unit || 'kg'}` : 'bodyweight'
-          return `* ${name}: ${r.max_reps} reps @ ${weight}`
+          const exName = (r.exercises as any)?.name ?? `Exercise #${r.exercise_id}`
+          const weight = r.max_weight ? `${r.max_weight}kg` : 'bodyweight'
+          const orm    = r.estimated_1rm ? ` (est. 1RM: ${Math.round(r.estimated_1rm)}kg)` : ''
+          return `* ${exName}: ${r.max_reps} reps @ ${weight}${orm}`
         }).join('\n')
-        contextStr += `\n\nUse this data to give SPECIFIC progressive overload advice (e.g., "Try adding 2.5kg to your bench press next session"). Reference actual exercise names and numbers.`
+        contextStr += `\n\nUse this data to give SPECIFIC progressive overload advice. Reference actual exercise names and weights.`
       }
     }
 

@@ -1,748 +1,1035 @@
 -- ==============================================================================
 -- FITNESS OS — COMPLETE DATABASE SCHEMA
--- Version: 6.0 (Production-Grade, Idempotent, Advanced)
--- Run this entire file in one shot in Supabase SQL Editor.
--- Safe to re-run: uses IF NOT EXISTS / CREATE OR REPLACE everywhere.
+-- Version: 7.2 (Production-Grade, Idempotent, Audit-Compliant)
+-- Run this entire file in one shot in the Supabase SQL Editor.
+-- Safe to re-run: uses IF NOT EXISTS / CREATE OR REPLACE / DROP IF EXISTS everywhere.
 -- ==============================================================================
 
 
 -- ==============================================================================
--- SECTION 1: TABLES
+-- SECTION 1: CORE TABLES
 -- ==============================================================================
-
--- ==========================================
--- MAIN WORKOUT TABLES
--- ==========================================
 
 -- Profiles (1-to-1 with auth.users)
-create table if not exists profiles (
-  id          uuid        primary key references auth.users(id) on delete cascade,
-  name        text        not null default 'Athlete',
-  email       text        not null default '',
+CREATE TABLE IF NOT EXISTS profiles (
+  id          uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name        text        NOT NULL DEFAULT 'Athlete',
+  email       text        NOT NULL DEFAULT '',
   avatar_url  text,
-  xp_total    integer     not null default 0,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  xp_total    integer     NOT NULL DEFAULT 0,
+  role        text        NOT NULL DEFAULT 'user',
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- Exercises master list (seeded once)
-create table if not exists exercises (
-  id              serial      primary key,
-  name            text        not null,
-  muscle_group    text        not null,
-  difficulty      text        not null default 'beginner',
+-- Safe column additions for profiles (idempotent)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS xp_total   integer     NOT NULL DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role       text        NOT NULL DEFAULT 'user';
+
+-- Exercises master list (seeded in Section 10)
+CREATE TABLE IF NOT EXISTS exercises (
+  id              serial      PRIMARY KEY,
+  name            text        NOT NULL,
+  muscle_group    text        NOT NULL,
+  difficulty      text        NOT NULL DEFAULT 'beginner',
   image_url       text,
   instructions    text,
   common_mistakes text,
-  is_deleted      boolean     not null default false,
-  created_at      timestamptz not null default now()
+  is_deleted      boolean     NOT NULL DEFAULT false,
+  created_at      timestamptz NOT NULL DEFAULT now()
 );
 
--- Workout templates (one per day: mon-sat, no thursday)
-create table if not exists workout_templates (
-  id      serial primary key,
-  day     text   not null unique,  -- 'monday', 'tuesday', etc.
-  name    text   not null,
-  focus   text   not null
+-- Workout templates (one per day)
+CREATE TABLE IF NOT EXISTS workout_templates (
+  id    serial PRIMARY KEY,
+  day   text   NOT NULL UNIQUE,  -- 'monday', 'tuesday', etc.
+  name  text   NOT NULL,
+  focus text   NOT NULL
 );
 
 -- Exercises within each day's template
-create table if not exists workout_template_exercises (
-  id             serial  primary key,
-  template_id    integer not null references workout_templates(id) on delete cascade,
-  exercise_id    integer not null references exercises(id) on delete cascade,
-  sets           integer not null,
-  reps           text    not null,  -- '10-12', '30 sec', etc.
-  exercise_order integer not null
+CREATE TABLE IF NOT EXISTS workout_template_exercises (
+  id             serial  PRIMARY KEY,
+  template_id    integer NOT NULL REFERENCES workout_templates(id)  ON DELETE CASCADE,
+  exercise_id    integer NOT NULL REFERENCES exercises(id)           ON DELETE CASCADE,
+  sets           integer NOT NULL,
+  reps           text    NOT NULL,   -- '10-12', '30 sec', etc.
+  exercise_order integer NOT NULL
 );
 
--- Achievement definitions (static, seeded once)
-create table if not exists achievements (
-  id              serial  primary key,
-  name            text    not null unique,
-  description     text    not null,
-  condition_type  text    not null,
-  condition_value integer not null,
-  icon            text    not null default '🏆'
+-- Achievement definitions (static, seeded in Section 11)
+CREATE TABLE IF NOT EXISTS achievements (
+  id              serial  PRIMARY KEY,
+  name            text    NOT NULL UNIQUE,
+  description     text    NOT NULL,
+  condition_type  text    NOT NULL,
+  condition_value integer NOT NULL,
+  icon            text    NOT NULL DEFAULT '🏆'
 );
-
--- Seed static achievements
-INSERT INTO achievements (id, name, description, condition_type, condition_value, icon) VALUES
-(1, 'First Step', 'Complete your first workout', 'total_workouts', 1, '👟'),
-(2, '7 Day Streak', 'Work out 7 days in a row', 'streak', 7, '🔥'),
-(3, '30 Day Streak', 'Work out 30 days in a row', 'streak', 30, '🔥'),
-(4, '90 Day Streak', 'Work out 90 days in a row', 'streak', 90, '🔥'),
-(5, '100 Sets', 'Complete 100 total sets', 'total_sets', 100, '💯'),
-(6, '1000 Sets', 'Complete 1,000 total sets', 'total_sets', 1000, '💪'),
-(7, '10,000 Sets', 'Complete 10,000 total sets', 'total_sets', 10000, '🏆'),
-(8, '10 Workouts', 'Complete 10 workouts', 'total_workouts', 10, '⭐'),
-(9, '50 Workouts', 'Complete 50 workouts', 'total_workouts', 50, '🌟'),
-(10, '100 Workouts', 'Complete 100 workouts', 'total_workouts', 100, '👑'),
-(11, 'Perfect Week', 'Complete every workout in a week', 'perfect_week', 1, '✅'),
-(12, '4 Perfect Weeks', 'Complete 4 perfect weeks', 'perfect_week', 4, '🎯')
-ON CONFLICT (id) DO UPDATE SET 
-  name = EXCLUDED.name, 
-  description = EXCLUDED.description, 
-  condition_type = EXCLUDED.condition_type, 
-  condition_value = EXCLUDED.condition_value, 
-  icon = EXCLUDED.icon;
 
 -- Achievements unlocked per user
-create table if not exists user_achievements (
-  id             serial      primary key,
-  user_id        uuid        not null references profiles(id) on delete cascade,
-  achievement_id integer     not null references achievements(id) on delete cascade,
-  unlocked_at    timestamptz not null default now(),
-  unique (user_id, achievement_id)
+CREATE TABLE IF NOT EXISTS user_achievements (
+  id             serial      PRIMARY KEY,
+  user_id        uuid        NOT NULL REFERENCES profiles(id)      ON DELETE CASCADE,
+  achievement_id integer     NOT NULL REFERENCES achievements(id)  ON DELETE CASCADE,
+  unlocked_at    timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, achievement_id)
 );
 
--- ==========================================
--- MARTIAL ARTS TRAINING TABLES
--- ==========================================
+-- ==============================================================================
+-- SECTION 2: MARTIAL ARTS TRAINING TABLES
+-- ==============================================================================
 
-create table if not exists martial_arts_exercises (
-  id              serial      primary key,
-  name            text        not null,
-  instruction     text,
-  comment         text,
-  image_url       text,
-  is_deleted      boolean     not null default false,
-  created_at      timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS martial_arts_exercises (
+  id          serial      PRIMARY KEY,
+  name        text        NOT NULL,
+  instruction text,
+  comment     text,
+  image_url   text,
+  is_deleted  boolean     NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now()
 );
 
-create table if not exists martial_arts_templates (
-  id          serial primary key,
-  day         text   not null unique, -- 'tuesday', 'saturday', etc.
-  title       text   not null,
+CREATE TABLE IF NOT EXISTS martial_arts_templates (
+  id          serial PRIMARY KEY,
+  day         text   NOT NULL UNIQUE,
+  title       text   NOT NULL,
   description text
 );
 
-create table if not exists martial_arts_template_exercises (
-  id             serial  primary key,
-  template_id    integer not null references martial_arts_templates(id) on delete cascade,
-  exercise_id    integer not null references martial_arts_exercises(id) on delete cascade,
-  sets           integer not null,
-  reps           text    not null, -- e.g. '3 min', '8 each leg'
-  exercise_order integer not null
+CREATE TABLE IF NOT EXISTS martial_arts_template_exercises (
+  id             serial  PRIMARY KEY,
+  template_id    integer NOT NULL REFERENCES martial_arts_templates(id)  ON DELETE CASCADE,
+  exercise_id    integer NOT NULL REFERENCES martial_arts_exercises(id)  ON DELETE CASCADE,
+  sets           integer NOT NULL,
+  reps           text    NOT NULL,
+  exercise_order integer NOT NULL
 );
 
--- ==========================================
--- MUSCLE FOCUS TRAINING TABLES
--- ==========================================
+-- ==============================================================================
+-- SECTION 3: MUSCLE FOCUS TRAINING TABLES
+-- ==============================================================================
 
-create table if not exists muscle_focus_exercises (
-  id              serial      primary key,
-  name            text        not null,
-  instruction     text,
-  comment         text,
-  image_url       text,
-  is_deleted      boolean     not null default false,
-  created_at      timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS muscle_focus_exercises (
+  id          serial      PRIMARY KEY,
+  name        text        NOT NULL,
+  instruction text,
+  comment     text,
+  image_url   text,
+  is_deleted  boolean     NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now()
 );
 
-create table if not exists muscle_focus_templates (
-  id          serial primary key,
-  category    text   not null unique, -- 'chest_focus', 'arms_focus', etc.
-  title       text   not null,
+CREATE TABLE IF NOT EXISTS muscle_focus_templates (
+  id          serial PRIMARY KEY,
+  category    text   NOT NULL UNIQUE,   -- 'chest_focus', 'arms_focus', etc.
+  title       text   NOT NULL,
   description text
 );
 
-create table if not exists muscle_focus_template_exercises (
-  id             serial  primary key,
-  template_id    integer not null references muscle_focus_templates(id) on delete cascade,
-  exercise_id    integer not null references muscle_focus_exercises(id) on delete cascade,
-  sets           integer not null,
-  reps           text    not null,
-  exercise_order integer not null
+CREATE TABLE IF NOT EXISTS muscle_focus_template_exercises (
+  id             serial  PRIMARY KEY,
+  template_id    integer NOT NULL REFERENCES muscle_focus_templates(id)  ON DELETE CASCADE,
+  exercise_id    integer NOT NULL REFERENCES muscle_focus_exercises(id)  ON DELETE CASCADE,
+  sets           integer NOT NULL,
+  reps           text    NOT NULL,
+  exercise_order integer NOT NULL
 );
 
--- ==========================================
--- AUXILIARY ROUTINES (Warmup, Cooldown, Posture, Knockknee)
--- ==========================================
+-- ==============================================================================
+-- SECTION 4: AUXILIARY ROUTINES (Warmup, Cooldown, Posture, Knockknee)
+-- ==============================================================================
 
-create table if not exists auxiliary_routines (
-  id          serial primary key,
-  category    text   not null unique, -- 'warmup', 'cooldown', 'posture', 'knockknee'
-  image_url   text
+CREATE TABLE IF NOT EXISTS auxiliary_routines (
+  id        serial PRIMARY KEY,
+  category  text   NOT NULL UNIQUE,  -- 'warmup', 'cooldown', 'posture', 'knockknee'
+  image_url text
 );
 
-create table if not exists auxiliary_routine_exercises (
-  id               serial      primary key,
-  routine_id       integer     not null references auxiliary_routines(id) on delete cascade,
-  name             text        not null,
+CREATE TABLE IF NOT EXISTS auxiliary_routine_exercises (
+  id               serial      PRIMARY KEY,
+  routine_id       integer     NOT NULL REFERENCES auxiliary_routines(id) ON DELETE CASCADE,
+  name             text        NOT NULL,
   duration_seconds integer,
   reps             text,
   sets             integer,
-  exercise_order   integer     not null,
-  is_deleted       boolean     not null default false,
-  created_at       timestamptz not null default now()
+  exercise_order   integer     NOT NULL,
+  is_deleted       boolean     NOT NULL DEFAULT false,
+  created_at       timestamptz NOT NULL DEFAULT now()
 );
+
+-- ==============================================================================
+-- SECTION 5: USER DATA TABLES
+-- ==============================================================================
 
 -- Personal records per user per exercise
-create table if not exists personal_records (
-  id                  serial      primary key,
-  user_id             uuid        not null references profiles(id) on delete cascade,
-  exercise_id         integer     not null references exercises(id) on delete cascade,
-  max_weight          numeric     not null default 0,
-  max_reps            integer     not null default 0,
-  longest_hold_seconds integer     not null default 0,
-  estimated_1rm       numeric     not null default 0,
-  achieved_at         timestamptz not null default now(),
-  updated_at          timestamptz not null default now(),
-  unique (user_id, exercise_id)
+CREATE TABLE IF NOT EXISTS personal_records (
+  id                   serial      PRIMARY KEY,
+  user_id              uuid        NOT NULL REFERENCES profiles(id)   ON DELETE CASCADE,
+  exercise_id          integer     NOT NULL REFERENCES exercises(id)  ON DELETE CASCADE,
+  max_weight           numeric     NOT NULL DEFAULT 0,
+  max_reps             integer     NOT NULL DEFAULT 0,
+  longest_hold_seconds integer     NOT NULL DEFAULT 0,
+  estimated_1rm        numeric     NOT NULL DEFAULT 0,
+  achieved_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at           timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, exercise_id)
 );
+
+-- Safe column migrations for personal_records
+ALTER TABLE personal_records ADD COLUMN IF NOT EXISTS max_weight           numeric     NOT NULL DEFAULT 0;
+ALTER TABLE personal_records ADD COLUMN IF NOT EXISTS max_reps             integer     NOT NULL DEFAULT 0;
+ALTER TABLE personal_records ADD COLUMN IF NOT EXISTS longest_hold_seconds integer     NOT NULL DEFAULT 0;
+ALTER TABLE personal_records ADD COLUMN IF NOT EXISTS estimated_1rm        numeric     NOT NULL DEFAULT 0;
+ALTER TABLE personal_records ADD COLUMN IF NOT EXISTS achieved_at          timestamptz NOT NULL DEFAULT now();
+ALTER TABLE personal_records ADD COLUMN IF NOT EXISTS updated_at           timestamptz NOT NULL DEFAULT now();
 
 -- Streak tracking (one row per user)
-create table if not exists streaks (
-  id                 serial      primary key,
-  user_id            uuid        not null unique references profiles(id) on delete cascade,
-  current_streak     integer     not null default 0,
-  best_streak        integer     not null default 0,
-  last_workout_date  date,
-  updated_at         timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS streaks (
+  id                serial      PRIMARY KEY,
+  user_id           uuid        NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
+  current_streak    integer     NOT NULL DEFAULT 0,
+  best_streak       integer     NOT NULL DEFAULT 0,
+  last_workout_date date,
+  updated_at        timestamptz NOT NULL DEFAULT now()
 );
 
-
--- ==============================================================================
--- SECTION 1B: SAFE COLUMN MIGRATIONS
--- Adds any new columns to existing tables without breaking a re-run.
--- This is critical for tables that already exist in the database.
--- ==============================================================================
-
--- profiles: add columns that may not exist yet
-alter table profiles add column if not exists xp_total    integer     not null default 0;
-alter table profiles add column if not exists updated_at  timestamptz not null default now();
-alter table profiles add column if not exists avatar_url  text;
-alter table profiles add column if not exists role        text        not null default 'user';
-
-
--- personal_records: migrate to the current production shape used by the app
-alter table personal_records add column if not exists max_weight numeric not null default 0;
-alter table personal_records add column if not exists max_reps integer not null default 0;
-alter table personal_records add column if not exists longest_hold_seconds integer not null default 0;
-alter table personal_records add column if not exists estimated_1rm numeric not null default 0;
-alter table personal_records add column if not exists achieved_at timestamptz not null default now();
-alter table personal_records add column if not exists updated_at timestamptz not null default now();
-
--- Body metrics tracking (used by the production UI)
-create table if not exists body_metrics (
-  id                  serial      primary key,
-  user_id             uuid        not null references profiles(id) on delete cascade,
-  weight_kg           numeric     not null,
+-- Body metrics tracking
+CREATE TABLE IF NOT EXISTS body_metrics (
+  id                  serial      PRIMARY KEY,
+  user_id             uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  weight_kg           numeric     NOT NULL,
   body_fat_percentage numeric,
-  measured_at         timestamptz not null default now(),
+  measured_at         timestamptz NOT NULL DEFAULT now(),
   notes               text,
-  created_at          timestamptz not null default now()
+  created_at          timestamptz NOT NULL DEFAULT now()
 );
 
-alter table body_metrics add column if not exists notes text;
-alter table body_metrics add column if not exists created_at timestamptz not null default now();
+ALTER TABLE body_metrics ADD COLUMN IF NOT EXISTS notes      text;
+ALTER TABLE body_metrics ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
 
--- Current workout storage used by the app (v5)
-create table if not exists workouts_v5 (
-  id                 uuid        primary key default gen_random_uuid(),
-  profile_id         uuid        not null references profiles(id) on delete cascade,
-  name               text        not null,
-  start_time         timestamptz not null,
-  end_time           timestamptz not null,
-  xp_earned          integer     not null default 0,
-  sets_skipped       integer     not null default 0,
-  exercises_skipped  integer     not null default 0,
-  estimated_calories integer     not null default 0,
-  created_at         timestamptz not null default now()
+-- Current workout storage (v5)
+CREATE TABLE IF NOT EXISTS workouts_v5 (
+  id                 uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id         uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name               text        NOT NULL,
+  start_time         timestamptz NOT NULL,
+  end_time           timestamptz NOT NULL,
+  xp_earned          integer     NOT NULL DEFAULT 0,
+  sets_skipped       integer     NOT NULL DEFAULT 0,
+  exercises_skipped  integer     NOT NULL DEFAULT 0,
+  estimated_calories integer     NOT NULL DEFAULT 0,
+  created_at         timestamptz NOT NULL DEFAULT now()
 );
 
-create table if not exists workout_exercises_v5 (
-  id                       uuid    primary key default gen_random_uuid(),
-  workout_id               uuid    not null references workouts_v5(id) on delete cascade,
-  exercise_id              integer references exercises(id) on delete cascade,
-  martial_arts_exercise_id integer references martial_arts_exercises(id) on delete cascade,
-  muscle_focus_exercise_id integer references muscle_focus_exercises(id) on delete cascade,
+CREATE TABLE IF NOT EXISTS workout_exercises_v5 (
+  id                       uuid    PRIMARY KEY DEFAULT gen_random_uuid(),
+  workout_id               uuid    NOT NULL REFERENCES workouts_v5(id)              ON DELETE CASCADE,
+  exercise_id              integer REFERENCES exercises(id)                          ON DELETE SET NULL,
+  martial_arts_exercise_id integer REFERENCES martial_arts_exercises(id)            ON DELETE SET NULL,
+  muscle_focus_exercise_id integer REFERENCES muscle_focus_exercises(id)            ON DELETE SET NULL,
   exercise_name            text,
-  order_index              integer not null,
-  sets_skipped             integer not null default 0
+  order_index              integer NOT NULL,
+  sets_skipped             integer NOT NULL DEFAULT 0
 );
 
-create table if not exists workout_sets_v5 (
-  id                  uuid    primary key default gen_random_uuid(),
-  workout_exercise_id uuid    not null references workout_exercises_v5(id) on delete cascade,
-  actual_reps         integer not null,
-  weight_kg           numeric not null default 0,
-  unit                text    not null default 'kg',
-  completed           boolean not null default false
+-- Safe column migrations for workout_exercises_v5
+ALTER TABLE workout_exercises_v5 ADD COLUMN IF NOT EXISTS exercise_name            text;
+ALTER TABLE workout_exercises_v5 ADD COLUMN IF NOT EXISTS martial_arts_exercise_id integer REFERENCES martial_arts_exercises(id) ON DELETE SET NULL;
+ALTER TABLE workout_exercises_v5 ADD COLUMN IF NOT EXISTS muscle_focus_exercise_id integer REFERENCES muscle_focus_exercises(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS workout_sets_v5 (
+  id                  uuid    PRIMARY KEY DEFAULT gen_random_uuid(),
+  workout_exercise_id uuid    NOT NULL REFERENCES workout_exercises_v5(id) ON DELETE CASCADE,
+  actual_reps         integer NOT NULL,
+  weight_kg           numeric NOT NULL DEFAULT 0,
+  unit                text    NOT NULL DEFAULT 'kg',
+  completed           boolean NOT NULL DEFAULT false
 );
 
-alter table workout_exercises_v5 add column if not exists exercise_name text;
-alter table workout_exercises_v5 add column if not exists martial_arts_exercise_id integer references martial_arts_exercises(id) on delete cascade;
-alter table workout_exercises_v5 add column if not exists muscle_focus_exercise_id integer references muscle_focus_exercises(id) on delete cascade;
+-- ==============================================================================
+-- SECTION 6: ACTIVITY FEED (Community module)
+-- ==============================================================================
 
--- Admin and System Tables
-create table if not exists app_settings (
-  id          serial      primary key,
-  key         text        not null unique,
-  value       jsonb       not null,
-  updated_at  timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS activity_feed (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_name   text        NOT NULL DEFAULT 'Athlete',
+  action_type text        NOT NULL DEFAULT 'workout_completed',
+  data        jsonb,
+  created_at  timestamptz NOT NULL DEFAULT now()
 );
 
-create table if not exists admin_logs (
-  id          serial      primary key,
-  admin_id    uuid        not null references profiles(id) on delete cascade,
-  action      text        not null,
-  details     jsonb,
-  created_at  timestamptz not null default now()
+-- ==============================================================================
+-- SECTION 7: ADMIN + SYSTEM TABLES
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  id         serial      PRIMARY KEY,
+  key        text        NOT NULL UNIQUE,
+  value      jsonb       NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Ensure unique constraints exist for ON CONFLICT clauses (fixes ERROR 42P10)
-alter table streaks drop constraint if exists streaks_user_id_key;
-alter table streaks add constraint streaks_user_id_key unique (user_id);
-
-alter table achievements drop constraint if exists achievements_name_key;
-alter table achievements add constraint achievements_name_key unique (name);
-
-alter table user_achievements drop constraint if exists user_achievements_user_id_achievement_id_key;
-alter table user_achievements add constraint user_achievements_user_id_achievement_id_key unique (user_id, achievement_id);
-
-alter table personal_records drop constraint if exists personal_records_user_id_exercise_id_key;
-alter table personal_records add constraint personal_records_user_id_exercise_id_key unique (user_id, exercise_id);
-
-
--- ==============================================================================
--- SECTION 2: PERFORMANCE INDEXES
--- ==============================================================================
-
-create index if not exists idx_profiles_id
-  on profiles(id);
-
-
-
-create index if not exists idx_streaks_user_id
-  on streaks(user_id);
-
-create index if not exists idx_streaks_last_workout
-  on streaks(last_workout_date desc);
-
-create index if not exists idx_user_achievements_user_id
-  on user_achievements(user_id);
-
-create index if not exists idx_user_achievements_achievement_id
-  on user_achievements(achievement_id);
-
-create index if not exists idx_personal_records_user_id
-  on personal_records(user_id);
-
-create index if not exists idx_personal_records_exercise_id
-  on personal_records(exercise_id);
-
-create index if not exists idx_body_metrics_user_id
-  on body_metrics(user_id, measured_at desc);
-
-create index if not exists idx_workouts_v5_profile_id
-  on workouts_v5(profile_id);
-
-create index if not exists idx_workouts_v5_start_time
-  on workouts_v5(start_time desc);
-
-create index if not exists idx_workout_exercises_v5_workout_id
-  on workout_exercises_v5(workout_id);
-
-create index if not exists idx_workout_exercises_v5_exercise_id
-  on workout_exercises_v5(exercise_id);
-
-create index if not exists idx_workout_sets_v5_workout_exercise_id
-  on workout_sets_v5(workout_exercise_id);
-
-create index if not exists idx_workout_sets_v5_completed
-  on workout_sets_v5(workout_exercise_id, completed) where completed = true;
-
-
--- ==============================================================================
--- SECTION 3: ROW LEVEL SECURITY
--- ==============================================================================
-
-alter table profiles           enable row level security;
-alter table user_achievements  enable row level security;
-alter table personal_records   enable row level security;
-alter table streaks            enable row level security;
-alter table body_metrics       enable row level security;
-alter table workouts_v5        enable row level security;
-alter table workout_exercises_v5 enable row level security;
-alter table workout_sets_v5    enable row level security;
-alter table app_settings       enable row level security;
-alter table admin_logs         enable row level security;
-
-
--- ==============================================================================
--- SECTION 4: RLS POLICIES (idempotent via DROP + CREATE)
--- ==============================================================================
-
--- profiles
-drop policy if exists "profiles_select_own"  on profiles;
-drop policy if exists "profiles_insert_own"  on profiles;
-drop policy if exists "profiles_update_own"  on profiles;
-create policy "profiles_select_own" on profiles for select using (auth.uid() = id);
-create policy "profiles_insert_own" on profiles for insert with check (auth.uid() = id);
-create policy "profiles_update_own" on profiles for update using (auth.uid() = id) with check (auth.uid() = id and role = (select role from profiles where id = auth.uid()));
-
--- RLS policies for workout_templates
-alter table workout_templates enable row level security;
-drop policy if exists "templates_public_read" on workout_templates;
-drop policy if exists "templates_admin_all" on workout_templates;
-create policy "templates_public_read" on workout_templates for select using (true);
-create policy "templates_admin_all" on workout_templates for all using ((select role from profiles where id = auth.uid()) = 'admin');
-
--- RLS policies for workout_template_exercises
-alter table workout_template_exercises enable row level security;
-drop policy if exists "template_exercises_public_read" on workout_template_exercises;
-drop policy if exists "template_exercises_admin_all" on workout_template_exercises;
-create policy "template_exercises_public_read" on workout_template_exercises for select using (true);
-create policy "template_exercises_admin_all" on workout_template_exercises for all using ((select role from profiles where id = auth.uid()) = 'admin');
-
--- RLS policies for auxiliary_routines
-alter table auxiliary_routines enable row level security;
-drop policy if exists "aux_routines_public_read" on auxiliary_routines;
-drop policy if exists "aux_routines_admin_all" on auxiliary_routines;
-create policy "aux_routines_public_read" on auxiliary_routines for select using (true);
-create policy "aux_routines_admin_all" on auxiliary_routines for all using ((select role from profiles where id = auth.uid()) = 'admin');
-
--- RLS policies for auxiliary_routine_exercises
-alter table auxiliary_routine_exercises enable row level security;
-drop policy if exists "aux_exercises_public_read" on auxiliary_routine_exercises;
-drop policy if exists "aux_exercises_admin_all" on auxiliary_routine_exercises;
-create policy "aux_exercises_public_read" on auxiliary_routine_exercises for select using (true);
-create policy "aux_exercises_admin_all" on auxiliary_routine_exercises for all using ((select role from profiles where id = auth.uid()) = 'admin');
-
--- user_achievements
-drop policy if exists "achievements_all_own" on user_achievements;
-create policy "achievements_all_own" on user_achievements for all using (auth.uid() = user_id);
-
--- personal_records
-drop policy if exists "records_all_own" on personal_records;
-create policy "records_all_own" on personal_records for all using (auth.uid() = user_id);
-
--- streaks
-drop policy if exists "streaks_all_own" on streaks;
-create policy "streaks_all_own" on streaks for all using (auth.uid() = user_id);
-
--- body metrics
-drop policy if exists "body_metrics_all_own" on body_metrics;
-create policy "body_metrics_all_own" on body_metrics for all using (auth.uid() = user_id);
-
--- current v5 workout tables used by the app
-drop policy if exists "workouts_v5_all_own" on workouts_v5;
-create policy "workouts_v5_all_own" on workouts_v5 for all using (profile_id = auth.uid());
-
-drop policy if exists "workout_exercises_v5_all_own" on workout_exercises_v5;
-create policy "workout_exercises_v5_all_own" on workout_exercises_v5 for all using (
-  workout_id in (select id from workouts_v5 where profile_id = auth.uid())
+CREATE TABLE IF NOT EXISTS admin_logs (
+  id         serial      PRIMARY KEY,
+  admin_id   uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  action     text        NOT NULL,
+  details    jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
-drop policy if exists "workout_sets_v5_all_own" on workout_sets_v5;
-create policy "workout_sets_v5_all_own" on workout_sets_v5 for all using (
-  workout_exercise_id in (
-    select id from workout_exercises_v5 where workout_id in (
-      select id from workouts_v5 where profile_id = auth.uid()
-    )
+
+-- ==============================================================================
+-- SECTION 8: UNIQUE CONSTRAINTS (idempotent)
+-- ==============================================================================
+
+ALTER TABLE streaks         DROP CONSTRAINT IF EXISTS streaks_user_id_key;
+ALTER TABLE streaks         ADD  CONSTRAINT streaks_user_id_key UNIQUE (user_id);
+
+ALTER TABLE achievements    DROP CONSTRAINT IF EXISTS achievements_name_key;
+ALTER TABLE achievements    ADD  CONSTRAINT achievements_name_key UNIQUE (name);
+
+ALTER TABLE user_achievements DROP CONSTRAINT IF EXISTS user_achievements_user_id_achievement_id_key;
+ALTER TABLE user_achievements ADD  CONSTRAINT user_achievements_user_id_achievement_id_key UNIQUE (user_id, achievement_id);
+
+ALTER TABLE personal_records DROP CONSTRAINT IF EXISTS personal_records_user_id_exercise_id_key;
+ALTER TABLE personal_records ADD  CONSTRAINT personal_records_user_id_exercise_id_key UNIQUE (user_id, exercise_id);
+
+-- Enforce valid achievement condition types
+ALTER TABLE achievements DROP CONSTRAINT IF EXISTS chk_achievements_condition_type;
+ALTER TABLE achievements ADD  CONSTRAINT chk_achievements_condition_type
+  CHECK (condition_type IN ('total_workouts', 'total_sets', 'streak', 'level', 'specific_exercise', 'perfect_week'));
+
+
+-- ==============================================================================
+-- SECTION 9: PERFORMANCE INDEXES
+-- ==============================================================================
+
+CREATE INDEX IF NOT EXISTS idx_profiles_id                      ON profiles(id);
+CREATE INDEX IF NOT EXISTS idx_streaks_user_id                  ON streaks(user_id);
+CREATE INDEX IF NOT EXISTS idx_streaks_last_workout             ON streaks(last_workout_date DESC);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id        ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_achievement_id ON user_achievements(achievement_id);
+CREATE INDEX IF NOT EXISTS idx_personal_records_user_id         ON personal_records(user_id);
+CREATE INDEX IF NOT EXISTS idx_personal_records_exercise_id     ON personal_records(exercise_id);
+CREATE INDEX IF NOT EXISTS idx_body_metrics_user_id             ON body_metrics(user_id, measured_at DESC);
+CREATE INDEX IF NOT EXISTS idx_workouts_v5_profile_id           ON workouts_v5(profile_id);
+CREATE INDEX IF NOT EXISTS idx_workouts_v5_start_time           ON workouts_v5(start_time DESC);
+CREATE INDEX IF NOT EXISTS idx_workout_exercises_v5_workout_id  ON workout_exercises_v5(workout_id);
+CREATE INDEX IF NOT EXISTS idx_workout_exercises_v5_exercise_id ON workout_exercises_v5(exercise_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sets_v5_we_id            ON workout_sets_v5(workout_exercise_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sets_v5_completed        ON workout_sets_v5(workout_exercise_id, completed) WHERE completed = true;
+CREATE INDEX IF NOT EXISTS idx_workout_template_ex_template_id  ON workout_template_exercises(template_id);
+CREATE INDEX IF NOT EXISTS idx_activity_feed_user_created       ON activity_feed(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_feed_created            ON activity_feed(created_at DESC);
+
+
+-- ==============================================================================
+-- SECTION 10: ROW LEVEL SECURITY
+-- ==============================================================================
+
+ALTER TABLE profiles              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_achievements     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE personal_records      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE streaks               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE body_metrics          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workouts_v5          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_exercises_v5  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_sets_v5      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app_settings         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_logs           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exercises            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE achievements         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_templates    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_template_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auxiliary_routines         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auxiliary_routine_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE martial_arts_exercises     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE martial_arts_templates     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE martial_arts_template_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE muscle_focus_exercises     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE muscle_focus_templates     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE muscle_focus_template_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_feed              ENABLE ROW LEVEL SECURITY;
+
+
+-- ==============================================================================
+-- SECTION 11: RLS POLICIES (idempotent via DROP + CREATE)
+-- ==============================================================================
+
+-- ─── profiles ───────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "profiles_select_own" ON profiles;
+DROP POLICY IF EXISTS "profiles_insert_own" ON profiles;
+DROP POLICY IF EXISTS "profiles_update_own" ON profiles;
+CREATE POLICY "profiles_select_own" ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (
+    auth.uid() = id
+    AND role = (SELECT role FROM profiles WHERE id = auth.uid())
+  );
+
+-- ─── exercises (public read, admin write) ────────────────────────────────────
+DROP POLICY IF EXISTS "exercises_public_read" ON exercises;
+DROP POLICY IF EXISTS "exercises_admin_all"   ON exercises;
+CREATE POLICY "exercises_public_read" ON exercises FOR SELECT USING (true);
+CREATE POLICY "exercises_admin_all"   ON exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── workout_templates (public read, admin write) ────────────────────────────
+DROP POLICY IF EXISTS "templates_public_read" ON workout_templates;
+DROP POLICY IF EXISTS "templates_admin_all"   ON workout_templates;
+CREATE POLICY "templates_public_read" ON workout_templates FOR SELECT USING (true);
+CREATE POLICY "templates_admin_all"   ON workout_templates FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── workout_template_exercises (public read, admin write) ───────────────────
+DROP POLICY IF EXISTS "template_exercises_public_read" ON workout_template_exercises;
+DROP POLICY IF EXISTS "template_exercises_admin_all"   ON workout_template_exercises;
+CREATE POLICY "template_exercises_public_read" ON workout_template_exercises FOR SELECT USING (true);
+CREATE POLICY "template_exercises_admin_all"   ON workout_template_exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── auxiliary_routines (public read, admin write) ───────────────────────────
+DROP POLICY IF EXISTS "aux_routines_public_read" ON auxiliary_routines;
+DROP POLICY IF EXISTS "aux_routines_admin_all"   ON auxiliary_routines;
+CREATE POLICY "aux_routines_public_read" ON auxiliary_routines FOR SELECT USING (true);
+CREATE POLICY "aux_routines_admin_all"   ON auxiliary_routines FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── auxiliary_routine_exercises (public read, admin write) ──────────────────
+DROP POLICY IF EXISTS "aux_exercises_public_read" ON auxiliary_routine_exercises;
+DROP POLICY IF EXISTS "aux_exercises_admin_all"   ON auxiliary_routine_exercises;
+CREATE POLICY "aux_exercises_public_read" ON auxiliary_routine_exercises FOR SELECT USING (true);
+CREATE POLICY "aux_exercises_admin_all"   ON auxiliary_routine_exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── achievements (public read, admin write) ─────────────────────────────────
+DROP POLICY IF EXISTS "achievements_public_read" ON achievements;
+DROP POLICY IF EXISTS "achievements_admin_all"   ON achievements;
+CREATE POLICY "achievements_public_read" ON achievements FOR SELECT USING (true);
+CREATE POLICY "achievements_admin_all"   ON achievements FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── user_achievements ───────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "achievements_all_own" ON user_achievements;
+CREATE POLICY "achievements_all_own" ON user_achievements FOR ALL USING (auth.uid() = user_id);
+
+-- ─── personal_records ────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "records_all_own" ON personal_records;
+CREATE POLICY "records_all_own" ON personal_records FOR ALL USING (auth.uid() = user_id);
+
+-- ─── streaks ─────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "streaks_all_own" ON streaks;
+CREATE POLICY "streaks_all_own" ON streaks FOR ALL USING (auth.uid() = user_id);
+
+-- ─── body_metrics ────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "body_metrics_all_own" ON body_metrics;
+CREATE POLICY "body_metrics_all_own" ON body_metrics FOR ALL USING (auth.uid() = user_id);
+
+-- ─── workouts_v5 ─────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "workouts_v5_all_own" ON workouts_v5;
+CREATE POLICY "workouts_v5_all_own" ON workouts_v5 FOR ALL USING (profile_id = auth.uid());
+
+-- ─── workout_exercises_v5 ────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "workout_exercises_v5_all_own" ON workout_exercises_v5;
+CREATE POLICY "workout_exercises_v5_all_own" ON workout_exercises_v5 FOR ALL USING (
+  workout_id IN (SELECT id FROM workouts_v5 WHERE profile_id = auth.uid())
+);
+
+-- ─── workout_sets_v5 ─────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "workout_sets_v5_all_own" ON workout_sets_v5;
+CREATE POLICY "workout_sets_v5_all_own" ON workout_sets_v5 FOR ALL USING (
+  workout_exercise_id IN (
+    SELECT id FROM workout_exercises_v5
+    WHERE workout_id IN (SELECT id FROM workouts_v5 WHERE profile_id = auth.uid())
   )
 );
 
--- exercises & achievements are public reads, admin writes
-alter table exercises    enable row level security;
-alter table achievements enable row level security;
-drop policy if exists "exercises_public_read"    on exercises;
-drop policy if exists "achievements_public_read" on achievements;
-drop policy if exists "exercises_admin_all"      on exercises;
-drop policy if exists "achievements_admin_all"   on achievements;
-
-create policy "exercises_public_read"    on exercises    for select using (true);
-create policy "achievements_public_read" on achievements for select using (true);
-
-create policy "exercises_admin_all" on exercises for all using (
-  (select role from profiles where id = auth.uid()) = 'admin'
-);
-create policy "achievements_admin_all" on achievements for all using (
-  (select role from profiles where id = auth.uid()) = 'admin'
+-- ─── app_settings (public read, admin write) ─────────────────────────────────
+DROP POLICY IF EXISTS "settings_public_read" ON app_settings;
+DROP POLICY IF EXISTS "settings_admin_all"   ON app_settings;
+CREATE POLICY "settings_public_read" ON app_settings FOR SELECT USING (true);
+CREATE POLICY "settings_admin_all"   ON app_settings FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
 );
 
--- app_settings (public read, admin write)
-drop policy if exists "settings_public_read" on app_settings;
-drop policy if exists "settings_admin_all" on app_settings;
-create policy "settings_public_read" on app_settings for select using (true);
-create policy "settings_admin_all" on app_settings for all using (
-  (select role from profiles where id = auth.uid()) = 'admin'
+-- ─── admin_logs (admin only) ─────────────────────────────────────────────────
+DROP POLICY IF EXISTS "admin_logs_admin_all" ON admin_logs;
+CREATE POLICY "admin_logs_admin_all" ON admin_logs FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
 );
 
--- admin_logs (admin read/write)
-drop policy if exists "admin_logs_admin_all" on admin_logs;
-create policy "admin_logs_admin_all" on admin_logs for all using (
-  (select role from profiles where id = auth.uid()) = 'admin'
+-- ─── martial_arts tables (public read, admin write) ──────────────────────────
+DROP POLICY IF EXISTS "ma_ex_public_read"        ON martial_arts_exercises;
+DROP POLICY IF EXISTS "ma_ex_admin_all"          ON martial_arts_exercises;
+DROP POLICY IF EXISTS "ma_tmpl_public_read"      ON martial_arts_templates;
+DROP POLICY IF EXISTS "ma_tmpl_admin_all"        ON martial_arts_templates;
+DROP POLICY IF EXISTS "ma_tmpl_ex_public_read"   ON martial_arts_template_exercises;
+DROP POLICY IF EXISTS "ma_tmpl_ex_admin_all"     ON martial_arts_template_exercises;
+
+CREATE POLICY "ma_ex_public_read" ON martial_arts_exercises FOR SELECT USING (true);
+CREATE POLICY "ma_ex_admin_all"   ON martial_arts_exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+CREATE POLICY "ma_tmpl_public_read" ON martial_arts_templates FOR SELECT USING (true);
+CREATE POLICY "ma_tmpl_admin_all"   ON martial_arts_templates FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+CREATE POLICY "ma_tmpl_ex_public_read" ON martial_arts_template_exercises FOR SELECT USING (true);
+CREATE POLICY "ma_tmpl_ex_admin_all"   ON martial_arts_template_exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
 );
 
+-- ─── muscle_focus tables (public read, admin write) ──────────────────────────
+DROP POLICY IF EXISTS "mf_ex_public_read"        ON muscle_focus_exercises;
+DROP POLICY IF EXISTS "mf_ex_admin_all"          ON muscle_focus_exercises;
+DROP POLICY IF EXISTS "mf_tmpl_public_read"      ON muscle_focus_templates;
+DROP POLICY IF EXISTS "mf_tmpl_admin_all"        ON muscle_focus_templates;
+DROP POLICY IF EXISTS "mf_tmpl_ex_public_read"   ON muscle_focus_template_exercises;
+DROP POLICY IF EXISTS "mf_tmpl_ex_admin_all"     ON muscle_focus_template_exercises;
 
--- ============================================================================== 
--- SECTION 5B: CURRENT ANALYTICS VIEW FOR V5 WORKOUTS
+CREATE POLICY "mf_ex_public_read" ON muscle_focus_exercises FOR SELECT USING (true);
+CREATE POLICY "mf_ex_admin_all"   ON muscle_focus_exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+CREATE POLICY "mf_tmpl_public_read" ON muscle_focus_templates FOR SELECT USING (true);
+CREATE POLICY "mf_tmpl_admin_all"   ON muscle_focus_templates FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+CREATE POLICY "mf_tmpl_ex_public_read" ON muscle_focus_template_exercises FOR SELECT USING (true);
+CREATE POLICY "mf_tmpl_ex_admin_all"   ON muscle_focus_template_exercises FOR ALL USING (
+  (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- ─── activity_feed (public read, own insert/delete) ──────────────────────────
+DROP POLICY IF EXISTS "feed_public_read" ON activity_feed;
+DROP POLICY IF EXISTS "feed_insert_own"  ON activity_feed;
+DROP POLICY IF EXISTS "feed_delete_own"  ON activity_feed;
+CREATE POLICY "feed_public_read" ON activity_feed FOR SELECT USING (true);
+CREATE POLICY "feed_insert_own"  ON activity_feed FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "feed_delete_own"  ON activity_feed FOR DELETE USING (auth.uid() = user_id);
+
+
+-- ==============================================================================
+-- SECTION 12: ANALYTICS VIEWS
 -- ==============================================================================
 
-drop materialized view if exists mv_weekly_volume_v5;
-create materialized view mv_weekly_volume_v5 as
-select
+-- Daily workout summary view (replaces materialized view — always fresh)
+DROP VIEW IF EXISTS workout_daily_summary CASCADE;
+CREATE OR REPLACE VIEW workout_daily_summary
+  WITH (security_invoker = true)
+AS
+SELECT
+  w.profile_id                                                           AS user_id,
+  w.start_time::date                                                     AS date,
+  to_char(w.start_time, 'Day')                                           AS day,
+  EXTRACT(EPOCH FROM (w.end_time - w.start_time)) / 60                  AS duration_minutes,
+  CASE
+    WHEN (COUNT(ws.id) + w.sets_skipped) > 0
+    THEN ROUND(
+      (COUNT(ws.id) FILTER (WHERE ws.completed = true)::numeric
+       / (COUNT(ws.id) + w.sets_skipped)) * 100
+    )
+    ELSE 0
+  END                                                                     AS completion_score,
+  COUNT(ws.id) + w.sets_skipped                                          AS total_sets,
+  COUNT(ws.id) FILTER (WHERE ws.completed)                               AS completed_sets,
+  COALESCE(SUM(ws.actual_reps), 0)                                       AS total_reps
+FROM workouts_v5 w
+LEFT JOIN workout_exercises_v5 we ON we.workout_id = w.id
+LEFT JOIN workout_sets_v5 ws      ON ws.workout_exercise_id = we.id
+GROUP BY w.id, w.profile_id, w.start_time, w.end_time, w.sets_skipped;
+
+GRANT SELECT ON workout_daily_summary TO authenticated;
+
+-- Weekly volume view (replaces materialized view — always fresh, always correct)
+DROP MATERIALIZED VIEW IF EXISTS mv_weekly_volume_v5;
+CREATE OR REPLACE VIEW mv_weekly_volume_v5
+  WITH (security_invoker = true)
+AS
+SELECT
   w.profile_id,
-  date_trunc('week', w.start_time) as week_start,
-  count(ws.id) filter (where ws.completed = true) as sets_completed
-from workouts_v5 w
-join workout_exercises_v5 we on w.id = we.workout_id
-join workout_sets_v5 ws on we.id = ws.workout_exercise_id
-group by 1, 2;
+  date_trunc('week', w.start_time)                              AS week_start,
+  COUNT(ws.id) FILTER (WHERE ws.completed = true)              AS sets_completed
+FROM workouts_v5 w
+JOIN workout_exercises_v5 we ON w.id = we.workout_id
+JOIN workout_sets_v5 ws      ON we.id = ws.workout_exercise_id
+GROUP BY 1, 2;
 
-grant select on mv_weekly_volume_v5 to authenticated;
-grant select on mv_weekly_volume_v5 to anon;
+GRANT SELECT ON mv_weekly_volume_v5 TO authenticated;
+GRANT SELECT ON mv_weekly_volume_v5 TO anon;
+
+-- Personal records compatibility view (for chat context and any legacy queries)
+-- Exposes `max_weight_kg` alias so old queries don't break
+DROP VIEW IF EXISTS records CASCADE;
+CREATE OR REPLACE VIEW records
+  WITH (security_invoker = true)
+AS
+SELECT
+  id,
+  user_id,
+  exercise_id,
+  max_reps,
+  max_weight        AS max_weight_kg,
+  'kg'::text        AS unit,
+  estimated_1rm,
+  achieved_at,
+  updated_at
+FROM personal_records;
+
+GRANT SELECT ON records TO authenticated;
 
 
 -- ==============================================================================
--- SECTION 5: UTILITY FUNCTIONS
+-- SECTION 13: UTILITY FUNCTIONS
 -- ==============================================================================
 
--- Securely increment XP for the currently authenticated user only
-create or replace function increment_xp(amount integer)
-returns void
-language sql
-security definer
-set search_path = public
-as $$
-  update profiles
-     set xp_total   = xp_total + amount,
+-- Securely increment XP for the currently authenticated user
+CREATE OR REPLACE FUNCTION increment_xp(amount integer)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  UPDATE profiles
+     SET xp_total   = xp_total + amount,
          updated_at = now()
-   where id = auth.uid();
+   WHERE id = auth.uid();
 $$;
 
--- Update the profiles.updated_at column automatically on every row change
-create or replace function touch_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at := now();
-  return new;
-end;
+-- Auto-update updated_at on every row change
+CREATE OR REPLACE FUNCTION touch_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
 $$;
 
-drop trigger if exists trg_profiles_updated_at on profiles;
-create trigger trg_profiles_updated_at
-  before update on profiles
-  for each row
-  execute function touch_updated_at();
-
-drop trigger if exists trg_streaks_updated_at on streaks;
-create trigger trg_streaks_updated_at
-  before update on streaks
-  for each row
-  execute function touch_updated_at();
-
-
--- ==============================================================================
--- SECTION 6: OBSOLETE TRIGGERS REMOVAL
--- Clean up old v4 triggers from the database
--- ==============================================================================
-drop trigger if exists trg_recompute_score on workout_sets;
-drop function if exists recompute_completion_score();
-
-
--- ==============================================================================
--- SECTION 7: STREAK ACHIEVEMENT TRIGGER
--- Fires after every streak update to check and award streak-based achievements.
--- ==============================================================================
-
-create or replace function check_streak_achievements()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  rec achievements%rowtype;
-begin
-  -- Loop over all streak-type achievements and award any that qualify
-  for rec in
-    select * from achievements
-     where condition_type = 'streak'
-       and condition_value <= new.current_streak
-  loop
-    insert into user_achievements (user_id, achievement_id)
-    values (new.user_id, rec.id)
-    on conflict (user_id, achievement_id) do nothing;
-  end loop;
-
-  return new;
-end;
+-- Reset exercises ID sequence after explicit ID inserts (prevents future conflicts)
+CREATE OR REPLACE FUNCTION reset_exercises_sequence()
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT setval('exercises_id_seq', (SELECT COALESCE(MAX(id), 0) FROM exercises));
 $$;
 
-drop trigger if exists trg_streak_achievements on streaks;
-create trigger trg_streak_achievements
-  after update of current_streak on streaks
-  for each row
-  when (new.current_streak > old.current_streak)
-  execute function check_streak_achievements();
+-- Trigger: auto-touch updated_at on profiles
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON profiles;
+CREATE TRIGGER trg_profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- Trigger: auto-touch updated_at on streaks
+DROP TRIGGER IF EXISTS trg_streaks_updated_at ON streaks;
+CREATE TRIGGER trg_streaks_updated_at
+  BEFORE UPDATE ON streaks
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- Remove obsolete v4 triggers/functions
+DROP TRIGGER  IF EXISTS trg_recompute_score    ON workout_sets;
+DROP FUNCTION IF EXISTS recompute_completion_score();
 
 
 -- ==============================================================================
--- SECTION 8: SIGNUP TRIGGER
--- Automatically creates a profile + streak row for every new Supabase auth user.
--- This makes the foreign key constraint on workout_sessions bullet-proof.
+-- SECTION 14: STREAK ACHIEVEMENT TRIGGER
+-- Awards streak-based achievements automatically on every streak update.
 -- ==============================================================================
 
-create or replace function handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_raw_name       text;
-  v_formatted_name text;
-  v_avatar_url     text;
-begin
-  -- Try to get name from Google Auth metadata first
-  v_formatted_name := coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name');
-  v_avatar_url     := coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture');
+CREATE OR REPLACE FUNCTION check_streak_achievements()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  rec achievements%ROWTYPE;
+BEGIN
+  -- Only fire when streak actually increased
+  FOR rec IN
+    SELECT * FROM achievements
+     WHERE condition_type = 'streak'
+       AND condition_value <= NEW.current_streak
+  LOOP
+    INSERT INTO user_achievements (user_id, achievement_id)
+    VALUES (NEW.user_id, rec.id)
+    ON CONFLICT (user_id, achievement_id) DO NOTHING;
+  END LOOP;
 
-  -- Fallback to deriving from email if no name provided
-  if v_formatted_name is null or v_formatted_name = '' then
-    v_raw_name       := split_part(new.email, '@', 1);
-    v_formatted_name := upper(left(v_raw_name, 1)) || lower(substring(v_raw_name from 2));
-  end if;
-
-  insert into public.profiles (id, email, name, avatar_url, xp_total)
-  values (new.id, new.email, v_formatted_name, v_avatar_url, 0)
-  on conflict (id) do update
-  set name = excluded.name,
-      avatar_url = excluded.avatar_url;
-
-  insert into public.streaks (user_id, current_streak, best_streak)
-  values (new.id, 0, 0)
-  on conflict (user_id) do nothing;
-
-  return new;
-end;
+  RETURN NEW;
+END;
 $$;
 
-drop trigger if exists trg_on_auth_user_created on auth.users;
-create trigger trg_on_auth_user_created
-  after insert on auth.users
-  for each row
-  execute function handle_new_user();
+DROP TRIGGER IF EXISTS trg_streak_achievements ON streaks;
+CREATE TRIGGER trg_streak_achievements
+  AFTER UPDATE OF current_streak ON streaks
+  FOR EACH ROW
+  WHEN (NEW.current_streak > OLD.current_streak)
+  EXECUTE FUNCTION check_streak_achievements();
 
 
 -- ==============================================================================
--- SECTION 9: ANALYTICS VIEW
--- A fast, security-aware view for dashboard charts and heatmaps.
+-- SECTION 15: WORKOUT COMPLETION ACHIEVEMENT TRIGGER
+-- Awards total_workouts and total_sets achievements after each workout save.
 -- ==============================================================================
 
-drop view if exists workout_daily_summary cascade;
-create or replace view workout_daily_summary
-  with (security_invoker = true)
-as
-select
-  w.profile_id as user_id,
-  w.start_time::date as date,
-  to_char(w.start_time, 'day') as day,
-  extract(epoch from (w.end_time - w.start_time))/60 as duration_minutes,
-  -- Calculate completion score (completed sets / (completed + skipped + explicitly skipped))
-  case when (count(ws.id) + w.sets_skipped) > 0 
-       then round((count(ws.id) filter (where ws.completed = true)::numeric / (count(ws.id) + w.sets_skipped)) * 100)
-       else 0 end as completion_score,
-  count(ws.id) + w.sets_skipped as total_sets,
-  count(ws.id) filter (where ws.completed) as completed_sets,
-  coalesce(sum(ws.actual_reps), 0) as total_reps
-from workouts_v5 w
-left join workout_exercises_v5 we on we.workout_id = w.id
-left join workout_sets_v5 ws on ws.workout_exercise_id = we.id
-group by
-  w.id,
-  w.profile_id,
-  w.start_time,
-  w.end_time,
-  w.sets_skipped;
+CREATE OR REPLACE FUNCTION check_workout_achievements()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_total_workouts integer;
+  v_total_sets     integer;
+  rec              achievements%ROWTYPE;
+BEGIN
+  -- Count total completed workouts for this user
+  SELECT COUNT(*) INTO v_total_workouts
+    FROM workouts_v5
+   WHERE profile_id = NEW.profile_id;
 
-grant select on workout_daily_summary to authenticated;
+  -- Count total completed sets for this user
+  SELECT COUNT(*) INTO v_total_sets
+    FROM workout_sets_v5 ws
+    JOIN workout_exercises_v5 we ON ws.workout_exercise_id = we.id
+    JOIN workouts_v5 w           ON we.workout_id = w.id
+   WHERE w.profile_id = NEW.profile_id
+     AND ws.completed = true;
 
+  -- Award total_workouts achievements
+  FOR rec IN
+    SELECT * FROM achievements
+     WHERE condition_type = 'total_workouts'
+       AND condition_value <= v_total_workouts
+  LOOP
+    INSERT INTO user_achievements (user_id, achievement_id)
+    VALUES (NEW.profile_id, rec.id)
+    ON CONFLICT (user_id, achievement_id) DO NOTHING;
+  END LOOP;
 
--- ==============================================================================
--- SECTION 10: ONE-TIME BACKFILL (safe to re-run — uses ON CONFLICT DO NOTHING)
--- Fixes any existing auth users who are missing profile/streak rows.
--- The FOR loop runs over auth.users and inserts missing rows safely.
--- ==============================================================================
+  -- Award total_sets achievements
+  FOR rec IN
+    SELECT * FROM achievements
+     WHERE condition_type = 'total_sets'
+       AND condition_value <= v_total_sets
+  LOOP
+    INSERT INTO user_achievements (user_id, achievement_id)
+    VALUES (NEW.profile_id, rec.id)
+    ON CONFLICT (user_id, achievement_id) DO NOTHING;
+  END LOOP;
 
-do $$
-declare
-  v_user          record;
-  v_raw_name      text;
-  v_display_name  text;
-begin
-  for v_user in select id, email from auth.users loop
-
-    v_raw_name     := split_part(v_user.email, '@', 1);
-    v_display_name := upper(left(v_raw_name, 1)) || lower(substring(v_raw_name from 2));
-
-    insert into public.profiles (id, email, name, xp_total)
-    values (v_user.id, v_user.email, v_display_name, 0)
-    on conflict (id) do nothing;
-
-    insert into public.streaks (user_id, current_streak, best_streak)
-    values (v_user.id, 0, 0)
-    on conflict (user_id) do nothing;
-
-  end loop;
-end;
+  RETURN NEW;
+END;
 $$;
 
-
--- ==============================================================================
--- SECTION 11: SEED ACHIEVEMENTS (idempotent — uses ON CONFLICT DO NOTHING)
--- ==============================================================================
-
-insert into achievements (name, description, condition_type, condition_value, icon) values
-  ('First Step',       'Complete your very first workout.',              'total_workouts', 1,   '👟'),
-  ('Getting Started',  'Complete 5 workouts.',                           'total_workouts', 5,   '💪'),
-  ('Consistent',       'Complete 10 workouts.',                          'total_workouts', 10,  '📅'),
-  ('Dedicated',        'Complete 25 workouts.',                          'total_workouts', 25,  '🎯'),
-  ('Centurion',        'Complete 100 workouts.',                         'total_workouts', 100, '🏅'),
-  ('Set Starter',      'Complete 50 total sets.',                        'total_sets',     50,  '✅'),
-  ('Set Machine',      'Complete 500 total sets.',                       'total_sets',     500, '⚙️'),
-  ('Set Legend',       'Complete 2000 total sets.',                      'total_sets',     2000,'🔩'),
-  ('3-Day Streak',     'Work out 3 days in a row.',                      'streak',         3,   '🔥'),
-  ('Iron Will',        'Maintain a 7-day streak.',                       'streak',         7,   '⚡'),
-  ('Two Weeks Strong', 'Maintain a 14-day streak.',                      'streak',         14,  '💎'),
-  ('Monthly Beast',    'Maintain a 30-day streak.',                      'streak',         30,  '👑')
-on conflict (name) do nothing;
+DROP TRIGGER IF EXISTS trg_workout_achievements ON workouts_v5;
+CREATE TRIGGER trg_workout_achievements
+  AFTER INSERT ON workouts_v5
+  FOR EACH ROW
+  EXECUTE FUNCTION check_workout_achievements();
 
 
 -- ==============================================================================
--- END OF SCHEMA
--- All sections are idempotent and safe to re-run at any time.
+-- SECTION 16: ROLE AUDIT TRIGGER
 -- ==============================================================================
--- ==============================================================================
--- MISSING INDEXES FOR PERFORMANCE
--- ==============================================================================
-create index if not exists idx_workout_template_exercises_template_id on workout_template_exercises(template_id);
--- ==============================================================================
--- SCHEMA RESTRAINTS & ROLE AUDITING
--- ==============================================================================
--- Enforce allowed achievement condition types
-ALTER TABLE achievements DROP CONSTRAINT IF EXISTS chk_achievements_condition_type;
-ALTER TABLE achievements ADD CONSTRAINT chk_achievements_condition_type CHECK (condition_type IN ('total_workouts', 'total_sets', 'streak', 'level', 'specific_exercise', 'perfect_week'));
 
--- Log role changes in profiles
-CREATE OR REPLACE FUNCTION audit_role_change() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION audit_role_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 BEGIN
   IF OLD.role IS DISTINCT FROM NEW.role THEN
     INSERT INTO admin_logs (admin_id, action, details)
-    VALUES (NEW.id, 'role_changed', jsonb_build_object('old_role', OLD.role, 'new_role', NEW.role));
+    VALUES (
+      NEW.id,
+      'role_changed',
+      jsonb_build_object('old_role', OLD.role, 'new_role', NEW.role)
+    );
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_audit_role_change ON profiles;
 CREATE TRIGGER trg_audit_role_change
-AFTER UPDATE OF role ON profiles
-FOR EACH ROW
-EXECUTE FUNCTION audit_role_change();
+  AFTER UPDATE OF role ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION audit_role_change();
+
+
+-- ==============================================================================
+-- SECTION 17: SIGNUP TRIGGER
+-- Auto-creates profile + streak row for every new Supabase auth user.
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_raw_name       text;
+  v_formatted_name text;
+  v_avatar_url     text;
+BEGIN
+  -- Try Google OAuth metadata first
+  v_formatted_name := COALESCE(
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'name'
+  );
+  v_avatar_url := COALESCE(
+    NEW.raw_user_meta_data->>'avatar_url',
+    NEW.raw_user_meta_data->>'picture'
+  );
+
+  -- Fallback: derive name from email prefix
+  IF v_formatted_name IS NULL OR v_formatted_name = '' THEN
+    v_raw_name       := split_part(NEW.email, '@', 1);
+    v_formatted_name := upper(left(v_raw_name, 1)) || lower(substring(v_raw_name FROM 2));
+  END IF;
+
+  INSERT INTO public.profiles (id, email, name, avatar_url, xp_total)
+  VALUES (NEW.id, NEW.email, v_formatted_name, v_avatar_url, 0)
+  ON CONFLICT (id) DO UPDATE
+    SET name       = EXCLUDED.name,
+        avatar_url = EXCLUDED.avatar_url;
+
+  INSERT INTO public.streaks (user_id, current_streak, best_streak)
+  VALUES (NEW.id, 0, 0)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_on_auth_user_created ON auth.users;
+CREATE TRIGGER trg_on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_user();
+
+
+-- ==============================================================================
+-- SECTION 18: ONE-TIME BACKFILL
+-- Fixes existing auth users who are missing profile/streak rows.
+-- Safe to re-run: uses ON CONFLICT DO NOTHING.
+-- ==============================================================================
+
+DO $$
+DECLARE
+  v_user         record;
+  v_raw_name     text;
+  v_display_name text;
+BEGIN
+  FOR v_user IN SELECT id, email FROM auth.users LOOP
+    v_raw_name     := split_part(v_user.email, '@', 1);
+    v_display_name := upper(left(v_raw_name, 1)) || lower(substring(v_raw_name FROM 2));
+
+    INSERT INTO public.profiles (id, email, name, xp_total)
+    VALUES (v_user.id, v_user.email, v_display_name, 0)
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.streaks (user_id, current_streak, best_streak)
+    VALUES (v_user.id, 0, 0)
+    ON CONFLICT (user_id) DO NOTHING;
+  END LOOP;
+END;
+$$;
+
+
+-- ==============================================================================
+-- SECTION 19: SEED ACHIEVEMENTS (single source of truth — idempotent)
+-- ==============================================================================
+
+INSERT INTO achievements (name, description, condition_type, condition_value, icon) VALUES
+  ('First Step',       'Complete your very first workout.',   'total_workouts', 1,    '👟'),
+  ('Getting Started',  'Complete 5 workouts.',                'total_workouts', 5,    '💪'),
+  ('Consistent',       'Complete 10 workouts.',               'total_workouts', 10,   '📅'),
+  ('Dedicated',        'Complete 25 workouts.',               'total_workouts', 25,   '🎯'),
+  ('Centurion',        'Complete 100 workouts.',              'total_workouts', 100,  '🏅'),
+  ('Set Starter',      'Complete 50 total sets.',             'total_sets',     50,   '✅'),
+  ('Set Machine',      'Complete 500 total sets.',            'total_sets',     500,  '⚙️'),
+  ('Set Legend',       'Complete 2,000 total sets.',          'total_sets',     2000, '🔩'),
+  ('3-Day Streak',     'Work out 3 days in a row.',           'streak',         3,    '🔥'),
+  ('Iron Will',        'Maintain a 7-day streak.',            'streak',         7,    '⚡'),
+  ('Two Weeks Strong', 'Maintain a 14-day streak.',           'streak',         14,   '💎'),
+  ('Monthly Beast',    'Maintain a 30-day streak.',           'streak',         30,   '👑'),
+  ('Quarter Century',  'Maintain a 90-day streak.',           'streak',         90,   '🏆')
+ON CONFLICT (name) DO UPDATE SET
+  description     = EXCLUDED.description,
+  condition_type  = EXCLUDED.condition_type,
+  condition_value = EXCLUDED.condition_value,
+  icon            = EXCLUDED.icon;
+
+
+-- ==============================================================================
+-- SECTION 20: SEED EXERCISES (IDs 1–56, matches src/constants/exercises.ts)
+-- Uses ON CONFLICT DO UPDATE to be fully idempotent.
+-- After seeding, resets the sequence so new auto-inserts don't conflict.
+-- ==============================================================================
+
+INSERT INTO exercises (id, name, muscle_group, difficulty, image_url) VALUES
+  -- MONDAY: Chest + Triceps
+  (1,  'Chest Press (Tube)',               'chest',     'beginner',     '/images/MONDAY/Chest Press.png'),
+  (2,  'Push-up Progression',              'chest',     'beginner',     '/images/MONDAY/Push-up.png'),
+  (3,  'Incline Chest Press (Tube)',        'chest',     'intermediate', '/images/MONDAY/Incline Chest Press.png'),
+  (4,  'Chest Fly (Tube)',                 'chest',     'intermediate', '/images/MONDAY/Chest Fly.png'),
+  (5,  'Incline Chest Fly (Tube)',         'chest',     'intermediate', '/images/MONDAY/Incline Chest Fly.png'),
+  (6,  'Triceps Pushdown (Tube)',          'triceps',   'beginner',     '/images/MONDAY/Triceps Pushdown.png'),
+  (7,  'Overhead Triceps Extension (Tube)','triceps',   'intermediate', '/images/MONDAY/Overhead Triceps Extension.png'),
+  -- TUESDAY: Back + Biceps + Forearms
+  (8,  'Lat Pulldown (Tube)',              'back',      'beginner',     '/images/TUESDAY/Lat Pulldown.png'),
+  (9,  'Bent-Over Row (Tube)',             'back',      'beginner',     '/images/TUESDAY/Bent-Over Row.png'),
+  (10, 'Seated Row (Tube)',               'back',      'beginner',     '/images/TUESDAY/Seated Row.png'),
+  (11, 'Straight-Arm Pushdown (Tube)',    'back',      'intermediate', '/images/TUESDAY/Straight-Arm Pushdown.png'),
+  (12, 'Face Pull (Tube)',                'back',      'beginner',     '/images/TUESDAY/Face Pull.png'),
+  (13, 'Biceps Curl (Tube)',              'biceps',    'beginner',     '/images/TUESDAY/Biceps Curl.png'),
+  (14, 'Hammer Curl',                     'biceps',    'beginner',     '/images/TUESDAY/Hammer Curl.png'),
+  (15, 'Supinating Curl (Alt)',           'biceps',    'intermediate', '/images/TUESDAY/Supinating Curl.png'),
+  (16, 'Reverse Curl',                    'forearms',  'beginner',     '/images/TUESDAY/Reverse Curl.png'),
+  (17, 'Wrist Curl',                      'forearms',  'beginner',     '/images/TUESDAY/Wrist Curl.png'),
+  (18, 'Reverse Wrist Curl',              'forearms',  'beginner',     '/images/TUESDAY/Reverse Wrist Curl.png'),
+  (19, 'Farmer Hold',                     'forearms',  'beginner',     '/images/TUESDAY/Farmer Hold.png'),
+  (20, 'Push-up Progression',             'chest',     'beginner',     '/images/TUESDAY/Incline Push-up.png'),
+  -- WEDNESDAY: Legs + Athletic Strength + Grip
+  (21, 'Tube Squat',                      'legs',      'beginner',     '/images/WEDNESDAY/Tube Squat.png'),
+  (22, 'Bulgarian Split Squat',           'legs',      'intermediate', '/images/WEDNESDAY/Bulgarian Split Squat.png'),
+  (23, 'RDL (Tube)',                      'legs',      'intermediate', '/images/WEDNESDAY/RDL.png'),
+  (24, 'Reverse Lunge',                   'legs',      'beginner',     '/images/WEDNESDAY/Reverse Lunge.png'),
+  (25, 'Glute Bridge',                    'legs',      'beginner',     '/images/WEDNESDAY/Glute Bridge.png'),
+  (26, 'Side Lunge',                      'legs',      'beginner',     '/images/WEDNESDAY/Side Lunge.png'),
+  (27, 'Calf Raise',                      'legs',      'beginner',     '/images/WEDNESDAY/Calf Raise.png'),
+  (28, 'Step-Ups (Athletic)',             'legs',      'beginner',     '/images/WEDNESDAY/Step-Ups.png'),
+  (29, 'Farmer Hold',                     'forearms',  'beginner',     '/images/WEDNESDAY/Farmer Hold.png'),
+  (30, 'Wrist Curl',                      'forearms',  'beginner',     '/images/WEDNESDAY/Wrist Curl.png'),
+  (31, 'Reverse Wrist Curl',              'forearms',  'beginner',     '/images/WEDNESDAY/Reverse Wrist Curl.png'),
+  -- FRIDAY: Shoulders + Chest + Triceps
+  (32, 'Shoulder Press (Tube)',           'shoulders', 'beginner',     '/images/FRIDAY/Shoulder Press.png'),
+  (33, 'Lateral Raise (Tube)',            'shoulders', 'beginner',     '/images/FRIDAY/Lateral Raise.png'),
+  (34, 'Arnold Press',                    'shoulders', 'intermediate', '/images/FRIDAY/Arnold Press.png'),
+  (35, 'Rear-Delt Fly',                   'shoulders', 'beginner',     '/images/FRIDAY/Rear-Delt Fly.png'),
+  (36, 'Decline Chest Press',             'chest',     'intermediate', '/images/FRIDAY/Decline Chest Press.png'),
+  (37, 'Decline Chest Fly',              'chest',     'intermediate', '/images/FRIDAY/Decline Chest Fly.png'),
+  (38, 'Triceps Pushdown (Tube)',         'triceps',   'beginner',     '/images/FRIDAY/Triceps Pushdown.png'),
+  (39, 'Push-up Progression',             'chest',     'beginner',     '/images/FRIDAY/Incline Push-up.png'),
+  -- SATURDAY: Back + Chest + Arms + Forearms
+  (40, 'Lat Pulldown (Tube)',             'back',      'beginner',     '/images/SATURDAY/Lat Pulldown.png'),
+  (41, 'Bent-Over Row (Tube)',            'back',      'beginner',     '/images/SATURDAY/Bent-Over Row.png'),
+  (42, 'Face Pull (Tube)',                'back',      'beginner',     '/images/SATURDAY/Face Pull.png'),
+  (43, 'Push-up Progression',             'chest',     'beginner',     '/images/SATURDAY/Push-up.png'),
+  (44, 'Chest Fly (Tube)',               'chest',     'intermediate', '/images/SATURDAY/Chest Fly.png'),
+  (45, 'Hammer Curl',                     'biceps',    'beginner',     '/images/SATURDAY/Hammer Curl.png'),
+  (46, 'Overhead Triceps Extension',      'triceps',   'intermediate', '/images/SATURDAY/Overhead Triceps Extension.png'),
+  (47, 'Wrist Curl',                      'forearms',  'beginner',     '/images/SATURDAY/Wrist Curl.png'),
+  (48, 'Reverse Wrist Curl',              'forearms',  'beginner',     '/images/SATURDAY/Reverse Wrist Curl.png'),
+  (49, 'Farmer Hold',                     'forearms',  'beginner',     '/images/SATURDAY/Farmer Hold.png'),
+  -- SUNDAY: Full Body Athletic
+  (50, 'Lat Pulldown (Tube)',             'back',      'beginner',     '/images/SUNDAY/Lat Pulldown.png'),
+  (51, 'Chest Press (Tube)',              'chest',     'beginner',     '/images/SUNDAY/Chest Press.png'),
+  (52, 'RDL (Tube)',                      'legs',      'intermediate', '/images/SUNDAY/RDL.png'),
+  (53, 'Step-Ups',                        'legs',      'beginner',     '/images/SUNDAY/Step-Ups.png'),
+  (54, 'Shoulder/Lateral Raise (Tube)',  'shoulders', 'beginner',     '/images/SUNDAY/Lateral Raise.png'),
+  (55, 'Push-up Progression',             'chest',     'beginner',     '/images/SUNDAY/Push-Up.png'),
+  (56, 'Farmer Hold',                     'forearms',  'beginner',     '/images/SUNDAY/Farmer Hold.png')
+ON CONFLICT (id) DO UPDATE SET
+  name         = EXCLUDED.name,
+  muscle_group = EXCLUDED.muscle_group,
+  difficulty   = EXCLUDED.difficulty,
+  image_url    = EXCLUDED.image_url;
+
+-- Reset ID sequence to MAX(id) so next auto-insert doesn't conflict
+SELECT setval('exercises_id_seq', (SELECT MAX(id) FROM exercises));
+
+
+-- ==============================================================================
+-- SECTION 21: SEED AUXILIARY ROUTINES (Warmup + Cooldown)
+-- Inserts warmup and cooldown exercises into auxiliary_routines tables.
+-- These are generic (not day-specific) and shown on warmup/cooldown pages.
+-- ==============================================================================
+
+-- Warmup routine
+INSERT INTO auxiliary_routines (category, image_url)
+VALUES ('warmup', '/images/Full Body Warm-Up Routine/Full Body Warm-Up.png')
+ON CONFLICT (category) DO UPDATE SET image_url = EXCLUDED.image_url;
+
+-- Cooldown routine
+INSERT INTO auxiliary_routines (category, image_url)
+VALUES ('cooldown', '/images/Post-Workout Cool Down Routine/Post-Workout Cool Down.png')
+ON CONFLICT (category) DO UPDATE SET image_url = EXCLUDED.image_url;
+
+-- Posture routine
+INSERT INTO auxiliary_routines (category, image_url)
+VALUES ('posture', '/images/Posture Routine/Daily Posture Correction.png')
+ON CONFLICT (category) DO UPDATE SET image_url = EXCLUDED.image_url;
+
+-- Knock-knee correction routine
+INSERT INTO auxiliary_routines (category, image_url)
+VALUES ('knockknee', '/images/Knock Knee Correction Routine/Knock Knee Correction.png')
+ON CONFLICT (category) DO UPDATE SET image_url = EXCLUDED.image_url;
+
+-- Seed warmup exercises (replaces generic/wrong jumping jacks set)
+-- Uses DO block to get the routine ID safely
+DO $$
+DECLARE
+  v_warmup_id   integer;
+  v_cooldown_id integer;
+BEGIN
+  SELECT id INTO v_warmup_id   FROM auxiliary_routines WHERE category = 'warmup';
+  SELECT id INTO v_cooldown_id FROM auxiliary_routines WHERE category = 'cooldown';
+
+  -- Clear existing exercises before re-seeding to avoid duplicates
+  DELETE FROM auxiliary_routine_exercises WHERE routine_id = v_warmup_id;
+  DELETE FROM auxiliary_routine_exercises WHERE routine_id = v_cooldown_id;
+
+  -- ─── WARMUP EXERCISES (correct per monday–sunday .md specs) ─────────────────
+  -- Using generic warmup that covers the common elements across all days.
+  -- Day-specific variations are handled in the frontend constants fallback.
+  INSERT INTO auxiliary_routine_exercises
+    (routine_id, name, duration_seconds, reps, exercise_order, is_deleted)
+  VALUES
+    (v_warmup_id, 'Marching / Light High Knees',        120,  NULL,          1, false),
+    (v_warmup_id, 'Arm Circles + Shoulder Rotations',   60,   NULL,          2, false),
+    (v_warmup_id, 'Band Pull-Apart',                    NULL, '2 × 12–15',   3, false),
+    (v_warmup_id, 'Dead Bug',                           NULL, '2 × 8–10/side', 4, false),
+    (v_warmup_id, 'Plank',                              40,   NULL,          5, false),
+    (v_warmup_id, 'Bodyweight Squat (Hip Mobility)',    NULL, '2 × 10',      6, false);
+
+  -- ─── COOLDOWN EXERCISES (correct per monday–sunday .md specs) ───────────────
+  INSERT INTO auxiliary_routine_exercises
+    (routine_id, name, duration_seconds, reps, exercise_order, is_deleted)
+  VALUES
+    (v_cooldown_id, 'Lat Stretch',                  30,  NULL,             1, false),
+    (v_cooldown_id, 'Chest Stretch',                30,  NULL,             2, false),
+    (v_cooldown_id, 'Hip-Flexor Stretch',           30,  NULL,             3, false),
+    (v_cooldown_id, 'Quadriceps Stretch',           30,  NULL,             4, false),
+    (v_cooldown_id, 'Hamstring Stretch',            30,  NULL,             5, false),
+    (v_cooldown_id, 'Wall Angels',                  NULL, '2 × 10',        6, false),
+    (v_cooldown_id, 'Butterfly Stretch',            45,  NULL,             7, false),
+    (v_cooldown_id, 'Side Lunge (Hip Control)',     NULL, '2 × 8–10/side', 8, false);
+END;
+$$;
+
+
+-- ==============================================================================
+-- END OF SCHEMA v7.2
+-- All sections are idempotent and safe to re-run at any time.
+-- Total tables: 22  |  Views: 3  |  Functions: 6  |  Triggers: 7
+-- ==============================================================================

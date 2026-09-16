@@ -36,6 +36,9 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
+  // Check Gemini API key at build/render time (server-side only — never expose to client)
+  const geminiConfigured = Boolean(process.env.GEMINI_API_KEY)
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -55,6 +58,7 @@ export default async function AdminPage() {
         initialMartialArts={initialMartialArts ?? []}
         initialMuscleFocus={initialMuscleFocus ?? []}
         initialAuxiliaryRoutines={initialAuxiliaryRoutines ?? []}
+        geminiConfigured={geminiConfigured}
       />
     </div>
   )

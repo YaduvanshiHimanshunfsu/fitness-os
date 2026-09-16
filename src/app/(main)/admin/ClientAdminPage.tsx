@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { Button } from '@/components/ui/button'
 import { Database } from '@/types/database'
@@ -11,12 +11,22 @@ import { MartialArtsModal } from '@/components/admin/MartialArtsModal'
 import { deleteExercise } from '@/actions/exercises'
 import { deleteMartialArtsExercise } from '@/actions/martialArts'
 import { deleteMuscleFocusExercise } from '@/actions/muscleFocus'
-import { Edit2, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react'
 import { ScheduleBuilder } from '@/components/admin/ScheduleBuilder'
 import { MuscleFocusModal } from '@/components/admin/MuscleFocusModal'
 import { AuxiliaryRoutineAdmin } from '@/components/admin/AuxiliaryRoutineAdmin'
 
 type Exercise = Database['public']['Tables']['exercises']['Row']
+
+// Safely parse a jsonb value that could be bool true, string 'true', or JSON '"true"'
+function parseSettingBool(val: unknown): boolean {
+  if (val === true) return true
+  if (typeof val === 'string') {
+    try { return JSON.parse(val) === true } catch { return val === 'true' }
+  }
+  return false
+}
 
 export default function ClientAdminPage({ 
   initialExercises, 
@@ -25,25 +35,31 @@ export default function ClientAdminPage({
   initialTemplates,
   initialMartialArts,
   initialMuscleFocus,
-  initialAuxiliaryRoutines
+  initialAuxiliaryRoutines,
+  geminiConfigured,
 }: { 
-  initialExercises: Exercise[],
-  initialSettings: any[],
-  initialLogs: any[],
-  initialTemplates: any[],
-  initialMartialArts: any[],
-  initialMuscleFocus: any[],
+  initialExercises: Exercise[]
+  initialSettings: any[]
+  initialLogs: any[]
+  initialTemplates: any[]
+  initialMartialArts: any[]
+  initialMuscleFocus: any[]
   initialAuxiliaryRoutines: any[]
+  geminiConfigured: boolean
 }) {
   const [exercises, setExercises] = useState(initialExercises)
   const [martialArts, setMartialArts] = useState(initialMartialArts)
   const [muscleFocus, setMuscleFocus] = useState(initialMuscleFocus)
   const [settings, setSettings] = useState(initialSettings)
   const [logs, setLogs] = useState(initialLogs)
-  const [geminiApiKey, setGeminiApiKey] = useState(settings.find(s => s.key === 'gemini_api_key')?.value || '')
-  const [userLimit, setUserLimit] = useState(settings.find(s => s.key === 'user_registration_limit')?.value || 100)
-  const [useDbMartialArts, setUseDbMartialArts] = useState(settings.find(s => s.key === 'use_db_martial_arts')?.value === 'true' || settings.find(s => s.key === 'use_db_martial_arts')?.value === true)
-  const [useDbMuscleFocus, setUseDbMuscleFocus] = useState(settings.find(s => s.key === 'use_db_muscle_focus')?.value === 'true' || settings.find(s => s.key === 'use_db_muscle_focus')?.value === true)
+  const [userLimit, setUserLimit] = useState(settings.find(s => s.key === 'user_registration_limit')?.value ?? 100)
+  // FIX: parseSettingBool handles jsonb returning boolean true (not string 'true')
+  const [useDbMartialArts, setUseDbMartialArts] = useState(
+    parseSettingBool(settings.find(s => s.key === 'use_db_martial_arts')?.value)
+  )
+  const [useDbMuscleFocus, setUseDbMuscleFocus] = useState(
+    parseSettingBool(settings.find(s => s.key === 'use_db_muscle_focus')?.value)
+  )
   const [isSaving, setIsSaving] = useState(false)
   
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -56,12 +72,18 @@ export default function ClientAdminPage({
   const [muscleFocusToEdit, setMuscleFocusToEdit] = useState<any | null>(null)
 
   const supabase = createClient()
+  const router = useRouter()
+
+  // FIX: router.refresh() tells Next.js to re-run all server component data fetches
+  // for this route without a full page reload, properly updating the UI lists.
+  const refreshExercises  = useCallback(() => router.refresh(), [router])
+  const refreshMartialArts = useCallback(() => router.refresh(), [router])
+  const refreshMuscleFocus = useCallback(() => router.refresh(), [router])
 
   const handleSaveSettings = async () => {
     try {
       setIsSaving(true)
       await saveGlobalSettings({
-        geminiApiKey,
         userRegistrationLimit: Number(userLimit),
         useDbMartialArts,
         useDbMuscleFocus
@@ -361,15 +383,23 @@ export default function ClientAdminPage({
         
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Gemini API Key</label>
-            <input 
-              type="password" 
-              value={geminiApiKey}
-              onChange={e => setGeminiApiKey(e.target.value)}
-              placeholder="AI_xxxxxxxxxxxxxxxxxxxx"
-              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 focus:outline-none focus:border-[#FF6B35]/50 transition-colors font-mono" 
-            />
-            <p className="text-xs text-zinc-500">Used for AI-powered workout insights and coaching.</p>
+            <label className="text-xs font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Gemini AI Status</label>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 max-w-xl">
+              {geminiConfigured
+                ? <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                : <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+              }
+              <div>
+                <p className="text-sm font-bold">
+                  {geminiConfigured ? 'Gemini API Connected' : 'Gemini API Not Configured'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {geminiConfigured
+                    ? 'GEMINI_API_KEY is set as a Vercel Environment Variable. AI features are active.'
+                    : 'Set GEMINI_API_KEY in Vercel Environment Variables to enable AI Coach and insights.'}
+                </p>
+              </div>
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -474,7 +504,7 @@ export default function ClientAdminPage({
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
-          window.location.reload() 
+          refreshExercises()
         }}
         exerciseToEdit={exerciseToEdit}
       />
@@ -482,7 +512,7 @@ export default function ClientAdminPage({
         isOpen={isMartialArtsModalOpen}
         onClose={() => {
           setIsMartialArtsModalOpen(false)
-          window.location.reload() 
+          refreshMartialArts()
         }}
         exerciseToEdit={martialArtsToEdit}
       />
@@ -490,7 +520,7 @@ export default function ClientAdminPage({
         isOpen={isMuscleFocusModalOpen}
         onClose={() => {
           setIsMuscleFocusModalOpen(false)
-          window.location.reload() 
+          refreshMuscleFocus()
         }}
         exerciseToEdit={muscleFocusToEdit}
       />

@@ -203,11 +203,10 @@ export async function saveWorkoutSession(rawPayload: z.infer<typeof WorkoutPaylo
     console.error('Achievement check error:', e)
   }
 
-  // 7. Post to community activity feed (best-effort)
+  // 7. Post to community activity feed (best-effort — non-fatal if table not yet in generated types)
   try {
     const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single()
-    // activity_feed may not be in generated types yet — cast via from() only
-    const { error: feedError } = await (supabase.from as (table: string) => ReturnType<typeof supabase.from>)('activity_feed').insert({
+    const { error: feedError } = await supabase.from('activity_feed' as any).insert({
       user_id:     user.id,
       user_name:   profile?.name || 'Athlete',
       action_type: 'workout_completed',
